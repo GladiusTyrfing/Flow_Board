@@ -30,6 +30,7 @@ public sealed partial class MainViewModel : ObservableObject
         Recorder = new AudioRecorder();
         Calendar = new CalendarViewModel(this);
         Table = new TableViewModel(this);
+        Timeline = new TimelineViewModel(this);
         CardDropHandler = new CardDropHandler();
         ListDropHandler = new ListDropHandler();
 
@@ -51,7 +52,11 @@ public sealed partial class MainViewModel : ObservableObject
             if (e.PropertyName == nameof(PomodoroService.IsRunning)) PomodoroStateChanged?.Invoke(this, EventArgs.Empty);
         };
         Workspace.Boards.CollectionChanged += (_, _) => RefreshSidebar();
+        Workspace.Storyboards.CollectionChanged += (_, _) => RefreshDocSidebar();
+        Workspace.Canvases.CollectionChanged += (_, _) => RefreshDocSidebar();
+        Workspace.Notes.CollectionChanged += (_, _) => RefreshDocSidebar();
         Settings.PropertyChanged += OnSettingsChanged;
+        Undo.PropertyChanged += (_, _) => RaiseUndoState();
 
         var last = Workspace.Boards.FirstOrDefault(b => b.Id == Settings.LastBoardId)
                    ?? Workspace.Boards.OrderByDescending(b => b.LastOpened).FirstOrDefault();
@@ -68,6 +73,7 @@ public sealed partial class MainViewModel : ObservableObject
     public AudioRecorder Recorder { get; }
     public CalendarViewModel Calendar { get; }
     public TableViewModel Table { get; }
+    public TimelineViewModel Timeline { get; }
     public FilterState Filter { get; } = new();
     public IDropTarget CardDropHandler { get; }
     public IDropTarget ListDropHandler { get; }
@@ -121,6 +127,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void RefreshSidebar()
     {
+        RefreshDocSidebar();
         OnPropertyChanged(nameof(StarredBoards));
         OnPropertyChanged(nameof(AllBoards));
         OnPropertyChanged(nameof(HasBoards));
@@ -161,6 +168,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void SelectBoard(Board? board)
     {
+        LeaveDocument();
         if (Dialogs.OfType<CardDetailViewModel>().Any()) CloseAllDialogs();
         CurrentBoard = board;
         if (board != null)
@@ -187,12 +195,19 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void SetViewMode(BoardViewMode mode) => ViewMode = mode;
+    private void SetViewMode(BoardViewMode mode)
+    {
+        if (ActiveView != ActiveView.Board) SelectBoard(CurrentBoard);
+        ViewMode = mode;
+    }
+
+    partial void OnCurrentBoardChanged(Board? value) => OnPropertyChanged(nameof(SelectedItem));
 
     public void RefreshViews()
     {
         if (ViewMode == BoardViewMode.Calendar) Calendar.Rebuild();
         else if (ViewMode == BoardViewMode.Table) Table.Rebuild();
+        else if (ViewMode == BoardViewMode.Timeline) Timeline.Rebuild();
     }
 
     [RelayCommand]
@@ -214,6 +229,12 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void StartRenameBoard()
     {
+        if (ActiveView != ActiveView.Board)
+        {
+            ActiveDocument?.BeginRename();
+            return;
+        }
+
         if (CurrentBoard != null) CurrentBoard.IsEditingName = true;
     }
 
@@ -304,6 +325,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void OpenFilter()
     {
+        if (ActiveView != ActiveView.Board) return;
         IsFilterOpen = true;
         FocusFilterRequested?.Invoke(this, EventArgs.Empty);
     }
@@ -314,6 +336,7 @@ public sealed partial class MainViewModel : ObservableObject
     public void ApplyFilter()
     {
         if (CurrentBoard == null) return;
+        RefreshBlocked();
         foreach (var list in CurrentBoard.Lists)
         {
             foreach (var card in list.Cards) card.IsFilteredOut = !Filter.Matches(card);
@@ -321,5 +344,23 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         RefreshViews();
+    }
+
+    /// <summary>Marks cards on the current board that wait on unfinished "blocked by" cards (which may live on other boards).</summary>
+    public void RefreshBlocked()
+    {
+        if (CurrentBoard == null) return;
+        Dictionary<Guid, bool>? done = null;
+        foreach (var card in CurrentBoard.AllActiveCards)
+        {
+            if (card.BlockedByIds.Count == 0)
+            {
+                card.IsBlocked = false;
+                continue;
+            }
+
+            done ??= Workspace.EnumerateActiveCards().GroupBy(t => t.Card.Id).ToDictionary(g => g.Key, g => g.First().Card.IsCompleted);
+            card.IsBlocked = !card.IsCompleted && card.BlockedByIds.Any(id => done.TryGetValue(id, out var d) && !d);
+        }
     }
 }

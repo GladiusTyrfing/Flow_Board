@@ -55,13 +55,14 @@ public sealed partial class TextPromptViewModel : DialogViewModel
     public string Placeholder { get; init; } = string.Empty;
     public string ConfirmText { get; init; } = "Save";
     public bool Multiline { get; init; }
+    public bool AllowEmpty { get; init; }
     [ObservableProperty] private string _text = string.Empty;
     public Task<string?> Result => _tcs.Task;
 
     [RelayCommand]
     private void Confirm()
     {
-        if (string.IsNullOrWhiteSpace(Text)) return;
+        if (string.IsNullOrWhiteSpace(Text) && !AllowEmpty) return;
         _tcs.TrySetResult(Text.Trim());
         MainViewModel.Instance.CloseDialog(this);
     }
@@ -98,7 +99,7 @@ public sealed class ShortcutsViewModel : DialogViewModel
             [
                 new("Ctrl + Tab / Ctrl + Shift + Tab", "Next / previous board"),
                 new("Alt + 1 … 9", "Jump to board 1–9 (starred first)"),
-                new("Ctrl + 1 / 2 / 3", "Board / Table / Calendar view"),
+                new("Ctrl + 1 / 2 / 3 / 4", "Board / Table / Calendar / Timeline view"),
                 new("Ctrl + B  or  [", "Show or hide the sidebar"),
                 new("Ctrl + Shift + N", "New board"),
                 new("Ctrl + Shift + L", "New list"),
@@ -137,6 +138,42 @@ public sealed class ShortcutsViewModel : DialogViewModel
                 new("Ctrl + Shift + C", "Archive card"),
                 new("Ctrl + Delete", "Delete card"),
                 new("Enter / Shift + Enter", "Save / new line in comments and checklists"),
+            ]),
+            new("Smart quick add (any new-card box)",
+            [
+                new("#label", "Adds (or creates) a label"),
+                new("!high  !urgent  !1 … !4", "Sets the priority"),
+                new("tomorrow 5pm, fri, next week, in 3 days, 12 May", "Sets the due date"),
+            ]),
+            new("Canvas & flowcharts",
+            [
+                new("Double-click", "Add a shape (or edit the one under the mouse)"),
+                new("Drag a dot on a shape", "Connect it — drop on empty space to create a connected shape"),
+                new("V / R / B / O / D / S / T / C / I", "Select / rounded / box / ellipse / diamond / sticky / text / connector / image"),
+                new("Tab / Enter", "Add a connected child / sibling (mind map)"),
+                new("F2", "Edit the selected shape's text"),
+                new("Space + drag, middle-drag", "Pan"),
+                new("Ctrl + wheel / Ctrl + 0", "Zoom / zoom to fit"),
+                new("Ctrl + C / V / D / A", "Copy / paste (images too) / duplicate / select all"),
+                new("Arrow keys (+ Shift)", "Nudge by 1 px (grid step)"),
+                new("Delete", "Delete the selection"),
+            ]),
+            new("Notes",
+            [
+                new("/", "Block menu: headings, to-dos, lists, quote, callout, code, image, link…"),
+                new("# ,  ## ,  - ,  1. ,  [] ,  > ,  ``` ,  ---", "Markdown shortcuts at the start of a line"),
+                new("Tab / Shift + Tab", "Indent / outdent"),
+                new("Alt + ↑ / ↓", "Move the block"),
+                new("Ctrl + Enter", "Tick a to-do (leave a code block)"),
+                new("Ctrl + Alt + 1 / 2 / 3 / 0", "Heading 1 / 2 / 3 / text"),
+                new("Ctrl + V", "Paste an image as a block"),
+            ]),
+            new("Storyboards & timeline",
+            [
+                new("Drag a shot column", "Reorder shots"),
+                new("Space / ← → / Home (animatic)", "Play-pause / step / restart"),
+                new("Drag a timeline bar / its edges", "Move it / change start or due date"),
+                new("Shift + wheel / Ctrl + wheel (timeline)", "Scroll through time / zoom"),
             ]),
         ];
     }

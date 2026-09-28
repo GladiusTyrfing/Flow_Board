@@ -1,0 +1,570 @@
+using System.ComponentModel;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using FlowBoard.Models;
+using FlowBoard.Services;
+using FlowBoard.ViewModels;
+
+namespace FlowBoard.Views;
+
+/// <summary>
+/// Pan/zoom surface and all pointer interaction for the canvas: select, move, resize, connect, marquee, create.
+/// The view model owns the data; this class only translates mouse and keyboard input.
+/// </summary>
+public partial class CanvasView : UserControl
+{
+    private enum Drag { None, Pan, Move, Resize, Connect, Marquee }
+
+    private CanvasViewModel? _vm;
+    private readonly DrawingBrush _dots;
+    private Drag _drag;
+    private Point _start;            // screen point where the drag began
+    private Point _last;             // last screen point
+    private bool _moved;
+    private CanvasNode? _target;     // node being moved / resized / connected from
+    private Dictionary<CanvasNode, Point> _startPositions = new();
+    private Size _startSize;
+    private bool _spaceDown;
+
+    public CanvasView()
+    {
+        InitializeComponent();
+        _dots = new DrawingBrush
+        {
+            TileMode = TileMode.Tile,
+            ViewportUnits = BrushMappingMode.Absolute,
+            Stretch = Stretch.None,
+        };
+        Dots.Fill = _dots;
+        UpdateDotBrush();
+
+        DataContextChanged += (_, _) =>
+        {
+            if (_vm != null)
+            {
+                _vm.Doc.PropertyChanged -= OnDocChanged;
+                _vm.RenderRequested -= OnRenderRequested;
+            }
+
+            _vm = DataContext as CanvasViewModel;
+            if (_vm == null) return;
+            _vm.Doc.PropertyChanged += OnDocChanged;
+            _vm.RenderRequested += OnRenderRequested;
+            ApplyTransform();
+        };
+        Loaded += (_, _) =>
+        {
+            Focus();
+            ThemeService.ThemeApplied += OnThemeApplied;
+        };
+        Unloaded += (_, _) => ThemeService.ThemeApplied -= OnThemeApplied;
+        PreviewKeyDown += OnKey;
+        KeyUp += (_, e) =>
+        {
+            if (e.Key == Key.Space) _spaceDown = false;
+        };
+    }
+
+    private void OnThemeApplied(object? sender, EventArgs e) => UpdateDotBrush();
+
+    private void UpdateDotBrush()
+    {
+        var brush = TryFindResource("Fb.FaintTextBrush") as Brush ?? Brushes.Gray;
+        var dot = new GeometryDrawing(brush, null, new EllipseGeometry(new Point(1, 1), 1, 1));
+        var group = new DrawingGroup { Opacity = 0.55 };
+        group.Children.Add(new GeometryDrawing(Brushes.Transparent, null, new RectangleGeometry(new Rect(0, 0, 20, 20))));
+        group.Children.Add(dot);
+        _dots.Drawing = group;
+        ApplyTransform();
+    }
+
+    // ================= transform =================
+
+    private void OnDocChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(CanvasDoc.Zoom) or nameof(CanvasDoc.OffsetX) or nameof(CanvasDoc.OffsetY)) ApplyTransform();
+    }
+
+    private void ApplyTransform()
+    {
+        if (_vm == null) return;
+        var d = _vm.Doc;
+        WorldHost.RenderTransform = new MatrixTransform(d.Zoom, 0, 0, d.Zoom, d.OffsetX, d.OffsetY);
+        var step = CanvasViewModel.Grid * d.Zoom;
+        while (step < 10) step *= 5; // keep the dot grid readable when zoomed far out
+        _dots.Viewport = new Rect(Mod(d.OffsetX, step), Mod(d.OffsetY, step), step, step);
+        _dots.Viewbox = new Rect(0, 0, 20, 20);
+        _dots.ViewboxUnits = BrushMappingMode.Absolute;
+        _dots.Stretch = Stretch.Fill;
+    }
+
+    private static double Mod(double v, double m) => ((v % m) + m) % m;
+
+    private Point ToWorld(Point screen)
+    {
+        var d = _vm!.Doc;
+        return new Point((screen.X - d.OffsetX) / d.Zoom, (screen.Y - d.OffsetY) / d.Zoom);
+    }
+
+    private void OnSurfaceSize(object sender, SizeChangedEventArgs e)
+    {
+        if (_vm == null) return;
+        var first = _vm.ViewportWidth == 1000 && _vm.ViewportHeight == 700;
+        _vm.ViewportWidth = Surface.ActualWidth;
+        _vm.ViewportHeight = Surface.ActualHeight;
+        // A brand-new canvas starts centered on its content.
+        if (first && _vm.Doc.Nodes.Count > 0 && _vm.Doc.Zoom == 1 && _vm.Doc.OffsetX == 80 && _vm.Doc.OffsetY == 60) _vm.ZoomToFit();
+    }
+
+    // ================= hit testing =================
+
+    /// <summary>Finds what's under the pointer: "node", "port", "resize" or "edge" with its data item.</summary>
+    private (string? Kind, object? Item) HitAt(DependencyObject? source)
+    {
+        for (var d = source; d != null && d != Surface; d = d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
+        {
+            if (d is TextBox) return ("text", (d as FrameworkElement)?.DataContext);
+            if (d is FrameworkElement { Tag: string tag } fe && tag is "node" or "port" or "resize" or "edge") return (tag, fe.DataContext);
+        }
+
+        return (null, null);
+    }
+
+    private CanvasNode? NodeAtScreen(Point p)
+    {
+        CanvasNode? found = null;
+        VisualTreeHelper.HitTest(Surface, null, r =>
+        {
+            if (HitAt(r.VisualHit).Item is CanvasNode n && n != _target)
+            {
+                found = n;
+                return HitTestResultBehavior.Stop;
+            }
+
+            return HitTestResultBehavior.Continue;
+        }, new PointHitTestParameters(p));
+        return found;
+    }
+
+    // ================= mouse =================
+
+    private void OnMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (_vm == null) return;
+        var (kind, item) = HitAt(e.OriginalSource as DependencyObject);
+        if (kind == "text") return; // let the text box handle it
+        Focus();
+        var p = e.GetPosition(Surface);
+        _start = _last = p;
+        _moved = false;
+
+        if (e.ChangedButton == MouseButton.Middle || (e.ChangedButton == MouseButton.Left && _spaceDown))
+        {
+            BeginDrag(Drag.Pan);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.ChangedButton == MouseButton.Right)
+        {
+            // Right-click selects what's under the pointer so the context menu acts on it.
+            if (item is CanvasNode rn && !rn.IsSelected) _vm.SelectOnly(rn);
+            return;
+        }
+
+        if (e.ChangedButton != MouseButton.Left) return;
+        var world = ToWorld(p);
+        var shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+
+        // Shape tools: click on empty space places a shape.
+        if (kind == null && ToolShape(_vm.Tool) is { } shape)
+        {
+            _vm.AddNodeAt(shape, world.X, world.Y);
+            _vm.Tool = CanvasTool.Select;
+            e.Handled = true;
+            return;
+        }
+
+        // Dragging from a port (or from a shape with the connector tool) draws a connector.
+        if (item is CanvasNode source && (kind == "port" || (kind == "node" && _vm.Tool == CanvasTool.Connector)))
+        {
+            _target = source;
+            BeginDrag(Drag.Connect);
+            e.Handled = true;
+            return;
+        }
+
+        switch (kind)
+        {
+
+            case "resize" when item is CanvasNode rn2:
+                _target = rn2;
+                _startSize = new Size(rn2.Width, rn2.Height);
+                BeginDrag(Drag.Resize);
+                break;
+
+            case "node" when item is CanvasNode node:
+                if (e.ClickCount == 2)
+                {
+                    _vm.OpenNode(node);
+                    break;
+                }
+
+                if (shift) node.IsSelected = !node.IsSelected;
+                else if (!node.IsSelected) _vm.SelectOnly(node);
+                foreach (var n in _vm.Doc.Nodes) if (n != node) n.IsEditing = false;
+                _target = node;
+                _startPositions = _vm.SelectedNodes.ToDictionary(n => n, n => new Point(n.X, n.Y));
+                BeginDrag(Drag.Move);
+                break;
+
+            case "edge" when item is CanvasEdge edge:
+                if (e.ClickCount == 2) _ = _vm.EditEdgeLabel(edge);
+                else _vm.SelectEdge(edge, shift);
+                break;
+
+            default:
+                if (e.ClickCount == 2)
+                {
+                    _vm.AddNodeAt(NodeShape.Rounded, world.X, world.Y);
+                    break;
+                }
+
+                if (!shift) _vm.ClearSelection();
+                BeginDrag(Drag.Marquee);
+                break;
+        }
+
+        e.Handled = true;
+    }
+
+    private static NodeShape? ToolShape(CanvasTool tool) => tool switch
+    {
+        CanvasTool.Rectangle => NodeShape.Rectangle,
+        CanvasTool.Rounded => NodeShape.Rounded,
+        CanvasTool.Ellipse => NodeShape.Ellipse,
+        CanvasTool.Diamond => NodeShape.Diamond,
+        CanvasTool.Sticky => NodeShape.Sticky,
+        CanvasTool.Text => NodeShape.Text,
+        _ => null,
+    };
+
+    private void BeginDrag(Drag kind)
+    {
+        _drag = kind;
+        Surface.CaptureMouse();
+    }
+
+    private void OnMouseMove(object sender, MouseEventArgs e)
+    {
+        if (_vm == null || _drag == Drag.None) return;
+        var p = e.GetPosition(Surface);
+        var total = p - _start;
+        if (!_moved && Math.Abs(total.X) + Math.Abs(total.Y) < 3) return;
+        var firstMove = !_moved;
+        _moved = true;
+        var z = _vm.Doc.Zoom;
+
+        switch (_drag)
+        {
+            case Drag.Pan:
+                _vm.Doc.OffsetX += p.X - _last.X;
+                _vm.Doc.OffsetY += p.Y - _last.Y;
+                Cursor = Cursors.SizeAll;
+                break;
+
+            case Drag.Move when _target != null && _startPositions.TryGetValue(_target, out var anchor):
+                if (firstMove) _vm.Checkpoint();
+                // Snap the grabbed node; everything else keeps its offset to it.
+                var nx = _vm.SnapValue(anchor.X + total.X / z);
+                var ny = _vm.SnapValue(anchor.Y + total.Y / z);
+                var dx = nx - anchor.X;
+                var dy = ny - anchor.Y;
+                foreach (var (n, s) in _startPositions)
+                {
+                    n.X = s.X + dx;
+                    n.Y = s.Y + dy;
+                }
+
+                break;
+
+            case Drag.Resize when _target != null:
+                if (firstMove) _vm.Checkpoint();
+                var w = Math.Max(40, _vm.SnapValue(_startSize.Width + total.X / z));
+                var h = Math.Max(30, _vm.SnapValue(_startSize.Height + total.Y / z));
+                if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && _startSize.Width > 0)
+                    h = Math.Max(30, w * _startSize.Height / _startSize.Width);
+                _target.Width = w;
+                _target.Height = h;
+                break;
+
+            case Drag.Connect when _target != null:
+                var world = ToWorld(p);
+                var from = _target.Bounds;
+                var over = NodeAtScreen(p);
+                var toBox = over?.Bounds ?? new Box(world.X - 1, world.Y - 1, 2, 2);
+                var shape = CanvasGeometry.Route(from, toBox, EdgeStyle.Curved, arrow: false);
+                ConnectPreview.Data = Geometry.Parse(shape.Path);
+                ConnectPreview.Visibility = Visibility.Visible;
+                break;
+
+            case Drag.Marquee:
+                var r = new Rect(_start, p);
+                Canvas.SetLeft(Marquee, r.X);
+                Canvas.SetTop(Marquee, r.Y);
+                Marquee.Width = r.Width;
+                Marquee.Height = r.Height;
+                Marquee.Visibility = Visibility.Visible;
+                var a = ToWorld(r.TopLeft);
+                var b = ToWorld(r.BottomRight);
+                _vm.SelectInRect(new Box(a.X, a.Y, b.X - a.X, b.Y - a.Y), Keyboard.Modifiers.HasFlag(ModifierKeys.Shift));
+                break;
+        }
+
+        _last = p;
+    }
+
+    private void OnMouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_vm == null || _drag == Drag.None) return;
+        var p = e.GetPosition(Surface);
+        if (_drag == Drag.Connect && _target != null)
+        {
+            ConnectPreview.Visibility = Visibility.Collapsed;
+            if (_moved)
+            {
+                var over = NodeAtScreen(p);
+                if (over != null)
+                {
+                    _vm.Connect(_target, over);
+                }
+                else
+                {
+                    var w = ToWorld(p);
+                    var created = _vm.ConnectToNew(_target, w.X, w.Y);
+                    created.IsEditing = true;
+                }
+            }
+        }
+
+        Marquee.Visibility = Visibility.Collapsed;
+        Cursor = null;
+        _drag = Drag.None;
+        _target = null;
+        _startPositions.Clear();
+        Surface.ReleaseMouseCapture();
+    }
+
+    private void OnWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (_vm == null) return;
+        var mods = Keyboard.Modifiers;
+        if (mods.HasFlag(ModifierKeys.Control))
+        {
+            var p = e.GetPosition(Surface);
+            _vm.ZoomAt(e.Delta > 0 ? 1.12 : 1 / 1.12, p.X, p.Y);
+        }
+        else if (mods.HasFlag(ModifierKeys.Shift))
+        {
+            _vm.Doc.OffsetX += e.Delta * 0.8;
+        }
+        else
+        {
+            _vm.Doc.OffsetY += e.Delta * 0.8;
+        }
+
+        e.Handled = true;
+    }
+
+    // ================= keyboard =================
+
+    private void OnEditorKey(object sender, KeyEventArgs e)
+    {
+        if (_vm == null || sender is not TextBox { DataContext: CanvasNode node } tb) return;
+        switch (e.Key)
+        {
+            case Key.Enter when !Keyboard.Modifiers.HasFlag(ModifierKeys.Shift):
+            case Key.Escape:
+                tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+                node.IsEditing = false;
+                Focus();
+                e.Handled = true;
+                break;
+            case Key.Tab:
+                tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+                node.IsEditing = false;
+                _vm.SelectOnly(node);
+                _vm.AddChildCommand.Execute(null);
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private void OnKey(object sender, KeyEventArgs e)
+    {
+        if (_vm == null) return;
+        if (Keyboard.FocusedElement is TextBox) return;
+        var mods = Keyboard.Modifiers;
+        var ctrl = mods.HasFlag(ModifierKeys.Control);
+        var shift = mods.HasFlag(ModifierKeys.Shift);
+        var single = _vm.SelectedNodes.Take(2).ToList() is [var one] ? one : null;
+        var handled = true;
+
+        switch (e.Key)
+        {
+            case Key.Space when !ctrl:
+                _spaceDown = true;
+                Cursor = Cursors.Hand;
+                break;
+            case Key.Delete:
+            case Key.Back:
+                _vm.DeleteSelectionCommand.Execute(null);
+                break;
+            case Key.A when ctrl:
+                _vm.SelectAllCommand.Execute(null);
+                break;
+            case Key.C when ctrl:
+                _vm.Copy();
+                break;
+            case Key.X when ctrl:
+                _vm.Copy();
+                _vm.DeleteSelectionCommand.Execute(null);
+                break;
+            case Key.V when ctrl:
+                var at = Mouse.GetPosition(Surface);
+                var inside = at.X >= 0 && at.Y >= 0 && at.X <= Surface.ActualWidth && at.Y <= Surface.ActualHeight;
+                var w = ToWorld(at);
+                if (!_vm.PasteImageFromClipboard(inside ? (w.X, w.Y) : null)) _vm.Paste();
+                break;
+            case Key.D when ctrl:
+                _vm.DuplicateSelectionCommand.Execute(null);
+                break;
+            case Key.D0 when ctrl:
+            case Key.NumPad0 when ctrl:
+                _vm.ZoomToFit();
+                break;
+            case Key.OemPlus when ctrl:
+            case Key.Add when ctrl:
+                _vm.ZoomInCommand.Execute(null);
+                break;
+            case Key.OemMinus when ctrl:
+            case Key.Subtract when ctrl:
+                _vm.ZoomOutCommand.Execute(null);
+                break;
+            case Key.Tab when !ctrl:
+                _vm.AddChildCommand.Execute(null);
+                break;
+            case Key.Enter when single != null:
+                _vm.AddSiblingCommand.Execute(null);
+                break;
+            case Key.F2 when single != null:
+                _vm.OpenNode(single);
+                break;
+            case Key.Escape when _vm.Tool != CanvasTool.Select || _vm.HasSelection:
+                _vm.Tool = CanvasTool.Select;
+                _vm.ClearSelection();
+                break;
+            case Key.Left or Key.Right or Key.Up or Key.Down when _vm.HasNodeSelection:
+                var step = shift ? CanvasViewModel.Grid : 1;
+                if (!e.IsRepeat) _vm.Checkpoint();
+                _vm.MoveSelection(e.Key == Key.Left ? -step : e.Key == Key.Right ? step : 0, e.Key == Key.Up ? -step : e.Key == Key.Down ? step : 0);
+                break;
+            case Key.V when mods == ModifierKeys.None:
+                _vm.Tool = CanvasTool.Select;
+                break;
+            case Key.R when mods == ModifierKeys.None:
+                _vm.Tool = CanvasTool.Rounded;
+                break;
+            case Key.B when mods == ModifierKeys.None:
+                _vm.Tool = CanvasTool.Rectangle;
+                break;
+            case Key.O when mods == ModifierKeys.None:
+                _vm.Tool = CanvasTool.Ellipse;
+                break;
+            case Key.D when mods == ModifierKeys.None:
+                _vm.Tool = CanvasTool.Diamond;
+                break;
+            case Key.S when mods == ModifierKeys.None:
+                _vm.Tool = CanvasTool.Sticky;
+                break;
+            case Key.T when mods == ModifierKeys.None:
+                _vm.Tool = CanvasTool.Text;
+                break;
+            case Key.C when mods == ModifierKeys.None:
+                _vm.Tool = CanvasTool.Connector;
+                break;
+            case Key.I when mods == ModifierKeys.None:
+                _vm.AddImageCommand.Execute(null);
+                break;
+            default:
+                handled = false;
+                break;
+        }
+
+        if (handled) e.Handled = true;
+    }
+
+    // ================= drop / export =================
+
+    private void OnDragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void OnDrop(object sender, DragEventArgs e)
+    {
+        if (_vm == null || e.Data.GetData(DataFormats.FileDrop) is not string[] files) return;
+        var w = ToWorld(e.GetPosition(Surface));
+        var offset = 0.0;
+        foreach (var f in files.Where(MediaStore.IsImageFile))
+        {
+            try
+            {
+                _vm.AddImageNode(MediaStore.ImportFile(f, _vm.Doc.Id), (w.X + offset, w.Y + offset));
+                offset += 30;
+            }
+            catch (Exception ex)
+            {
+                _vm.Main.ShowToast($"Couldn't add {System.IO.Path.GetFileName(f)}: {ex.Message}", isError: true);
+            }
+        }
+
+        e.Handled = true;
+    }
+
+    private void OnRenderRequested(object? sender, string what)
+    {
+        if (_vm == null) return;
+        if (_vm.Doc.Nodes.Count == 0)
+        {
+            _vm.Main.ShowToast("The canvas is empty.", isError: true);
+            return;
+        }
+
+        var selectedNodes = _vm.SelectedNodes.ToList();
+        var selectedEdges = _vm.SelectedEdges.ToList();
+        _vm.ClearSelection();
+        World.UpdateLayout();
+        try
+        {
+            var b = _vm.ContentBounds(40);
+            var bg = (Brush)FindResource("Fb.WindowBrush");
+            var image = MediaStore.Render(World, 2, bg, new Rect(b.X, b.Y, b.W, b.H));
+            if (what == "print") MediaStore.Print(image, _vm.Doc.Name);
+            else if (MediaStore.ExportPng(image, _vm.Doc.Name)) _vm.Main.ShowToast("Canvas exported");
+        }
+        catch (Exception ex)
+        {
+            _vm.Main.ShowToast($"Export failed: {ex.Message}", isError: true);
+        }
+        finally
+        {
+            foreach (var n in selectedNodes) n.IsSelected = true;
+            foreach (var ed in selectedEdges) ed.IsSelected = true;
+            _vm.RaiseSelection();
+        }
+    }
+}

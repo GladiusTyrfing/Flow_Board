@@ -1,0 +1,345 @@
+<UserControl x:Class="FlowBoard.Views.NoteView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:FlowBoard.ViewModels"
+             xmlns:models="clr-namespace:FlowBoard.Models"
+             xmlns:h="clr-namespace:FlowBoard.Helpers"
+             mc:Ignorable="d"
+             x:Name="Root"
+             d:DataContext="{d:DesignInstance vm:NoteViewModel}">
+    <UserControl.Resources>
+        <Style x:Key="GutterButton" TargetType="Button" BasedOn="{StaticResource Fb.IconButton}">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Foreground" Value="{DynamicResource Fb.FaintTextBrush}" />
+        </Style>
+    </UserControl.Resources>
+
+    <DockPanel>
+        <!-- "/" menu is placed at the focused block from code -->
+            <Popup x:Name="SlashPopup" DockPanel.Dock="Top" AllowsTransparency="True" StaysOpen="True" Placement="Bottom" PopupAnimation="Fade">
+                <Border Style="{StaticResource Fb.Flyout}" Width="300" Padding="6" MaxHeight="360">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="BLOCKS" Style="{StaticResource Fb.Caption}" Margin="8,4,0,6" />
+                        <ListBox x:Name="SlashList" ItemsSource="{Binding SlashOptions}" SelectedItem="{Binding SlashSelected}" BorderThickness="0" Background="Transparent"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" Focusable="False" PreviewMouseLeftButtonUp="OnSlashClick">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:SlashOption}">
+                                    <Grid Margin="2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="34" Height="34" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" Margin="0,0,10,0">
+                                            <ui:SymbolIcon Symbol="{Binding Icon, Converter={StaticResource SymbolName}}" FontSize="17" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13.5" Foreground="{DynamicResource Fb.TextBrush}" />
+                                            <TextBlock Text="{Binding Hint}" Style="{StaticResource Fb.Muted}" FontSize="11.5" />
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+            </Popup>
+
+        <!-- ============ Header ============ -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource Fb.HeaderPill}" Margin="12,12,12,0" Padding="6,5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" ClipToBounds="True">
+                    <Button Style="{StaticResource Fb.HeaderButton}" Command="{Binding Main.ToggleSidebarCommand}" ToolTip="Show sidebar (Ctrl+B)"
+                            Visibility="{Binding Main.IsSidebarShown, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+                        <ui:SymbolIcon Symbol="PanelLeft24" FontSize="16" />
+                    </Button>
+                    <ui:SymbolIcon Symbol="{Binding Page.Icon, Converter={StaticResource SymbolName}}" FontSize="16" Margin="8,0,6,0" Foreground="{DynamicResource Fb.AccentTextBrush}" />
+                    <TextBlock Text="{Binding Page.Title}" FontWeight="Bold" FontSize="15" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               MaxWidth="{Binding Main.BoardNameMaxWidth}" />
+                    <TextBlock Text="{Binding Stats}" Style="{StaticResource Fb.Muted}" FontSize="12" VerticalAlignment="Center" Margin="14,0,0,0"
+                               Visibility="{Binding Main.IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
+                    <Button Style="{StaticResource Fb.HeaderButton}" Command="{Binding Main.ToggleDocStarCommand}" CommandParameter="{Binding Page}" ToolTip="Star this page">
+                        <ui:SymbolIcon Symbol="Star24" FontSize="16" Filled="{Binding Page.IsStarred}" />
+                    </Button>
+                    <Button Style="{StaticResource Fb.HeaderButton}" h:Behaviors.ClickOpensContextMenu="True" ToolTip="More">
+                        <ui:SymbolIcon Symbol="MoreHorizontal24" FontSize="18" />
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Export as Markdown…" Command="{Binding ExportMarkdownCommand}">
+                                    <MenuItem.Icon><ui:SymbolIcon Symbol="ArrowExport24" /></MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Copy as Markdown" Command="{Binding CopyMarkdownCommand}">
+                                    <MenuItem.Icon><ui:SymbolIcon Symbol="Copy24" /></MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Turn open to-dos into cards" Command="{Binding TodosToCardsCommand}">
+                                    <MenuItem.Icon><ui:SymbolIcon Symbol="Board24" /></MenuItem.Icon>
+                                </MenuItem>
+                                <Separator />
+                                <MenuItem Header="Duplicate page" Command="{Binding Main.DuplicateDocCommand}" CommandParameter="{Binding Page}">
+                                    <MenuItem.Icon><ui:SymbolIcon Symbol="DocumentCopy24" /></MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Delete page…" Command="{Binding Main.DeleteDocCommand}" CommandParameter="{Binding Page}">
+                                    <MenuItem.Icon><ui:SymbolIcon Symbol="Delete24" /></MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ============ Page ============ -->
+        <Border Margin="12" Style="{StaticResource Fb.Glass}" Background="{DynamicResource Fb.SurfaceBrush}" h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}">
+            <ScrollViewer x:Name="Scroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AllowDrop="True" PreviewDrop="OnDrop" PreviewDragOver="OnDragOver">
+                <StackPanel MaxWidth="860" Margin="24,36,24,0" HorizontalAlignment="Stretch">
+                    <!-- Icon -->
+                    <Button x:Name="IconButton" Style="{StaticResource Fb.GhostButton}" HorizontalAlignment="Left" Padding="8" Margin="40,0,0,4" Click="OnIconClick" ToolTip="Change icon">
+                        <ui:SymbolIcon Symbol="{Binding Page.Icon, Converter={StaticResource SymbolName}}" FontSize="40" Foreground="{DynamicResource Fb.AccentTextBrush}" />
+                    </Button>
+                    <Popup x:Name="IconPopup" Style="{StaticResource Fb.Popup}" PlacementTarget="{Binding ElementName=IconButton}">
+                        <Border Style="{StaticResource Fb.Flyout}" Width="236" Padding="8">
+                            <ItemsControl ItemsSource="{Binding PageIcons}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource Fb.IconButton}" Width="36" Height="36" Margin="2" Click="OnIconPicked"
+                                                Command="{Binding DataContext.SetIconCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                            <ui:SymbolIcon Symbol="{Binding Converter={StaticResource SymbolName}}" FontSize="18" />
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </Popup>
+
+                    <!-- Title -->
+                    <TextBox x:Name="TitleBox" Style="{StaticResource Fb.BareTextBox}" Margin="48,0,0,6" FontSize="34" FontWeight="ExtraBold" Tag="Untitled"
+                             Text="{Binding Page.Title, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="False"
+                             h:Behaviors.EnterCommand="{Binding FocusFirstCommand}" />
+                    <TextBlock Text="{Binding Stats}" Style="{StaticResource Fb.Muted}" FontSize="12" Margin="50,0,0,18" />
+
+                    <!-- Blocks -->
+                    <ItemsControl x:Name="BlocksHost" ItemsSource="{Binding Page.Blocks}" Focusable="False" PreviewKeyDown="OnBlockKey" LostKeyboardFocus="OnBlocksLostFocus">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:NoteBlock}">
+                                <Grid x:Name="Row" Background="Transparent" Margin="{Binding Indent, Converter={StaticResource IndentMargin}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="48" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Gutter: add + block menu -->
+                                    <StackPanel x:Name="Gutter" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,3,2,0" Opacity="0">
+                                        <Button Style="{StaticResource GutterButton}" ToolTip="Add a block below" Command="{Binding DataContext.AddBelowCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                            <ui:SymbolIcon Symbol="Add24" FontSize="14" />
+                                        </Button>
+                                        <Button Style="{StaticResource GutterButton}" ToolTip="Block menu" h:Behaviors.ClickOpensContextMenu="True">
+                                            <ui:SymbolIcon Symbol="ReOrderDotsVertical24" FontSize="14" />
+                                            <Button.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="Turn into">
+                                                        <MenuItem.Icon><ui:SymbolIcon Symbol="ArrowRepeatAll24" /></MenuItem.Icon>
+                                                        <MenuItem Header="Text" Tag="Paragraph" Click="OnTurnInto" />
+                                                        <MenuItem Header="Heading 1" Tag="Heading1" Click="OnTurnInto" />
+                                                        <MenuItem Header="Heading 2" Tag="Heading2" Click="OnTurnInto" />
+                                                        <MenuItem Header="Heading 3" Tag="Heading3" Click="OnTurnInto" />
+                                                        <MenuItem Header="To-do" Tag="Todo" Click="OnTurnInto" />
+                                                        <MenuItem Header="Bulleted list" Tag="Bullet" Click="OnTurnInto" />
+                                                        <MenuItem Header="Numbered list" Tag="Numbered" Click="OnTurnInto" />
+                                                        <MenuItem Header="Quote" Tag="Quote" Click="OnTurnInto" />
+                                                        <MenuItem Header="Callout" Tag="Callout" Click="OnTurnInto" />
+                                                        <MenuItem Header="Code" Tag="Code" Click="OnTurnInto" />
+                                                    </MenuItem>
+                                                    <MenuItem Header="Move up" InputGestureText="Alt+↑" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.MoveUpCommand}" CommandParameter="{Binding}">
+                                                        <MenuItem.Icon><ui:SymbolIcon Symbol="ArrowUp24" /></MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="Move down" InputGestureText="Alt+↓" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.MoveDownCommand}" CommandParameter="{Binding}">
+                                                        <MenuItem.Icon><ui:SymbolIcon Symbol="ArrowDown24" /></MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="Duplicate" InputGestureText="Ctrl+D" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.DuplicateBlockCommand}" CommandParameter="{Binding}">
+                                                        <MenuItem.Icon><ui:SymbolIcon Symbol="Copy24" /></MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <Separator />
+                                                    <MenuItem Header="Delete" InputGestureText="Ctrl+Shift+K" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.DeleteBlockCommand}" CommandParameter="{Binding}">
+                                                        <MenuItem.Icon><ui:SymbolIcon Symbol="Delete24" /></MenuItem.Icon>
+                                                    </MenuItem>
+                                                </ContextMenu>
+                                            </Button.ContextMenu>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <!-- Markers -->
+                                    <Grid Grid.Column="1" x:Name="Marker" Width="26" VerticalAlignment="Top" Visibility="Collapsed">
+                                        <Ellipse x:Name="Bullet" Width="6" Height="6" Fill="{DynamicResource Fb.TextBrush}" Margin="0,12,0,0" VerticalAlignment="Top" HorizontalAlignment="Center" Visibility="Collapsed" />
+                                        <TextBlock x:Name="Number" Text="{Binding Number, StringFormat='{}{0}.'}" FontSize="15" Margin="0,4,0,0" HorizontalAlignment="Center" Visibility="Collapsed"
+                                                   Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                        <CheckBox x:Name="Check" IsChecked="{Binding IsChecked}" Margin="2,4,0,0" MinWidth="0" Visibility="Collapsed" Focusable="False" />
+                                    </Grid>
+
+                                    <!-- Text blocks -->
+                                    <Border Grid.Column="2" x:Name="TextFrame" Padding="2,3" BorderThickness="0" CornerRadius="{DynamicResource Fb.Radius}">
+                                        <DockPanel>
+                                            <ui:SymbolIcon x:Name="CalloutIcon" DockPanel.Dock="Left" Symbol="Lightbulb24" FontSize="18" Margin="4,2,10,0" VerticalAlignment="Top"
+                                                           Foreground="{DynamicResource Fb.AccentTextBrush}" Visibility="Collapsed" />
+                                            <TextBox x:Name="Editor" Style="{StaticResource Fb.BareTextBox}" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                                                     FontSize="15" AcceptsReturn="True" AcceptsTab="False" Tag="Type '/' for commands" Padding="0,1"
+                                                     SpellCheck.IsEnabled="True" />
+                                        </DockPanel>
+                                    </Border>
+
+                                    <!-- Divider -->
+                                    <Border Grid.Column="1" Grid.ColumnSpan="2" x:Name="Divider" Height="1" Margin="0,14" Background="{DynamicResource Fb.DividerBrush}" Visibility="Collapsed" />
+
+                                    <!-- Image -->
+                                    <StackPanel Grid.Column="1" Grid.ColumnSpan="2" x:Name="ImageBlock" Visibility="Collapsed" Margin="0,6">
+                                        <Button Style="{StaticResource Fb.GhostButton}" Padding="0" HorizontalAlignment="Left" Cursor="Hand"
+                                                Command="{Binding DataContext.ViewImageCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                            <Image Source="{Binding ImageFullPath, Converter={StaticResource ImagePath}, ConverterParameter=1400}" MaxHeight="440" Stretch="Uniform"
+                                                   h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusValue}" />
+                                        </Button>
+                                        <TextBox x:Name="Caption" Style="{StaticResource Fb.BareTextBox}" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" Tag="Add a caption"
+                                                 FontSize="13" Foreground="{DynamicResource Fb.MutedTextBrush}" Margin="2,6,0,0" AcceptsReturn="False" />
+                                    </StackPanel>
+
+                                    <!-- Link -->
+                                    <Button Grid.Column="1" Grid.ColumnSpan="2" x:Name="LinkBlock" Visibility="Collapsed" Style="{StaticResource Fb.SubtleButton}" HorizontalAlignment="Left"
+                                            Margin="0,4" Padding="12,8" Command="{Binding DataContext.OpenLinkCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon x:Name="LinkIcon" Symbol="Link24" FontSize="16" Foreground="{DynamicResource Fb.AccentTextBrush}" />
+                                            <TextBlock Text="{Binding Text}" FontWeight="SemiBold" Margin="8,0,0,0" TextDecorations="Underline" />
+                                            <TextBlock Text="{Binding LinkKind}" Style="{StaticResource Fb.Caption}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Gutter" Property="Opacity" Value="1" />
+                                    </Trigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Heading1">
+                                        <Setter TargetName="Editor" Property="FontSize" Value="28" />
+                                        <Setter TargetName="Editor" Property="FontWeight" Value="Bold" />
+                                        <Setter TargetName="Editor" Property="Tag" Value="Heading 1" />
+                                        <Setter TargetName="TextFrame" Property="Margin" Value="0,18,0,2" />
+                                        <Setter TargetName="Gutter" Property="Margin" Value="0,26,2,0" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Heading2">
+                                        <Setter TargetName="Editor" Property="FontSize" Value="22" />
+                                        <Setter TargetName="Editor" Property="FontWeight" Value="Bold" />
+                                        <Setter TargetName="Editor" Property="Tag" Value="Heading 2" />
+                                        <Setter TargetName="TextFrame" Property="Margin" Value="0,14,0,2" />
+                                        <Setter TargetName="Gutter" Property="Margin" Value="0,19,2,0" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Heading3">
+                                        <Setter TargetName="Editor" Property="FontSize" Value="18" />
+                                        <Setter TargetName="Editor" Property="FontWeight" Value="SemiBold" />
+                                        <Setter TargetName="Editor" Property="Tag" Value="Heading 3" />
+                                        <Setter TargetName="TextFrame" Property="Margin" Value="0,10,0,0" />
+                                        <Setter TargetName="Gutter" Property="Margin" Value="0,13,2,0" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Bullet">
+                                        <Setter TargetName="Marker" Property="Visibility" Value="Visible" />
+                                        <Setter TargetName="Bullet" Property="Visibility" Value="Visible" />
+                                        <Setter TargetName="Editor" Property="Tag" Value="List" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Numbered">
+                                        <Setter TargetName="Marker" Property="Visibility" Value="Visible" />
+                                        <Setter TargetName="Number" Property="Visibility" Value="Visible" />
+                                        <Setter TargetName="Editor" Property="Tag" Value="List" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Todo">
+                                        <Setter TargetName="Marker" Property="Visibility" Value="Visible" />
+                                        <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+                                        <Setter TargetName="Editor" Property="Tag" Value="To-do" />
+                                    </DataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Type}" Value="Todo" />
+                                            <Condition Binding="{Binding IsChecked}" Value="True" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter TargetName="Editor" Property="Foreground" Value="{DynamicResource Fb.MutedTextBrush}" />
+                                        <Setter TargetName="Editor" Property="TextDecorations" Value="Strikethrough" />
+                                    </MultiDataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Quote">
+                                        <Setter TargetName="TextFrame" Property="BorderThickness" Value="3,0,0,0" />
+                                        <Setter TargetName="TextFrame" Property="BorderBrush" Value="{DynamicResource Fb.AccentBrush}" />
+                                        <Setter TargetName="TextFrame" Property="CornerRadius" Value="0" />
+                                        <Setter TargetName="TextFrame" Property="Padding" Value="14,3,4,3" />
+                                        <Setter TargetName="Editor" Property="FontStyle" Value="Italic" />
+                                        <Setter TargetName="Editor" Property="FontSize" Value="16" />
+                                        <Setter TargetName="Editor" Property="Tag" Value="Quote" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Callout">
+                                        <Setter TargetName="TextFrame" Property="Background" Value="{DynamicResource Fb.AccentSoftBrush}" />
+                                        <Setter TargetName="TextFrame" Property="Padding" Value="12,10" />
+                                        <Setter TargetName="TextFrame" Property="Margin" Value="0,4" />
+                                        <Setter TargetName="CalloutIcon" Property="Visibility" Value="Visible" />
+                                        <Setter TargetName="Editor" Property="Tag" Value="Callout" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Code">
+                                        <Setter TargetName="TextFrame" Property="Background" Value="{DynamicResource Fb.SubtleBrush}" />
+                                        <Setter TargetName="TextFrame" Property="BorderThickness" Value="1" />
+                                        <Setter TargetName="TextFrame" Property="BorderBrush" Value="{DynamicResource Fb.DividerBrush}" />
+                                        <Setter TargetName="TextFrame" Property="Padding" Value="14,10" />
+                                        <Setter TargetName="TextFrame" Property="Margin" Value="0,4" />
+                                        <Setter TargetName="Editor" Property="FontFamily" Value="Cascadia Mono, Consolas" />
+                                        <Setter TargetName="Editor" Property="FontSize" Value="13.5" />
+                                        <Setter TargetName="Editor" Property="TextWrapping" Value="NoWrap" />
+                                        <Setter TargetName="Editor" Property="SpellCheck.IsEnabled" Value="False" />
+                                        <Setter TargetName="Editor" Property="Tag" Value="Code (Ctrl+Enter to leave)" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Divider">
+                                        <Setter TargetName="TextFrame" Property="Visibility" Value="Collapsed" />
+                                        <Setter TargetName="Divider" Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Image">
+                                        <Setter TargetName="TextFrame" Property="Visibility" Value="Collapsed" />
+                                        <Setter TargetName="ImageBlock" Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Type}" Value="Link">
+                                        <Setter TargetName="TextFrame" Property="Visibility" Value="Collapsed" />
+                                        <Setter TargetName="LinkBlock" Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding LinkKind}" Value="Card">
+                                        <Setter TargetName="LinkIcon" Property="Symbol" Value="TaskListLtr24" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding LinkKind}" Value="Board">
+                                        <Setter TargetName="LinkIcon" Property="Symbol" Value="Board24" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding LinkKind}" Value="Storyboard">
+                                        <Setter TargetName="LinkIcon" Property="Symbol" Value="VideoClip24" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding LinkKind}" Value="Canvas">
+                                        <Setter TargetName="LinkIcon" Property="Symbol" Value="Flowchart24" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding LinkKind}" Value="Note">
+                                        <Setter TargetName="LinkIcon" Property="Symbol" Value="DocumentText24" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Click below the last block to keep writing -->
+                    <Border Height="160" Background="Transparent" Cursor="IBeam" MouseLeftButtonDown="OnTailClick" />
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </DockPanel>
+
+</UserControl>

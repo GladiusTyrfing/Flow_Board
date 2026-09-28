@@ -58,6 +58,20 @@ public static class Json
         return copy;
     }
 
+    /// <summary>Deep copy of a storyboard, canvas or note with a new id (child ids are kept; they are local).</summary>
+    public static T CloneDocument<T>(T doc) where T : class
+    {
+        var copy = JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(doc, Compact), Options)!;
+        switch (copy)
+        {
+            case Storyboard s: s.Id = Guid.NewGuid(); break;
+            case CanvasDoc c: c.Id = Guid.NewGuid(); break;
+            case NotePage n: n.Id = Guid.NewGuid(); break;
+        }
+
+        return copy;
+    }
+
     /// <summary>Gives a card (and children) new ids. Attachments keep their files but get new ids.</summary>
     public static void ReassignIds(Card card, IReadOnlyDictionary<Guid, Guid>? labelMap = null)
     {

@@ -39,6 +39,9 @@ public partial class LabelOption : ObservableObject
 
 public sealed record ReminderChoice(int Minutes, string Text);
 
+/// <summary>A related card shown in the card editor. Relation: "Linked", "Blocked by" or "Blocks".</summary>
+public sealed record CardRelation(Guid Id, Card? Card, string Relation, string Title, string Where, bool IsDone);
+
 /// <summary>The big card editor (Trello's "card back").</summary>
 public sealed partial class CardDetailViewModel : DialogViewModel
 {
@@ -58,6 +61,141 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         LoadDateEditor();
         Card.Comments.CollectionChanged += OnCommentsChanged;
         Board.Labels.CollectionChanged += OnBoardLabelsChanged;
+        RefreshRelations();
+    }
+
+    // ---------- linked cards & dependencies ----------
+
+    public ObservableCollection<CardRelation> Relations { get; } = [];
+    public bool HasRelations => Relations.Count > 0;
+
+    public string BlockedText
+    {
+        get
+        {
+            var open = Relations.Count(r => r.Relation == "Blocked by" && !r.IsDone);
+            return open == 0 ? string.Empty : open == 1 ? "Waiting on 1 unfinished card" : $"Waiting on {open} unfinished cards";
+        }
+    }
+
+    private void RefreshRelations()
+    {
+        Relations.Clear();
+        CardRelation Make(Guid id, string rel)
+        {
+            var c = _main.Workspace.FindCard(id, out var b, out var l);
+            var where = c == null ? "Deleted card" : l == null ? $"{b?.Name} › archived" : $"{b?.Name} › {l.Name}";
+            return new CardRelation(id, c, rel, c?.Title ?? "(missing card)", where, c?.IsCompleted ?? true);
+        }
+
+        foreach (var id in Card.BlockedByIds) Relations.Add(Make(id, "Blocked by"));
+        foreach (var (_, _, other) in _main.Workspace.EnumerateActiveCards())
+            if (other.BlockedByIds.Contains(Card.Id)) Relations.Add(Make(other.Id, "Blocks"));
+        foreach (var id in Card.LinkedCardIds) Relations.Add(Make(id, "Linked"));
+        OnPropertyChanged(nameof(HasRelations));
+        OnPropertyChanged(nameof(BlockedText));
+        Card.NotifyRelationsChanged();
+    }
+
+    private IEnumerable<Guid> Related() => Relations.Select(r => r.Id).Append(Card.Id);
+
+    [RelayCommand]
+    private async Task LinkCard()
+    {
+        var pick = await _main.PickLinkAsync("Link a related card", [LinkTarget.Card], Related());
+        if (pick == null) return;
+        var other = _main.Workspace.FindCard(pick.Value.Id, out _, out _);
+        if (!Card.LinkedCardIds.Contains(pick.Value.Id)) Card.LinkedCardIds.Add(pick.Value.Id);
+        if (other != null && !other.LinkedCardIds.Contains(Card.Id))
+        {
+            other.LinkedCardIds.Add(Card.Id);
+            other.NotifyRelationsChanged();
+        }
+
+        Card.AddActivity($"linked \"{pick.Value.Title}\"", Me);
+        RefreshRelations();
+    }
+
+    [RelayCommand]
+    private async Task AddBlocker()
+    {
+        var pick = await _main.PickLinkAsync("This card is blocked by…", [LinkTarget.Card], Related());
+        if (pick == null) return;
+        if (DependsOn(pick.Value.Id, Card.Id))
+        {
+            _main.ShowToast("That would create a loop: that card already waits on this one.", isError: true);
+            return;
+        }
+
+        Card.BlockedByIds.Add(pick.Value.Id);
+        Card.AddActivity($"is now blocked by \"{pick.Value.Title}\"", Me);
+        RefreshRelations();
+        _main.RefreshBlocked();
+    }
+
+    [RelayCommand]
+    private async Task AddBlocks()
+    {
+        var pick = await _main.PickLinkAsync("This card blocks…", [LinkTarget.Card], Related());
+        if (pick == null || _main.Workspace.FindCard(pick.Value.Id, out _, out _) is not { } other) return;
+        if (DependsOn(Card.Id, other.Id))
+        {
+            _main.ShowToast("That would create a loop: this card already waits on that one.", isError: true);
+            return;
+        }
+
+        other.BlockedByIds.Add(Card.Id);
+        other.NotifyRelationsChanged();
+        Card.AddActivity($"now blocks \"{pick.Value.Title}\"", Me);
+        RefreshRelations();
+        _main.RefreshBlocked();
+    }
+
+    /// <summary>True when <paramref name="card"/> (transitively) waits on <paramref name="blocker"/>.</summary>
+    private bool DependsOn(Guid card, Guid blocker)
+    {
+        var seen = new HashSet<Guid>();
+        var stack = new Stack<Guid>([card]);
+        while (stack.Count > 0)
+        {
+            var id = stack.Pop();
+            if (id == blocker) return true;
+            if (!seen.Add(id) || _main.Workspace.FindCard(id, out _, out _) is not { } c) continue;
+            foreach (var b in c.BlockedByIds) stack.Push(b);
+        }
+
+        return false;
+    }
+
+    [RelayCommand]
+    private void RemoveRelation(CardRelation r)
+    {
+        var other = r.Card;
+        switch (r.Relation)
+        {
+            case "Blocked by":
+                Card.BlockedByIds.Remove(r.Id);
+                break;
+            case "Blocks":
+                other?.BlockedByIds.Remove(Card.Id);
+                break;
+            default:
+                Card.LinkedCardIds.Remove(r.Id);
+                other?.LinkedCardIds.Remove(Card.Id);
+                break;
+        }
+
+        other?.NotifyRelationsChanged();
+        RefreshRelations();
+        _main.RefreshBlocked();
+    }
+
+    [RelayCommand]
+    private void OpenRelation(CardRelation r)
+    {
+        if (r.Card == null) return;
+        _main.CloseDialog(this);
+        _main.OpenTarget(LinkTarget.Card, r.Id);
     }
 
     public Card Card { get; }

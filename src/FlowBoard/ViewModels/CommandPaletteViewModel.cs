@@ -82,8 +82,43 @@ public sealed partial class CommandPaletteViewModel : DialogViewModel
             }
         }
 
+        void AddDoc(string title, string subtitle, string group, SymbolRegular icon, Action open)
+        {
+            var s = Score(title, q);
+            if (q.Length > 0 && s <= 0) return;
+            items.Add(new PaletteItem { Title = title, Subtitle = subtitle, Group = group, Icon = icon, Score = s + 4, Execute = open });
+        }
+
+        foreach (var sb in _main.Workspace.Storyboards)
+        {
+            var x = sb;
+            AddDoc(sb.Name, $"{sb.Mode} storyboard · {sb.Shots.Count} {(sb.Mode == StoryboardMode.Animation ? "frames" : "shots")}", "Storyboards", SymbolRegular.VideoClip24, () => _main.OpenStoryboard(x));
+        }
+
+        foreach (var cv in _main.Workspace.Canvases)
+        {
+            var x = cv;
+            AddDoc(cv.Name, $"Canvas · {cv.Nodes.Count} shapes", "Canvases", SymbolRegular.Flowchart24, () => _main.OpenCanvas(x));
+        }
+
+        foreach (var n in _main.Workspace.Notes)
+        {
+            var x = n;
+            AddDoc(n.Title, $"Page · edited {n.UpdatedAt:d MMM}", "Notes", SymbolRegular.DocumentText24, () => _main.OpenNote(x));
+        }
+
         if (q.Length > 0)
         {
+            // Text inside note pages.
+            foreach (var n in _main.Workspace.Notes)
+            {
+                var hit = n.Blocks.FirstOrDefault(b => b.Text.Contains(q, StringComparison.OrdinalIgnoreCase));
+                if (hit == null || Score(n.Title, q) > 0) continue;
+                var x = n;
+                var snippet = hit.Text.Length > 70 ? hit.Text[..70] + "…" : hit.Text;
+                items.Add(new PaletteItem { Title = n.Title, Subtitle = snippet, Group = "Notes", Icon = SymbolRegular.DocumentText24, Score = 9, Execute = () => _main.OpenNote(x) });
+            }
+
             foreach (var (board, list, card) in _main.Workspace.EnumerateActiveCards())
             {
                 var s = Math.Max(Score(card.Title, q) + 10, card.Description.Contains(q, StringComparison.OrdinalIgnoreCase) ? 8 : 0);
@@ -109,7 +144,7 @@ public sealed partial class CommandPaletteViewModel : DialogViewModel
     }
 
     /// <summary>Simple fuzzy score: substring beats in-order character match; 0 = no match.</summary>
-    private static int Score(string text, string q)
+    internal static int Score(string text, string q)
     {
         if (q.Length == 0) return 1;
         if (string.IsNullOrEmpty(text)) return 0;
@@ -139,6 +174,11 @@ public sealed partial class CommandPaletteViewModel : DialogViewModel
         new() { Title = "Board view", Group = "Commands", Icon = SymbolRegular.Board24, Shortcut = "Ctrl+1", Execute = () => _main.SetViewModeCommand.Execute(BoardViewMode.Board) },
         new() { Title = "Table view", Group = "Commands", Icon = SymbolRegular.Table24, Shortcut = "Ctrl+2", Execute = () => _main.SetViewModeCommand.Execute(BoardViewMode.Table) },
         new() { Title = "Calendar view", Group = "Commands", Icon = SymbolRegular.CalendarLtr24, Shortcut = "Ctrl+3", Execute = () => _main.SetViewModeCommand.Execute(BoardViewMode.Calendar) },
+        new() { Title = "Timeline view", Group = "Commands", Icon = SymbolRegular.TextBulletListSquare24, Shortcut = "Ctrl+4", Execute = () => _main.SetViewModeCommand.Execute(BoardViewMode.Timeline) },
+        new() { Title = "Dashboard", Group = "Commands", Icon = SymbolRegular.DataPie24, Execute = () => _main.OpenDashboardCommand.Execute(null) },
+        new() { Title = "New storyboard", Group = "Commands", Icon = SymbolRegular.VideoClip24, Execute = () => _main.NewStoryboardCommand.Execute(null) },
+        new() { Title = "New canvas / flowchart", Group = "Commands", Icon = SymbolRegular.Flowchart24, Execute = () => _main.NewCanvasCommand.Execute(null) },
+        new() { Title = "New note page", Group = "Commands", Icon = SymbolRegular.DocumentText24, Execute = () => _main.NewNoteCommand.Execute(null) },
         new() { Title = "Filter cards", Group = "Commands", Icon = SymbolRegular.Filter24, Shortcut = "Ctrl+F", Execute = () => _main.OpenFilterCommand.Execute(null) },
         new() { Title = "Toggle dark / light theme", Group = "Commands", Icon = SymbolRegular.WeatherMoon24, Shortcut = "Ctrl+T", Execute = () => _main.ToggleThemeCommand.Execute(null) },
         new() { Title = "Toggle sidebar", Group = "Commands", Icon = SymbolRegular.PanelLeft24, Shortcut = "Ctrl+B", Execute = () => _main.ToggleSidebarCommand.Execute(null) },

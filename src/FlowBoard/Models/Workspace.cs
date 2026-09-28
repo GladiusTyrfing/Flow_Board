@@ -9,6 +9,9 @@ public partial class Workspace : ObservableObject
     [ObservableProperty] private int _version = 1;
     [ObservableProperty] private ObservableCollection<Board> _boards = [];
     [ObservableProperty] private ObservableCollection<BoardTemplate> _userTemplates = [];
+    [ObservableProperty] private ObservableCollection<Storyboard> _storyboards = [];
+    [ObservableProperty] private ObservableCollection<CanvasDoc> _canvases = [];
+    [ObservableProperty] private ObservableCollection<NotePage> _notes = [];
 
     public void Hydrate()
     {

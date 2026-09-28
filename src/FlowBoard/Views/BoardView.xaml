@@ -181,6 +181,19 @@
                                     <TextBlock Text="{Binding VoiceCount}" FontSize="11" Margin="3,0,0,0" />
                                 </StackPanel>
                             </Border>
+                            <Border Style="{StaticResource Fb.Badge}" Background="#33F59E0B" ToolTip="Blocked: waiting on an unfinished card"
+                                    Visibility="{Binding IsBlocked, Converter={StaticResource BoolToVis}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="LockClosed24" FontSize="12" Foreground="{DynamicResource Fb.WarningBrush}" />
+                                    <TextBlock Text="Blocked" FontSize="11" FontWeight="SemiBold" Margin="3,0,0,0" Foreground="{DynamicResource Fb.WarningBrush}" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource Fb.Badge}" Visibility="{Binding RelationCount, Converter={StaticResource HasValueToVis}}" ToolTip="Linked cards and dependencies">
+                                <StackPanel Orientation="Horizontal" TextElement.Foreground="{DynamicResource Fb.MutedTextBrush}">
+                                    <ui:SymbolIcon Symbol="Link24" FontSize="13" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                    <TextBlock Text="{Binding RelationCount}" FontSize="11" Margin="3,0,0,0" />
+                                </StackPanel>
+                            </Border>
                             <Border Style="{StaticResource Fb.Badge}" Visibility="{Binding CommentCount, Converter={StaticResource HasValueToVis}}" ToolTip="Comments">
                                 <StackPanel Orientation="Horizontal" TextElement.Foreground="{DynamicResource Fb.MutedTextBrush}">
                                     <ui:SymbolIcon Symbol="Comment24" FontSize="13" Foreground="{DynamicResource Fb.MutedTextBrush}" />
@@ -573,10 +586,13 @@
                                 <TextBox Style="{StaticResource Fb.Input}" MinHeight="64" AcceptsReturn="True" Background="{DynamicResource Fb.CardBrush}"
                                          BorderBrush="{DynamicResource Fb.AccentBrush}"
                                          Text="{Binding NewCardTitle, UpdateSourceTrigger=PropertyChanged}"
-                                         ToolTip="Enter to add · Shift+Enter for a new line (each line becomes a card) · Esc to cancel"
+                                         ToolTip="Enter to add · Shift+Enter for a new line (each line becomes a card) · Esc to cancel&#x0a;Smart add: tomorrow 3pm, fri, next week, jun 12, #label, !high"
                                          h:Behaviors.FocusWhen="{Binding IsAddingCard}"
                                          h:Behaviors.EnterCommand="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=CommitAddCardCommand}"
                                          h:Behaviors.EscapeCommand="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=CancelAddCardCommand}" />
+                                <TextBlock Margin="4,6,0,0" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Fb.AccentTextBrush}" TextWrapping="Wrap"
+                                           Text="{Binding NewCardTitle, Converter={StaticResource SmartPreview}}"
+                                           Visibility="{Binding Text, RelativeSource={RelativeSource Self}, Converter={StaticResource HasValueToVis}}" />
                                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                     <Button Style="{StaticResource Fb.AccentButton}" Content="Add card"
                                             Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=CommitAddCardCommand}" CommandParameter="{Binding}" />

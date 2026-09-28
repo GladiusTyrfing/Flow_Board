@@ -68,7 +68,10 @@ public sealed partial class CalendarViewModel : ObservableObject
         var title = await _main.PromptAsync("New card", $"Due {day.Date:dddd, MMMM d}", "Card title", "Add card");
         if (title == null) return;
         _main.Undo.Checkpoint(_main.Workspace, board, "Add card");
-        var card = new Card { Title = title, DueDate = day.Date, Board = board, ReminderMinutes = _main.Settings.DefaultReminderMinutes };
+        var card = _main.CreateCardFromText(title, board, board.Lists[0]);
+        // The clicked day wins; keep a parsed time of day if there was one.
+        card.DueDate = day.Date + (card.DueDate?.TimeOfDay ?? TimeSpan.Zero);
+        card.ReminderMinutes = _main.Settings.DefaultReminderMinutes;
         card.AddActivity($"added this card to {board.Lists[0].Name}", _main.Settings.DisplayName);
         board.Lists[0].Cards.Add(card);
         Rebuild();

@@ -30,6 +30,14 @@
     <conv:IntToDoubleConverter x:Key="IntToDouble" />
     <conv:SelectedTagMultiConverter x:Key="SelectedTag" />
     <conv:PercentConverter x:Key="Percent" />
+    <conv:SmartPreviewConverter x:Key="SmartPreview" />
+    <conv:NotEqualsConverter x:Key="NotEquals" />
+    <conv:SecondsConverter x:Key="Seconds" />
+    <conv:GreaterThanConverter x:Key="GreaterThan" />
+    <conv:GeometryConverter x:Key="Geometry" />
+    <conv:IndentToMarginConverter x:Key="IndentMargin" />
+    <conv:SymbolNameConverter x:Key="SymbolName" />
+    <conv:StoryboardIconConverter x:Key="StoryboardIcon" />
 
     <CubicEase x:Key="EaseOut" EasingMode="EaseOut" />
 
@@ -371,6 +379,76 @@
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Fb.InputBrush}" />
                             <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Fb.AccentBrush}" />
                         </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Borderless field with a placeholder (set the placeholder text in Tag). Storyboards, notes, canvas. -->
+    <Style x:Key="Fb.Field" TargetType="TextBox" BasedOn="{StaticResource Fb.InlineTextBox}">
+        <Setter Property="AcceptsReturn" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Bd" CornerRadius="{DynamicResource Fb.Radius}" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <Grid Margin="{TemplateBinding Padding}">
+                            <TextBlock x:Name="Hint" Text="{TemplateBinding Tag}" Foreground="{DynamicResource Fb.FaintTextBrush}" IsHitTestVisible="False"
+                                       TextWrapping="Wrap" Margin="2,0,0,0" Visibility="Collapsed" FontStyle="{TemplateBinding FontStyle}" />
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="Hint" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Fb.SubtleBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Fb.InputBrush}" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Fb.AccentBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Single-line field with a placeholder -->
+    <Style x:Key="Fb.LineField" TargetType="TextBox" BasedOn="{StaticResource Fb.Field}">
+        <Setter Property="AcceptsReturn" Value="False" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+    </Style>
+
+    <!-- Bare text box (no chrome at all): note blocks, canvas node labels. -->
+    <Style x:Key="Fb.BareTextBox" TargetType="TextBox">
+        <Setter Property="Foreground" Value="{DynamicResource Fb.TextBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource Fb.TextBrush}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource Fb.AccentBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Grid Background="{TemplateBinding Background}">
+                        <TextBlock x:Name="Hint" Text="{TemplateBinding Tag}" Foreground="{DynamicResource Fb.FaintTextBrush}" IsHitTestVisible="False"
+                                   TextWrapping="Wrap" Margin="2,0,0,0" Visibility="Collapsed" />
+                        <ScrollViewer x:Name="PART_ContentHost" Focusable="False" Margin="{TemplateBinding Padding}"
+                                      HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Text" Value="" />
+                                <Condition Property="IsKeyboardFocused" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Hint" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

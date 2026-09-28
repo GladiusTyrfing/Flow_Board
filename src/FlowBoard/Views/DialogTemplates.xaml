@@ -24,6 +24,29 @@
     <DataTemplate DataType="{x:Type vm:ArchiveViewModel}">
         <views:ArchiveView />
     </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:SketchPadViewModel}">
+        <views:SketchPadView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:AnimaticViewModel}">
+        <views:AnimaticView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:LinkPickerViewModel}">
+        <views:LinkPickerView />
+    </DataTemplate>
+
+    <!-- Documents shown in the main area -->
+    <DataTemplate DataType="{x:Type vm:StoryboardViewModel}">
+        <views:StoryboardView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:CanvasViewModel}">
+        <views:CanvasView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:NoteViewModel}">
+        <views:NoteView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+        <views:DashboardView />
+    </DataTemplate>
 
     <!-- Confirm -->
     <DataTemplate DataType="{x:Type vm:ConfirmDialogViewModel}">
@@ -144,9 +167,14 @@
                     </StackPanel>
                     <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource Fb.Muted}" Text="Enter to add · Esc to close" />
                 </Grid>
-                <ui:TextBox PlaceholderText="What needs doing? (one card per line)" FontSize="16" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="140"
+                <ui:TextBox PlaceholderText="What needs doing? e.g. Edit trailer fri 3pm #video !high" FontSize="16" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="140"
                             Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
                             h:Behaviors.FocusOnLoad="True" h:Behaviors.EnterCommand="{Binding AddCommand}" />
+                <TextBlock Margin="4,6,0,0" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fb.AccentTextBrush}" TextWrapping="Wrap"
+                           Text="{Binding Title, Converter={StaticResource SmartPreview}}"
+                           Visibility="{Binding Text, RelativeSource={RelativeSource Self}, Converter={StaticResource HasValueToVis}}" />
+                <TextBlock Margin="4,4,0,0" FontSize="11" Foreground="{DynamicResource Fb.FaintTextBrush}"
+                           Text="Try: Edit trailer fri 3pm #video !high" />
                 <Grid Margin="0,12,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />

@@ -66,9 +66,9 @@ public sealed partial class MainViewModel
         return await vm.Result;
     }
 
-    public async Task<string?> PromptAsync(string title, string message, string placeholder, string confirmText, string initial = "")
+    public async Task<string?> PromptAsync(string title, string message, string placeholder, string confirmText, string initial = "", bool allowEmpty = false)
     {
-        var vm = new TextPromptViewModel { Title = title, Message = message, Placeholder = placeholder, ConfirmText = confirmText, Text = initial };
+        var vm = new TextPromptViewModel { Title = title, Message = message, Placeholder = placeholder, ConfirmText = confirmText, Text = initial, AllowEmpty = allowEmpty };
         ShowDialog(vm);
         return await vm.Result;
     }
@@ -105,6 +105,15 @@ public sealed partial class MainViewModel
 
     private void UndoCore(bool redo)
     {
+        // Storyboards, canvases and notes have their own undo history.
+        if (ActiveView != ActiveView.Board && ActiveDocument != null)
+        {
+            if (Dialogs.Count > 0) CloseAllDialogs();
+            var done = redo ? ActiveDocument.Redo() : ActiveDocument.Undo();
+            if (!done) ShowToast(redo ? "Nothing to redo" : "Nothing to undo");
+            return;
+        }
+
         // Close editors first so their pending edits become their own undo step and nothing edits a stale board.
         CloseAllDialogs();
         var currentId = CurrentBoard?.Id;

@@ -448,3 +448,108 @@ public sealed class PercentConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
+
+/// <summary>Live preview of what smart quick add understood ("Due Fri 15:00 · High · #video").</summary>
+public sealed class SmartPreviewConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string s || string.IsNullOrWhiteSpace(s)) return string.Empty;
+        var first = s.Split('\n')[0];
+        var parsed = SmartParser.Parse(first, DateTime.Now);
+        return parsed.HasExtras ? parsed.Summary : string.Empty;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
+/// <summary>Opposite of <see cref="EqualsConverter"/> (one-way): true / Visible when the value differs from the parameter.</summary>
+public sealed class NotEqualsConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var differs = !string.Equals(value?.ToString(), parameter?.ToString(), StringComparison.OrdinalIgnoreCase);
+        if (targetType == typeof(Visibility)) return differs ? Visibility.Visible : Visibility.Collapsed;
+        return differs;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
+/// <summary>3.5 → "3.5s", 75 → "1:15".</summary>
+public sealed class SecondsConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var s = value is double d ? d : 0;
+        return s < 60 ? $"{s:0.#}s" : TimeSpan.FromSeconds(s).ToString(@"m\:ss");
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
+/// <summary>Visible / true when a number is greater than the parameter (default 0).</summary>
+public sealed class GreaterThanConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var v = value == null ? 0 : System.Convert.ToDouble(value, CultureInfo.InvariantCulture);
+        var limit = double.TryParse(parameter as string, NumberStyles.Any, CultureInfo.InvariantCulture, out var p) ? p : 0;
+        var result = v > limit;
+        if (targetType == typeof(Visibility)) return result ? Visibility.Visible : Visibility.Collapsed;
+        return result;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
+/// <summary>Path mini-language string → frozen Geometry (empty string → nothing).</summary>
+public sealed class GeometryConverter : IValueConverter
+{
+    public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string s || s.Length == 0) return null;
+        try
+        {
+            var g = Geometry.Parse(s);
+            g.Freeze();
+            return g;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
+/// <summary>Indent level → left margin (ConverterParameter = pixels per level, default 28).</summary>
+public sealed class IndentToMarginConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var step = double.TryParse(parameter as string, NumberStyles.Any, CultureInfo.InvariantCulture, out var p) ? p : 28;
+        return new Thickness((value is int i ? i : 0) * step, 0, 0, 0);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
+/// <summary>Symbol name string ("Rocket24") → SymbolRegular for dynamic icons.</summary>
+public sealed class SymbolNameConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is string s && Enum.TryParse<SymbolRegular>(s, out var sym) ? sym : SymbolRegular.DocumentText24;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
+/// <summary>Storyboard mode → sidebar icon.</summary>
+public sealed class StoryboardIconConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is StoryboardMode.Animation ? SymbolRegular.Sparkle24 : SymbolRegular.VideoClip24;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}

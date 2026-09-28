@@ -19,6 +19,10 @@
     <Compile Include="..\..\src\FlowBoard\Services\UndoService.cs" Link="Core\Services\UndoService.cs" />
     <Compile Include="..\..\src\FlowBoard\Services\TemplateService.cs" Link="Core\Services\TemplateService.cs" />
     <Compile Include="..\..\src\FlowBoard\ViewModels\FilterState.cs" Link="Core\ViewModels\FilterState.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\SmartParser.cs" Link="Core\Services\SmartParser.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\CanvasGeometry.cs" Link="Core\Services\CanvasGeometry.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\NoteMarkdown.cs" Link="Core\Services\NoteMarkdown.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\DashboardStats.cs" Link="Core\Services\DashboardStats.cs" />
   </ItemGroup>
 
   <ItemGroup>

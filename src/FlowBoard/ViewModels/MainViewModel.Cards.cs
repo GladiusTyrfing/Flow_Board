@@ -15,6 +15,7 @@ public sealed partial class MainViewModel
     private void StartAddList()
     {
         if (CurrentBoard == null) return;
+        if (ActiveView != ActiveView.Board) SelectBoard(CurrentBoard);
         ViewMode = BoardViewMode.Board;
         NewListName = string.Empty;
         IsAddingList = true;
@@ -189,13 +190,45 @@ public sealed partial class MainViewModel
         // Several lines pasted at once become several cards.
         foreach (var line in title.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0))
         {
-            var card = new Card { Title = line, Board = CurrentBoard, IsCompleted = list.IsDoneList };
+            var card = CreateCardFromText(line, CurrentBoard, list);
             card.AddActivity($"added this card to {list.Name}", Me);
             list.Cards.Add(card);
             card.IsFilteredOut = !Filter.Matches(card);
         }
 
         list.NewCardTitle = string.Empty;
+    }
+
+    /// <summary>
+    /// Builds a card from quick-add text: "Edit trailer fri 3pm #video !high" sets the title, due date,
+    /// label (created if the board doesn't have it yet) and priority.
+    /// </summary>
+    public Card CreateCardFromText(string text, Board board, BoardList list)
+    {
+        var parsed = SmartParser.Parse(text, DateTime.Now);
+        var card = new Card { Title = parsed.Title, Board = board, IsCompleted = list.IsDoneList };
+        if (parsed.Due is { } due)
+        {
+            card.DueDate = due;
+            card.ReminderMinutes = Settings.DefaultReminderMinutes;
+        }
+
+        if (parsed.Priority is { } p) card.Priority = p;
+        foreach (var name in parsed.Labels)
+        {
+            var label = board.Labels.FirstOrDefault(l => l.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            if (label == null)
+            {
+                var used = board.Labels.Select(l => l.Color).ToHashSet();
+                label = new Label { Name = name, Color = Label.Palette.FirstOrDefault(c => !used.Contains(c)) ?? Label.Palette[0] };
+                board.Labels.Add(label);
+                if (board == CurrentBoard) Filter.SetBoard(board);
+            }
+
+            if (!card.LabelIds.Contains(label.Id)) card.LabelIds.Add(label.Id);
+        }
+
+        return card;
     }
 
     [RelayCommand]
@@ -215,6 +248,7 @@ public sealed partial class MainViewModel
             return;
         }
 
+        if (ActiveView != ActiveView.Board) SelectBoard(CurrentBoard);
         ViewMode = BoardViewMode.Board;
         CloseAllDialogs();
         var list = CurrentBoard.Lists.FirstOrDefault();
@@ -239,6 +273,7 @@ public sealed partial class MainViewModel
     public void OnCardDialogClosed()
     {
         ApplyFilter();
+        if (ActiveDocument is DashboardViewModel dashboard) dashboard.Refresh();
     }
 
     [RelayCommand]
@@ -248,6 +283,7 @@ public sealed partial class MainViewModel
         card.IsCompleted = !card.IsCompleted;
         card.AddActivity(card.IsCompleted ? "marked this card as complete" : "marked this card as incomplete", Me);
         MoveForCompletion(card);
+        RefreshBlocked();
         if (ViewMode != BoardViewMode.Board) RefreshViews();
     }
 

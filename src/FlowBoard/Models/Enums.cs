@@ -31,6 +31,7 @@ public enum BoardViewMode
     Board,
     Table,
     Calendar,
+    Timeline,
 }
 
 public enum ThemeMode

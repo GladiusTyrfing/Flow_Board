@@ -33,6 +33,7 @@
         <KeyBinding Key="D1" Modifiers="Control" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:BoardViewMode.Board}" />
         <KeyBinding Key="D2" Modifiers="Control" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:BoardViewMode.Table}" />
         <KeyBinding Key="D3" Modifiers="Control" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:BoardViewMode.Calendar}" />
+        <KeyBinding Key="D4" Modifiers="Control" Command="{Binding SetViewModeCommand}" CommandParameter="{x:Static models:BoardViewMode.Timeline}" />
         <KeyBinding Key="B" Modifiers="Control" Command="{Binding ToggleSidebarCommand}" />
         <KeyBinding Key="T" Modifiers="Control" Command="{Binding ToggleThemeCommand}" />
         <KeyBinding Key="P" Modifiers="Control" Command="{Binding TogglePomodoroCommand}" />
@@ -96,7 +97,7 @@
                         <DataTrigger.Binding>
                             <MultiBinding Converter="{StaticResource Same}">
                                 <Binding />
-                                <Binding Source="{x:Static vm:MainViewModel.Instance}" Path="CurrentBoard" />
+                                <Binding Source="{x:Static vm:MainViewModel.Instance}" Path="SelectedItem" />
                             </MultiBinding>
                         </DataTrigger.Binding>
                         <Setter TargetName="Btn" Property="Background" Value="{DynamicResource Fb.AccentSoftBrush}" />
@@ -109,6 +110,157 @@
                         <Setter TargetName="Star" Property="Visibility" Value="Visible" />
                         <Setter TargetName="StarIcon" Property="Filled" Value="True" />
                         <Setter TargetName="StarIcon" Property="Foreground" Value="#F5CD47" />
+                    </DataTrigger>
+                </DataTemplate.Triggers>
+            </DataTemplate>
+
+            <DataTemplate x:Key="SidebarStoryboardTemplate" DataType="{x:Type models:Storyboard}">
+                <Button x:Name="Btn" Style="{StaticResource Fb.GhostButton}" Padding="8,6" Margin="0,1" HorizontalContentAlignment="Stretch"
+                        Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=OpenStoryboardCommand}" CommandParameter="{Binding}" ToolTip="{Binding Name}">
+                    <Button.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Open" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=OpenStoryboardCommand}" CommandParameter="{Binding}">
+                                <MenuItem.Icon><ui:SymbolIcon Symbol="Open24" /></MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Star / unstar" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ToggleDocStarCommand}" CommandParameter="{Binding}">
+                                <MenuItem.Icon><ui:SymbolIcon Symbol="Star24" /></MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Duplicate" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=DuplicateDocCommand}" CommandParameter="{Binding}">
+                                <MenuItem.Icon><ui:SymbolIcon Symbol="Copy24" /></MenuItem.Icon>
+                            </MenuItem>
+                            <Separator />
+                            <MenuItem Header="Delete storyboard…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=DeleteDocCommand}" CommandParameter="{Binding}">
+                                <MenuItem.Icon><ui:SymbolIcon Symbol="Delete24" /></MenuItem.Icon>
+                            </MenuItem>
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="36" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="28" Height="22" CornerRadius="{DynamicResource Fb.RadiusSmall}" HorizontalAlignment="Left" Background="{DynamicResource Fb.SubtleBrush}">
+                            <ui:SymbolIcon Symbol="{Binding Mode, Converter={StaticResource StoryboardIcon}}" FontSize="14" Foreground="{DynamicResource Fb.AccentTextBrush}" />
+                        </Border>
+                        <TextBlock Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource Fb.TextBrush}" FontSize="14" />
+                        <ui:SymbolIcon x:Name="StarIcon" Grid.Column="2" Symbol="Star24" Filled="True" FontSize="13" Foreground="#F5CD47" Margin="0,0,6,0" Visibility="Collapsed" />
+                    </Grid>
+                </Button>
+                <DataTemplate.Triggers>
+                    <DataTrigger Value="True">
+                        <DataTrigger.Binding>
+                            <MultiBinding Converter="{StaticResource Same}">
+                                <Binding />
+                                <Binding Source="{x:Static vm:MainViewModel.Instance}" Path="SelectedItem" />
+                            </MultiBinding>
+                        </DataTrigger.Binding>
+                        <Setter TargetName="Btn" Property="Background" Value="{DynamicResource Fb.AccentSoftBrush}" />
+                        <Setter TargetName="Btn" Property="FontWeight" Value="Bold" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsStarred}" Value="True">
+                        <Setter TargetName="StarIcon" Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                </DataTemplate.Triggers>
+            </DataTemplate>
+            <DataTemplate x:Key="SidebarCanvasTemplate" DataType="{x:Type models:CanvasDoc}">
+                <Button x:Name="Btn" Style="{StaticResource Fb.GhostButton}" Padding="8,6" Margin="0,1" HorizontalContentAlignment="Stretch"
+                        Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=OpenCanvasCommand}" CommandParameter="{Binding}" ToolTip="{Binding Name}">
+                    <Button.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Open" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=OpenCanvasCommand}" CommandParameter="{Binding}">
+                                <MenuItem.Icon><ui:SymbolIcon Symbol="Open24" /></MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Star / unstar" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ToggleDocStarCommand}" CommandParameter="{Binding}">
+                                <MenuItem.Icon><ui:SymbolIcon Symbol="Star24" /></MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Duplicate" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=DuplicateDocCommand}" CommandParameter="{Binding}">
+                                <MenuItem.Icon><ui:SymbolIcon Symbol="Copy24" /></MenuItem.Icon>
+                            </MenuItem>
+                            <Separator />
+                            <MenuItem Header="Delete canvas…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=DeleteDocCommand}" CommandParameter="{Binding}">
+                                <MenuItem.Icon><ui:SymbolIcon Symbol="Delete24" /></MenuItem.Icon>
+                            </MenuItem>
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="36" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="28" Height="22" CornerRadius="{DynamicResource Fb.RadiusSmall}" HorizontalAlignment="Left" Background="{DynamicResource Fb.SubtleBrush}">
+                            <ui:SymbolIcon Symbol="Flowchart24" FontSize="14" Foreground="{DynamicResource Fb.AccentTextBrush}" />
+                        </Border>
+                        <TextBlock Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource Fb.TextBrush}" FontSize="14" />
+                        <ui:SymbolIcon x:Name="StarIcon" Grid.Column="2" Symbol="Star24" Filled="True" FontSize="13" Foreground="#F5CD47" Margin="0,0,6,0" Visibility="Collapsed" />
+                    </Grid>
+                </Button>
+                <DataTemplate.Triggers>
+                    <DataTrigger Value="True">
+                        <DataTrigger.Binding>
+                            <MultiBinding Converter="{StaticResource Same}">
+                                <Binding />
+                                <Binding Source="{x:Static vm:MainViewModel.Instance}" Path="SelectedItem" />
+                            </MultiBinding>
+                        </DataTrigger.Binding>
+                        <Setter TargetName="Btn" Property="Background" Value="{DynamicResource Fb.AccentSoftBrush}" />
+                        <Setter TargetName="Btn" Property="FontWeight" Value="Bold" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsStarred}" Value="True">
+                        <Setter TargetName="StarIcon" Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                </DataTemplate.Triggers>
+            </DataTemplate>
+            <DataTemplate x:Key="SidebarNoteTemplate" DataType="{x:Type models:NotePage}">
+                <Button x:Name="Btn" Style="{StaticResource Fb.GhostButton}" Padding="8,6" Margin="0,1" HorizontalContentAlignment="Stretch"
+                        Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=OpenNoteCommand}" CommandParameter="{Binding}" ToolTip="{Binding Title}">
+                    <Button.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Open" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=OpenNoteCommand}" CommandParameter="{Binding}">
+                                <MenuItem.Icon><ui:SymbolIcon Symbol="Open24" /></MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Star / unstar" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ToggleDocStarCommand}" CommandParameter="{Binding}">
+                                <MenuItem.Icon><ui:SymbolIcon Symbol="Star24" /></MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Duplicate" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=DuplicateDocCommand}" CommandParameter="{Binding}">
+                                <MenuItem.Icon><ui:SymbolIcon Symbol="Copy24" /></MenuItem.Icon>
+                            </MenuItem>
+                            <Separator />
+                            <MenuItem Header="Delete page…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=DeleteDocCommand}" CommandParameter="{Binding}">
+                                <MenuItem.Icon><ui:SymbolIcon Symbol="Delete24" /></MenuItem.Icon>
+                            </MenuItem>
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="36" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="28" Height="22" CornerRadius="{DynamicResource Fb.RadiusSmall}" HorizontalAlignment="Left" Background="{DynamicResource Fb.SubtleBrush}">
+                            <ui:SymbolIcon Symbol="{Binding Icon, Converter={StaticResource SymbolName}}" FontSize="14" Foreground="{DynamicResource Fb.AccentTextBrush}" />
+                        </Border>
+                        <TextBlock Grid.Column="1" Text="{Binding Title}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource Fb.TextBrush}" FontSize="14" />
+                        <ui:SymbolIcon x:Name="StarIcon" Grid.Column="2" Symbol="Star24" Filled="True" FontSize="13" Foreground="#F5CD47" Margin="0,0,6,0" Visibility="Collapsed" />
+                    </Grid>
+                </Button>
+                <DataTemplate.Triggers>
+                    <DataTrigger Value="True">
+                        <DataTrigger.Binding>
+                            <MultiBinding Converter="{StaticResource Same}">
+                                <Binding />
+                                <Binding Source="{x:Static vm:MainViewModel.Instance}" Path="SelectedItem" />
+                            </MultiBinding>
+                        </DataTrigger.Binding>
+                        <Setter TargetName="Btn" Property="Background" Value="{DynamicResource Fb.AccentSoftBrush}" />
+                        <Setter TargetName="Btn" Property="FontWeight" Value="Bold" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsStarred}" Value="True">
+                        <Setter TargetName="StarIcon" Property="Visibility" Value="Visible" />
                     </DataTrigger>
                 </DataTemplate.Triggers>
             </DataTemplate>
@@ -261,12 +413,12 @@
                         </Border>
                     </Popup>
 
-                    <Button Style="{StaticResource Fb.IconButton}" Command="{Binding DoUndoCommand}" IsEnabled="{Binding Undo.CanUndo}"
-                            ToolTip="{Binding Undo.UndoDescription, StringFormat='Undo {0} (Ctrl+Z)', TargetNullValue='Undo (Ctrl+Z)'}">
+                    <Button Style="{StaticResource Fb.IconButton}" Command="{Binding DoUndoCommand}" IsEnabled="{Binding CanUndoNow}"
+                            ToolTip="{Binding UndoDescriptionNow, StringFormat='Undo {0} (Ctrl+Z)', TargetNullValue='Undo (Ctrl+Z)'}">
                         <ui:SymbolIcon Symbol="ArrowUndo24" FontSize="16" />
                     </Button>
-                    <Button Style="{StaticResource Fb.IconButton}" Command="{Binding DoRedoCommand}" IsEnabled="{Binding Undo.CanRedo}"
-                            ToolTip="{Binding Undo.RedoDescription, StringFormat='Redo {0} (Ctrl+Y)', TargetNullValue='Redo (Ctrl+Y)'}">
+                    <Button Style="{StaticResource Fb.IconButton}" Command="{Binding DoRedoCommand}" IsEnabled="{Binding CanRedoNow}"
+                            ToolTip="{Binding RedoDescriptionNow, StringFormat='Redo {0} (Ctrl+Y)', TargetNullValue='Redo (Ctrl+Y)'}">
                         <ui:SymbolIcon Symbol="ArrowRedo24" FontSize="16" />
                     </Button>
                     <Button Style="{StaticResource Fb.IconButton}" Command="{Binding ToggleThemeCommand}" ToolTip="Toggle dark / light (Ctrl+T)">
@@ -305,7 +457,7 @@
                         </StackPanel>
                     </Grid>
 
-                    <ui:TextBox DockPanel.Dock="Top" PlaceholderText="Find a board" Margin="0,0,0,10" ClearButtonEnabled="True"
+                    <ui:TextBox DockPanel.Dock="Top" PlaceholderText="Find boards, pages…" Margin="0,0,0,10" ClearButtonEnabled="True"
                                 Text="{Binding SidebarQuery, UpdateSourceTrigger=PropertyChanged}">
                         <ui:TextBox.Icon>
                             <ui:SymbolIcon Symbol="Search24" />
@@ -344,6 +496,19 @@
 
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel>
+                            <Button x:Name="DashboardButton" Style="{StaticResource Fb.GhostButton}" Padding="8,6" Margin="0,0,0,6" HorizontalContentAlignment="Stretch"
+                                    Command="{Binding OpenDashboardCommand}" ToolTip="Overview: due soon, completed, time tracked">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="36" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="28" Height="22" CornerRadius="{DynamicResource Fb.RadiusSmall}" HorizontalAlignment="Left" Background="{DynamicResource Fb.AccentGradientBrush}">
+                                        <ui:SymbolIcon Symbol="DataPie24" FontSize="14" Foreground="White" />
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="Dashboard" VerticalAlignment="Center" FontSize="14" Foreground="{DynamicResource Fb.TextBrush}" />
+                                </Grid>
+                            </Button>
                             <StackPanel Visibility="{Binding StarredBoards, Converter={StaticResource HasValueToVis}}">
                                 <TextBlock Text="STARRED" Style="{StaticResource Fb.Caption}" Margin="6,4,0,4" />
                                 <ItemsControl ItemsSource="{Binding StarredBoards}" ItemTemplate="{StaticResource SidebarBoardTemplate}" />
@@ -358,13 +523,46 @@
                                     <TextBlock Margin="10,0,0,0" Text="Create new board" FontSize="13" />
                                 </StackPanel>
                             </Button>
+                            <Separator Margin="0,8" Background="{DynamicResource Fb.DividerBrush}" />
+                            <Grid Margin="6,4,0,4">
+                                <TextBlock Text="STORYBOARDS" Style="{StaticResource Fb.Caption}" VerticalAlignment="Center" />
+                                <Button Style="{StaticResource Fb.IconButton}" Width="24" Height="24" HorizontalAlignment="Right" Command="{Binding NewStoryboardCommand}" ToolTip="New storyboard">
+                                    <ui:SymbolIcon Symbol="Add24" FontSize="13" />
+                                </Button>
+                            </Grid>
+                            <ItemsControl ItemsSource="{Binding SidebarStoryboards}" ItemTemplate="{StaticResource SidebarStoryboardTemplate}" />
+                            <Separator Margin="0,8" Background="{DynamicResource Fb.DividerBrush}" />
+                            <Grid Margin="6,4,0,4">
+                                <TextBlock Text="CANVASES &amp; FLOWCHARTS" Style="{StaticResource Fb.Caption}" VerticalAlignment="Center" />
+                                <Button Style="{StaticResource Fb.IconButton}" Width="24" Height="24" HorizontalAlignment="Right" Command="{Binding NewCanvasCommand}" ToolTip="New canvas">
+                                    <ui:SymbolIcon Symbol="Add24" FontSize="13" />
+                                </Button>
+                            </Grid>
+                            <ItemsControl ItemsSource="{Binding SidebarCanvases}" ItemTemplate="{StaticResource SidebarCanvasTemplate}" />
+                            <Separator Margin="0,8" Background="{DynamicResource Fb.DividerBrush}" />
+                            <Grid Margin="6,4,0,4">
+                                <TextBlock Text="NOTES" Style="{StaticResource Fb.Caption}" VerticalAlignment="Center" />
+                                <Button Style="{StaticResource Fb.IconButton}" Width="24" Height="24" HorizontalAlignment="Right" Command="{Binding NewNoteCommand}" ToolTip="New page">
+                                    <ui:SymbolIcon Symbol="Add24" FontSize="13" />
+                                </Button>
+                            </Grid>
+                            <ItemsControl ItemsSource="{Binding SidebarNotes}" ItemTemplate="{StaticResource SidebarNoteTemplate}" />
                         </StackPanel>
                     </ScrollViewer>
                 </DockPanel>
             </Border>
 
             <!-- Board area -->
-            <Grid x:Name="BoardArea" Grid.Column="1" h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}">
+            <!-- Storyboards, canvases, notes and the dashboard (app theme, not board theme) -->
+            <Grid x:Name="DocArea" Grid.Column="1" h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}"
+                  Visibility="{Binding ActiveView, Converter={StaticResource NotEquals}, ConverterParameter=Board}">
+                <Border Background="{DynamicResource Fb.PanelBrush}" CornerRadius="{DynamicResource Fb.RadiusLarge}" />
+                <ContentControl Content="{Binding ActiveDocument}" Focusable="False" h:Behaviors.AnimateIn="fade" />
+                <Border CornerRadius="{DynamicResource Fb.RadiusLarge}" BorderThickness="1" BorderBrush="{DynamicResource Fb.PanelBorderBrush}" IsHitTestVisible="False" />
+            </Grid>
+
+            <Grid x:Name="BoardArea" Grid.Column="1" h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}"
+                  Visibility="{Binding ActiveView, Converter={StaticResource Equals}, ConverterParameter=Board}">
                 <Border x:Name="BoardBackground" Margin="-48" Background="{Binding CurrentBoard.Background, Converter={StaticResource BoardBackground}}">
                     <Border.Effect>
                         <BlurEffect Radius="{Binding CurrentBoard.BackgroundBlur}" KernelType="Gaussian" RenderingBias="Performance" />
@@ -450,6 +648,13 @@
                                             <StackPanel Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="CalendarLtr24" FontSize="15" />
                                                 <TextBlock Text="Calendar" Margin="6,0,0,0" Visibility="{Binding IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
+                                            </StackPanel>
+                                        </RadioButton>
+                                        <RadioButton Style="{StaticResource Fb.Segment}" Foreground="{DynamicResource Fb.HeaderTextBrush}" GroupName="View" ToolTip="Timeline (Ctrl+4)"
+                                                     IsChecked="{Binding ViewMode, Converter={StaticResource Equals}, ConverterParameter=Timeline}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="TextBulletListSquare24" FontSize="15" />
+                                                <TextBlock Text="Timeline" Margin="6,0,0,0" Visibility="{Binding IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
                                             </StackPanel>
                                         </RadioButton>
                                     </StackPanel>
@@ -589,6 +794,7 @@
                         <views:BoardView Visibility="{Binding ViewMode, Converter={StaticResource Equals}, ConverterParameter=Board}" />
                         <views:TableView Visibility="{Binding ViewMode, Converter={StaticResource Equals}, ConverterParameter=Table}" />
                         <views:CalendarView Visibility="{Binding ViewMode, Converter={StaticResource Equals}, ConverterParameter=Calendar}" />
+                        <views:TimelineView Visibility="{Binding ViewMode, Converter={StaticResource Equals}, ConverterParameter=Timeline}" />
                     </Grid>
                 </DockPanel>
             </Grid>

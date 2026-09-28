@@ -59,7 +59,7 @@ public sealed partial class MainViewModel
             return true;
         }
 
-        if (isTyping || HasDialog) return false;
+        if (isTyping || HasDialog || ActiveView != ActiveView.Board) return false;
 
         // ----- Single keys (not while typing) -----
         if (mods == ModifierKeys.None)

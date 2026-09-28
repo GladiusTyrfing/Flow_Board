@@ -63,11 +63,15 @@ public sealed partial class QuickAddViewModel : DialogViewModel
         _main.Undo.Checkpoint(_main.Workspace, Board, "Quick add card");
         foreach (var line in title.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0))
         {
-            var card = new Card
+            // Typed hints ("fri 3pm #video !high") win; the pickers fill in whatever wasn't typed.
+            var card = _main.CreateCardFromText(line, Board, List);
+            if (card.DueDate == null && due != null)
             {
-                Title = line, Board = Board, DueDate = due, Priority = Priority, IsCompleted = List.IsDoneList,
-                ReminderMinutes = due != null ? _main.Settings.DefaultReminderMinutes : -1,
-            };
+                card.DueDate = due;
+                card.ReminderMinutes = _main.Settings.DefaultReminderMinutes;
+            }
+
+            if (card.Priority == Priority.None) card.Priority = Priority;
             card.AddActivity($"added this card to {List.Name} (quick add)", _main.Settings.DisplayName);
             List.Cards.Add(card);
         }

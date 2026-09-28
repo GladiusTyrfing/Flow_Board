@@ -29,6 +29,10 @@ public partial class Card : ObservableObject
     /// <summary>Shows details (description, checklists, files, voice notes…) right on the board.</summary>
     [ObservableProperty] private bool _isExpanded;
     [ObservableProperty] private ObservableCollection<Guid> _labelIds = [];
+    /// <summary>Related cards (any board). Shown as curved lines on the board when "Links" is on.</summary>
+    [ObservableProperty] private ObservableCollection<Guid> _linkedCardIds = [];
+    /// <summary>Cards that must be finished before this one (dependencies, drawn on the timeline).</summary>
+    [ObservableProperty] private ObservableCollection<Guid> _blockedByIds = [];
     [ObservableProperty] private ObservableCollection<Checklist> _checklists = [];
     [ObservableProperty] private ObservableCollection<Attachment> _attachments = [];
     [ObservableProperty] private ObservableCollection<Comment> _comments = [];
@@ -38,6 +42,10 @@ public partial class Card : ObservableObject
     [ObservableProperty][property: JsonIgnore] private bool _isFilteredOut;
     [ObservableProperty][property: JsonIgnore] private bool _isTimerRunning;
     [ObservableProperty][property: JsonIgnore] private bool _isHighlighted;
+    /// <summary>Waiting on at least one unfinished "blocked by" card (set by the app when the board is shown).</summary>
+    [ObservableProperty][property: JsonIgnore] private bool _isBlocked;
+
+    [JsonIgnore] public int RelationCount => LinkedCardIds.Count + BlockedByIds.Count;
 
     private Board? _board;
 
@@ -146,6 +154,8 @@ public partial class Card : ObservableObject
         if (t.TotalMinutes >= 1) return $"{(int)t.TotalMinutes}m";
         return $"{t.Seconds}s";
     }
+
+    public void NotifyRelationsChanged() => OnPropertyChanged(nameof(RelationCount));
 
     public void NotifyLabelsChanged()
     {
