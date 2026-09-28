@@ -553,3 +553,27 @@ public sealed class StoryboardIconConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
+
+/// <summary>Storyboard shot status → chip color.</summary>
+public sealed class StatusBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var hex = (value as string) switch
+        {
+            "Idea" => "#8B5CF6",
+            "Planned" => "#3B82F6",
+            "In progress" => "#F59E0B",
+            "Needs changes" => "#EF4444",
+            "Done" => "#10B981",
+            "Approved" => "#059669",
+            _ => null,
+        };
+        if (hex == null) return Brushes.Transparent;
+        var b = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
+        b.Freeze();
+        return b;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}

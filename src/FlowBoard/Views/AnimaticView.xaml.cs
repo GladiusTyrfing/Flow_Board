@@ -81,6 +81,7 @@ public partial class AnimaticView : UserControl
         FrontImage.Clip = null;
         FrontImage.Opacity = 1;
         FrontImage.Source = next;
+        FrontImage.Stretch = _vm.Current.ImageFit ? Stretch.Uniform : Stretch.UniformToFill;
         BackImage.Source = null;
         if (!Helpers.Behaviors.AnimationsEnabled) return;
 

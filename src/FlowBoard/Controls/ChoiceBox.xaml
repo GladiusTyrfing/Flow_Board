@@ -1,0 +1,17 @@
+<UserControl x:Class="FlowBoard.Controls.ChoiceBox"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             x:Name="Self">
+    <!-- Type your own value or pick one from the list (no focus outline, follows the app corners). -->
+    <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" MinHeight="30">
+        <DockPanel>
+            <Button x:Name="Opener" DockPanel.Dock="Right" Style="{StaticResource Fb.IconButton}" Width="26" Height="26" Margin="0,0,2,0" Focusable="False"
+                    Click="OnOpen" ToolTip="Choose">
+                <ui:SymbolIcon Symbol="ChevronDown24" FontSize="11" />
+            </Button>
+            <TextBox Style="{StaticResource Fb.LineField}" FontSize="{Binding FontSize, ElementName=Self}" VerticalAlignment="Center" Background="Transparent"
+                     Tag="{Binding Placeholder, ElementName=Self}" Text="{Binding Value, ElementName=Self, UpdateSourceTrigger=PropertyChanged}" />
+        </DockPanel>
+    </Border>
+</UserControl>

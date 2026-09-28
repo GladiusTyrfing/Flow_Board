@@ -1,6 +1,7 @@
 <UserControl x:Class="FlowBoard.Views.CardDetailView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:FlowBoard.Controls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
@@ -405,9 +406,12 @@
                                     <ui:SymbolIcon Symbol="Mic24" Style="{StaticResource SectionIcon}" />
                                     <TextBlock Text="Voice notes" Style="{StaticResource Fb.SectionTitle}" />
                                 </StackPanel>
-                                <Button Style="{StaticResource Fb.SubtleButton}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,8"
-                                        Content="Record" Command="{Binding StartRecordingCommand}"
-                                        Visibility="{Binding Recorder.IsRecording, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,8"
+                                            Visibility="{Binding Recorder.IsRecording, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+                                    <Button Style="{StaticResource Fb.SubtleButton}" Content="Import audio…" Command="{Binding ImportVoiceCommand}" Margin="0,0,6,0"
+                                            ToolTip="Add .wav, .mp3, .m4a … files from your PC" />
+                                    <Button Style="{StaticResource Fb.SubtleButton}" Content="Record" Command="{Binding StartRecordingCommand}" />
+                                </StackPanel>
                             </Grid>
 
                             <!-- Recording panel -->
@@ -850,6 +854,10 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <c:ColorButton Width="28" Height="24" Command="{Binding SetEditingLabelColorCommand}" />
+                            <TextBlock Text="Custom color…" Style="{StaticResource Fb.Muted}" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                     <Button Style="{StaticResource Fb.AccentButton}" Content="Done" Command="{Binding FinishEditingLabelCommand}" />
                                     <Button Style="{StaticResource Fb.DangerButton}" Content="Delete" Margin="8,0,0,0"
@@ -879,6 +887,10 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <c:ColorButton Width="28" Height="24" Command="{Binding PickNewLabelColorCommand}" />
+                            <TextBlock Text="Custom color…" Style="{StaticResource Fb.Muted}" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
                         <Button Style="{StaticResource Fb.AccentButton}" HorizontalAlignment="Stretch" Margin="0,4,0,0" Content="Create label" Command="{Binding CreateLabelCommand}" />
                     </StackPanel>
                 </Border>
@@ -962,6 +974,10 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <c:ColorButton Width="28" Height="24" Command="{Binding SetCoverColorCommand}" />
+                            <TextBlock Text="Custom color…" Style="{StaticResource Fb.Muted}" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
                         <TextBlock Text="Images from attachments" Style="{StaticResource Fb.Caption}" Margin="0,8,0,6"
                                    Visibility="{Binding Card.ImageAttachments, Converter={StaticResource HasValueToVis}}" />
                         <ItemsControl ItemsSource="{Binding Card.ImageAttachments}">

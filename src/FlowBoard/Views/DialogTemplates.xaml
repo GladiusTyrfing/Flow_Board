@@ -30,6 +30,9 @@
     <DataTemplate DataType="{x:Type vm:AnimaticViewModel}">
         <views:AnimaticView />
     </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:ImageCropViewModel}">
+        <views:ImageCropView />
+    </DataTemplate>
     <DataTemplate DataType="{x:Type vm:LinkPickerViewModel}">
         <views:LinkPickerView />
     </DataTemplate>

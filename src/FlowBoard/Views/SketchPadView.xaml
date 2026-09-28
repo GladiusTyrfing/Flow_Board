@@ -1,6 +1,7 @@
 <UserControl x:Class="FlowBoard.Views.SketchPadView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:FlowBoard.Controls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
@@ -46,6 +47,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                <c:ColorButton Width="26" Height="26" VerticalAlignment="Center" Command="{Binding SetColorCommand}" ToolTip="Any color…" />
                 <Border Width="1" Height="22" Background="{DynamicResource Fb.DividerBrush}" Margin="8,0" />
                 <Border Style="{StaticResource Fb.SegmentGroup}">
                     <StackPanel Orientation="Horizontal">

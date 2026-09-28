@@ -8,6 +8,7 @@
              xmlns:models="clr-namespace:FlowBoard.Models"
              xmlns:h="clr-namespace:FlowBoard.Helpers"
              xmlns:dd="urn:gong-wpf-dragdrop"
+             xmlns:c="clr-namespace:FlowBoard.Controls"
              mc:Ignorable="d"
              x:Name="Root"
              d:DataContext="{d:DesignInstance vm:StoryboardViewModel}">
@@ -15,11 +16,7 @@
         <Style x:Key="SbLabel" TargetType="TextBlock" BasedOn="{StaticResource Fb.Caption}">
             <Setter Property="Margin" Value="2,12,0,4" />
         </Style>
-        <Style x:Key="SbCombo" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
-            <Setter Property="IsEditable" Value="True" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="MinHeight" Value="30" />
-            <Setter Property="Padding" Value="8,4" />
+        <Style x:Key="SbCombo" TargetType="c:ChoiceBox">
             <Setter Property="Margin" Value="0,0,6,6" />
         </Style>
         <Style x:Key="SbChip" TargetType="Border">
@@ -102,6 +99,12 @@
                             <TextBlock Text="Play" Margin="6,0,0,0" Visibility="{Binding Main.IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
                         </StackPanel>
                     </Button>
+                    <ToggleButton Style="{StaticResource Fb.HeaderToggle}" IsChecked="{Binding Board.FramesOnly}" ToolTip="Show only the frames (hide the notes)">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="SlideMultiple24" FontSize="16" />
+                            <TextBlock Text="Frames only" Margin="6,0,0,0" Visibility="{Binding Main.IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
+                        </StackPanel>
+                    </ToggleButton>
                     <Button Style="{StaticResource Fb.HeaderButton}" Command="{Binding AddShotCommand}" ToolTip="Add a shot at the end">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="Add24" FontSize="16" />
@@ -112,6 +115,20 @@
                         <ui:SymbolIcon Symbol="MoreHorizontal24" FontSize="18" />
                         <Button.ContextMenu>
                             <ContextMenu>
+                                <MenuItem Header="Frame shape (aspect ratio)">
+                                    <MenuItem.Icon><ui:SymbolIcon Symbol="RatioOneToOne24" /></MenuItem.Icon>
+                                    <MenuItem Header="16:9" Command="{Binding SetAspectCommand}" CommandParameter="16:9" />
+                                    <MenuItem Header="4:3" Command="{Binding SetAspectCommand}" CommandParameter="4:3" />
+                                    <MenuItem Header="1.85:1" Command="{Binding SetAspectCommand}" CommandParameter="1.85:1" />
+                                    <MenuItem Header="2.39:1" Command="{Binding SetAspectCommand}" CommandParameter="2.39:1" />
+                                    <MenuItem Header="1:1" Command="{Binding SetAspectCommand}" CommandParameter="1:1" />
+                                    <MenuItem Header="4:5" Command="{Binding SetAspectCommand}" CommandParameter="4:5" />
+                                    <MenuItem Header="9:16" Command="{Binding SetAspectCommand}" CommandParameter="9:16" />
+                                </MenuItem>
+                                <MenuItem Header="Import images as shots…" Command="{Binding ImportImagesAsShotsCommand}">
+                                    <MenuItem.Icon><ui:SymbolIcon Symbol="ImageMultiple24" /></MenuItem.Icon>
+                                </MenuItem>
+                                <Separator />
                                 <MenuItem Header="Export as image…" Command="{Binding ExportImageCommand}">
                                     <MenuItem.Icon><ui:SymbolIcon Symbol="ImageArrowForward24" /></MenuItem.Icon>
                                 </MenuItem>
@@ -172,6 +189,7 @@
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{DynamicResource Fb.AccentGradientBrush}" Padding="8,3" VerticalAlignment="Center"
                                                     ToolTip="Drag the column to reorder" Cursor="SizeAll">
@@ -181,7 +199,73 @@
                                             </Border>
                                             <TextBox Grid.Column="1" Style="{StaticResource Fb.LineField}" Tag="Title" FontWeight="SemiBold" FontSize="14" Margin="6,0,0,0"
                                                      Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" />
-                                            <Button Grid.Column="2" Style="{StaticResource Fb.IconButton}" Width="28" Height="28" h:Behaviors.ClickOpensContextMenu="True" ToolTip="Shot menu">
+                                            <Button Grid.Column="2" Style="{StaticResource Fb.GhostButton}" Padding="7,2" Margin="4,0,0,0" VerticalAlignment="Center"
+                                                    h:Behaviors.ClickOpensContextMenu="True" ToolTip="Production status">
+                                                <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Padding="6,1" Background="{Binding Status, Converter={StaticResource StatusBrush}}">
+                                                    <TextBlock x:Name="StatusText" Text="{Binding Status}" FontSize="11" FontWeight="SemiBold" Foreground="White" />
+                                                </Border>
+                                                <Button.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="None" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                            <MenuItem.CommandParameter>
+                                                                <MultiBinding Converter="{StaticResource ToArray}">
+                                                                    <Binding />
+                                                                    <Binding Source="None" />
+                                                                </MultiBinding>
+                                                            </MenuItem.CommandParameter>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Idea" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                            <MenuItem.CommandParameter>
+                                                                <MultiBinding Converter="{StaticResource ToArray}">
+                                                                    <Binding />
+                                                                    <Binding Source="Idea" />
+                                                                </MultiBinding>
+                                                            </MenuItem.CommandParameter>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Planned" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                            <MenuItem.CommandParameter>
+                                                                <MultiBinding Converter="{StaticResource ToArray}">
+                                                                    <Binding />
+                                                                    <Binding Source="Planned" />
+                                                                </MultiBinding>
+                                                            </MenuItem.CommandParameter>
+                                                        </MenuItem>
+                                                        <MenuItem Header="In progress" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                            <MenuItem.CommandParameter>
+                                                                <MultiBinding Converter="{StaticResource ToArray}">
+                                                                    <Binding />
+                                                                    <Binding Source="In progress" />
+                                                                </MultiBinding>
+                                                            </MenuItem.CommandParameter>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Needs changes" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                            <MenuItem.CommandParameter>
+                                                                <MultiBinding Converter="{StaticResource ToArray}">
+                                                                    <Binding />
+                                                                    <Binding Source="Needs changes" />
+                                                                </MultiBinding>
+                                                            </MenuItem.CommandParameter>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Done" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                            <MenuItem.CommandParameter>
+                                                                <MultiBinding Converter="{StaticResource ToArray}">
+                                                                    <Binding />
+                                                                    <Binding Source="Done" />
+                                                                </MultiBinding>
+                                                            </MenuItem.CommandParameter>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Approved" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                            <MenuItem.CommandParameter>
+                                                                <MultiBinding Converter="{StaticResource ToArray}">
+                                                                    <Binding />
+                                                                    <Binding Source="Approved" />
+                                                                </MultiBinding>
+                                                            </MenuItem.CommandParameter>
+                                                        </MenuItem>
+                                                    </ContextMenu>
+                                                </Button.ContextMenu>
+                                            </Button>
+                                            <Button Grid.Column="3" Style="{StaticResource Fb.IconButton}" Width="28" Height="28" h:Behaviors.ClickOpensContextMenu="True" ToolTip="Shot menu">
                                                 <ui:SymbolIcon Symbol="MoreVertical24" FontSize="15" />
                                                 <Button.ContextMenu>
                                                     <ContextMenu>
@@ -212,11 +296,11 @@
                                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="12,0,12,12">
                                             <StackPanel>
                                                 <!-- Frame -->
-                                                <Grid x:Name="Frame" Height="156" AllowDrop="True" Drop="OnFrameDrop" DragOver="OnFrameDragOver" Tag="{Binding}"
+                                                <Grid x:Name="Frame" Height="{Binding DataContext.FrameHeight, ElementName=Root}" AllowDrop="True" Drop="OnFrameDrop" DragOver="OnFrameDragOver" Tag="{Binding}"
                                                       h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusValue}">
                                                     <Border Background="{DynamicResource Fb.SubtleBrush}" BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="1"
                                                             CornerRadius="{DynamicResource Fb.Radius}" />
-                                                    <Image Source="{Binding ImageFullPath, Converter={StaticResource ImagePath}, ConverterParameter=640}" Stretch="UniformToFill"
+                                                    <Image x:Name="FrameImage" Source="{Binding ImageFullPath, Converter={StaticResource ImagePath}, ConverterParameter=640}" Stretch="UniformToFill"
                                                            RenderOptions.BitmapScalingMode="HighQuality" />
                                                     <!-- Empty frame -->
                                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -246,6 +330,12 @@
                                                         <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.ViewImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="View">
                                                             <ui:SymbolIcon Symbol="ZoomIn24" FontSize="15" />
                                                         </Button>
+                                                        <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.CropImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Crop or show the whole image">
+                                                            <ui:SymbolIcon Symbol="Crop24" FontSize="15" />
+                                                        </Button>
+                                                        <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.ToggleFitCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Fill the frame / fit the whole image">
+                                                            <ui:SymbolIcon Symbol="ArrowFit24" FontSize="15" />
+                                                        </Button>
                                                         <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.SketchCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Draw on this frame">
                                                             <ui:SymbolIcon Symbol="Pen24" FontSize="15" />
                                                         </Button>
@@ -265,6 +355,7 @@
                                                     </Border>
                                                 </Grid>
 
+                                                <StackPanel Visibility="{Binding DataContext.Board.FramesOnly, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
                                                 <!-- Scene + date -->
                                                 <Grid Margin="0,10,0,0">
                                                     <Grid.ColumnDefinitions>
@@ -278,19 +369,16 @@
                                                                      Text="{Binding Scene, UpdateSourceTrigger=PropertyChanged}" />
                                                         </StackPanel>
                                                     </Border>
-                                                    <DatePicker Grid.Column="1" SelectedDate="{Binding Date}" FontSize="12" Width="130" ToolTip="Shoot / due date" />
+                                                    <c:DateChip Grid.Column="1" Date="{Binding Date}" Placeholder="Shoot date" ToolTip="Shoot / due date" />
                                                 </Grid>
 
                                                 <!-- Film -->
                                                 <StackPanel Visibility="{Binding DataContext.IsAnimation, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
                                                     <TextBlock Text="CAMERA" Style="{StaticResource SbLabel}" />
                                                     <WrapPanel>
-                                                        <ComboBox Style="{StaticResource SbCombo}" Width="132" ToolTip="Shot type" ItemsSource="{Binding DataContext.ShotTypes, ElementName=Root}"
-                                                                  Text="{Binding ShotType, UpdateSourceTrigger=LostFocus}" />
-                                                        <ComboBox Style="{StaticResource SbCombo}" Width="132" ToolTip="Angle" ItemsSource="{Binding DataContext.Angles, ElementName=Root}"
-                                                                  Text="{Binding Angle, UpdateSourceTrigger=LostFocus}" />
-                                                        <ComboBox Style="{StaticResource SbCombo}" Width="132" ToolTip="Movement" ItemsSource="{Binding DataContext.Movements, ElementName=Root}"
-                                                                  Text="{Binding Movement, UpdateSourceTrigger=LostFocus}" />
+                                                        <c:ChoiceBox Style="{StaticResource SbCombo}" Width="132" ToolTip="Shot type" Placeholder="Shot type" Options="{Binding DataContext.ShotTypes, ElementName=Root}" Value="{Binding ShotType}" />
+                                                        <c:ChoiceBox Style="{StaticResource SbCombo}" Width="132" ToolTip="Angle" Placeholder="Angle" Options="{Binding DataContext.Angles, ElementName=Root}" Value="{Binding Angle}" />
+                                                        <c:ChoiceBox Style="{StaticResource SbCombo}" Width="132" ToolTip="Movement" Placeholder="Movement" Options="{Binding DataContext.Movements, ElementName=Root}" Value="{Binding Movement}" />
                                                         <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" Width="132" Height="30" Margin="0,0,6,6">
                                                             <TextBox Style="{StaticResource Fb.LineField}" Tag="Lens (e.g. 35mm)" FontSize="12" VerticalAlignment="Center"
                                                                      Text="{Binding Lens, UpdateSourceTrigger=PropertyChanged}" />
@@ -335,8 +423,7 @@
                                                                 </Button>
                                                             </StackPanel>
                                                         </Border>
-                                                        <ComboBox Style="{StaticResource SbCombo}" Width="130" ToolTip="Transition into this frame" ItemsSource="{Binding DataContext.Transitions, ElementName=Root}"
-                                                                  Text="{Binding Transition, UpdateSourceTrigger=LostFocus}" />
+                                                        <c:ChoiceBox Style="{StaticResource SbCombo}" Width="130" ToolTip="Transition into this frame" Placeholder="Transition" Options="{Binding DataContext.Transitions, ElementName=Root}" Value="{Binding Transition}" />
                                                     </WrapPanel>
                                                     <!-- Voice -->
                                                     <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" Padding="4">
@@ -345,13 +432,17 @@
                                                                     Command="{Binding DataContext.ToggleRecordCommand, ElementName=Root}" CommandParameter="{Binding}">
                                                                 <ui:SymbolIcon Symbol="Mic24" FontSize="15" Foreground="#F87168" />
                                                             </Button>
+                                                            <Button DockPanel.Dock="Left" Style="{StaticResource Fb.IconButton}" Width="30" Height="30" ToolTip="Use an audio file from your PC"
+                                                                    Command="{Binding DataContext.ImportVoiceCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                                <ui:SymbolIcon Symbol="FolderOpen24" FontSize="15" />
+                                                            </Button>
                                                             <Button DockPanel.Dock="Right" Style="{StaticResource Fb.IconButton}" Width="30" Height="30" ToolTip="Remove voice"
                                                                     Visibility="{Binding HasVoice, Converter={StaticResource BoolToVis}}"
                                                                     Command="{Binding DataContext.RemoveVoiceCommand, ElementName=Root}" CommandParameter="{Binding}">
                                                                 <ui:SymbolIcon Symbol="Dismiss24" FontSize="13" />
                                                             </Button>
                                                             <Grid>
-                                                                <TextBlock Text="Record a voice line" Style="{StaticResource Fb.Muted}" FontSize="12" VerticalAlignment="Center" Margin="6,0"
+                                                                <TextBlock Text="Record or import a voice line" Style="{StaticResource Fb.Muted}" FontSize="12" VerticalAlignment="Center" Margin="6,0"
                                                                            Visibility="{Binding HasVoice, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
                                                                 <Button Style="{StaticResource Fb.GhostButton}" Padding="6,3" HorizontalAlignment="Left"
                                                                         Visibility="{Binding HasVoice, Converter={StaticResource BoolToVis}}"
@@ -485,6 +576,7 @@
                                                                  h:Behaviors.EnterCommand="{Binding DataContext.AddEquipmentCommand, ElementName=Root}" h:Behaviors.CommandParameter="{Binding}" />
                                                     </DockPanel>
                                                 </StackPanel>
+                                                </StackPanel>
                                             </StackPanel>
                                         </ScrollViewer>
                                     </DockPanel>
@@ -501,9 +593,13 @@
                                 <DataTrigger Binding="{Binding HasImage}" Value="False">
                                     <Setter TargetName="FrameTools" Property="Visibility" Value="Collapsed" />
                                 </DataTrigger>
-                                <Trigger SourceName="Card" Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource Fb.AccentBrush}" />
-                                </Trigger>
+                                <DataTrigger Binding="{Binding ImageFit}" Value="True">
+                                    <Setter TargetName="FrameImage" Property="Stretch" Value="Uniform" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="">
+                                    <Setter TargetName="StatusText" Property="Text" Value="Status" />
+                                    <Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource Fb.MutedTextBrush}" />
+                                </DataTrigger>
                                 <DataTrigger Value="True">
                                     <DataTrigger.Binding>
                                         <MultiBinding Converter="{StaticResource Same}">
@@ -520,6 +616,7 @@
 
                 <!-- Add shot column -->
                 <Button Style="{StaticResource Fb.GhostButton}" Width="140" Margin="44,0,0,0" VerticalAlignment="Stretch" Command="{Binding AddShotCommand}"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0"
                         BorderBrush="{DynamicResource Fb.DividerBrush}" Foreground="{DynamicResource Fb.MutedTextBrush}">
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                         <ui:SymbolIcon Symbol="AddCircle24" FontSize="28" HorizontalAlignment="Center" />

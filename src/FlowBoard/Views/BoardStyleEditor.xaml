@@ -1,6 +1,7 @@
 <UserControl x:Class="FlowBoard.Views.BoardStyleEditor"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:FlowBoard.Controls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
@@ -241,6 +242,10 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <c:ColorButton Width="28" Height="24" Command="{Binding SetBackgroundCommand}" Prefix="color:" />
+                            <TextBlock Text="Custom color…" Style="{StaticResource Fb.Muted}" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
                         <Border Height="12" />
                         <StackPanel Style="{StaticResource SliderRow}">
                             <Grid>

@@ -12,6 +12,40 @@ public static class MediaStore
 {
     public const string ImageFilter = "Images|*.png;*.jpg;*.jpeg;*.gif;*.bmp;*.webp;*.tif;*.tiff|All files|*.*";
 
+    public const string AudioFilter = "Audio|*.wav;*.mp3;*.m4a;*.aac;*.wma;*.flac;*.ogg|All files|*.*";
+
+    public static bool IsAudioFile(string path) =>
+        Models.Attachment.AudioExtensions.Contains(Path.GetExtension(path).ToLowerInvariant()) || Path.GetExtension(path).ToLowerInvariant() is ".flac";
+
+    /// <summary>Length of an audio file in seconds (0 when it can't be read).</summary>
+    public static double AudioSeconds(string fullPath)
+    {
+        try
+        {
+            using var reader = new NAudio.Wave.AudioFileReader(fullPath);
+            return reader.TotalTime.TotalSeconds;
+        }
+        catch
+        {
+            try
+            {
+                using var mf = new NAudio.Wave.MediaFoundationReader(fullPath);
+                return mf.TotalTime.TotalSeconds;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+    }
+
+    /// <summary>Lets the user pick audio files from the PC.</summary>
+    public static string[] PickAudio(bool multiple)
+    {
+        var dlg = new OpenFileDialog { Filter = AudioFilter, Title = "Choose audio", Multiselect = multiple };
+        return dlg.ShowDialog() == true ? dlg.FileNames : [];
+    }
+
     public static string DocFolder(Guid owner)
     {
         var dir = Path.Combine(AppPaths.AttachmentsDir, "docs", owner.ToString("N"));

@@ -34,7 +34,25 @@ public partial class Storyboard : ObservableObject
     [ObservableProperty] private bool _isStarred;
     [ObservableProperty] private DateTime _createdAt = DateTime.Now;
     [ObservableProperty] private string _accentColor = "#8B5CF6";
+    /// <summary>Frame aspect ratio ("16:9", "4:3", "2.39:1", "1:1", "9:16"...).</summary>
+    [ObservableProperty] private string _aspect = "16:9";
+    /// <summary>Hide the notes and show only the frames (quick overview).</summary>
+    [ObservableProperty] private bool _framesOnly;
     [ObservableProperty] private ObservableCollection<Shot> _shots = [];
+
+    public static readonly string[] AspectChoices = ["16:9", "4:3", "1.85:1", "2.39:1", "1:1", "4:5", "9:16"];
+
+    public static double ParseAspect(string? aspect)
+    {
+        if (string.IsNullOrWhiteSpace(aspect)) return 16.0 / 9;
+        var parts = aspect.Split(':');
+        return parts.Length == 2
+               && double.TryParse(parts[0], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var a)
+               && double.TryParse(parts[1], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var b)
+               && a > 0 && b > 0
+            ? a / b
+            : 16.0 / 9;
+    }
 
     [JsonIgnore] public TimeSpan TotalDuration => TimeSpan.FromSeconds(Shots.Sum(s => s.DurationSeconds));
 }
@@ -57,6 +75,16 @@ public partial class Shot : ObservableObject
     [ObservableProperty] private string? _sketchPath;
     /// <summary>Photo the sketch was drawn over (kept so the sketch stays editable).</summary>
     [ObservableProperty] private string? _sketchBackgroundPath;
+    /// <summary>Uncropped image (so the crop can be changed later).</summary>
+    [ObservableProperty] private string? _originalImagePath;
+    [ObservableProperty] private double _cropX;
+    [ObservableProperty] private double _cropY;
+    [ObservableProperty] private double _cropW;
+    [ObservableProperty] private double _cropH;
+    /// <summary>Show the whole image inside the frame (letterboxed) instead of filling it.</summary>
+    [ObservableProperty] private bool _imageFit;
+    /// <summary>Production status ("", "Idea", "Planned", "In progress", "Done", "Approved").</summary>
+    [ObservableProperty] private string _status = string.Empty;
     [ObservableProperty] private DateTime? _date;
     [ObservableProperty] private string _description = string.Empty;
     [ObservableProperty] private string _sceneNotes = string.Empty;
@@ -100,6 +128,7 @@ public partial class Shot : ObservableObject
     public static readonly string[] Angles = ["Eye level", "High angle", "Low angle", "Bird's eye", "Worm's eye", "Dutch tilt", "Overhead"];
     public static readonly string[] Movements = ["Static", "Pan", "Tilt", "Dolly in", "Dolly out", "Tracking", "Handheld", "Crane", "Zoom", "Whip pan", "Orbit"];
     public static readonly string[] Transitions = ["Cut", "Fade", "Dissolve", "Wipe", "Match cut", "Smash cut"];
+    public static readonly string[] Statuses = ["Idea", "Planned", "In progress", "Needs changes", "Done", "Approved"];
 }
 
 // =====================================================================
@@ -116,6 +145,10 @@ public enum NodeShape
     Text,
     Image,
     Card,
+    /// <summary>Freehand drawing (pen tool). The stroke is in <see cref="CanvasNode.PathData"/>.</summary>
+    Ink,
+    /// <summary>Labelled area that groups the shapes inside it.</summary>
+    Frame,
 }
 
 public enum EdgeStyle
@@ -153,6 +186,12 @@ public partial class CanvasNode : ObservableObject
     [ObservableProperty] private string? _imagePath;
     [ObservableProperty] private Guid? _cardId;
     [ObservableProperty] private int _z;
+    /// <summary>Ink stroke geometry (path mini-language, any coordinates; it is stretched to the node box).</summary>
+    [ObservableProperty] private string? _pathData;
+    [ObservableProperty] private double _strokeWidth = 3;
+    /// <summary>Size of the box the ink was drawn in (the drawing scales from it when resized).</summary>
+    [ObservableProperty] private double _inkWidth;
+    [ObservableProperty] private double _inkHeight;
 
     [ObservableProperty][property: JsonIgnore] private bool _isSelected;
     [ObservableProperty][property: JsonIgnore] private bool _isEditing;
@@ -178,6 +217,24 @@ public partial class CanvasEdge : ObservableObject
     [ObservableProperty] private string _color = "#98A2B3";
     [ObservableProperty] private bool _dashed;
     [ObservableProperty] private bool _arrow = true;
+    [ObservableProperty] private bool _startArrow;
+    [ObservableProperty] private double _thickness = 2;
+    /// <summary>Free end points, used when <see cref="FromId"/> / <see cref="ToId"/> is empty (lines and arrows drawn on their own).</summary>
+    [ObservableProperty] private double _fromX;
+    [ObservableProperty] private double _fromY;
+    [ObservableProperty] private double _toX;
+    [ObservableProperty] private double _toY;
+
+    // Runtime: where the line actually starts and ends (for the drag handles).
+    [ObservableProperty][property: JsonIgnore] private double _startX;
+    [ObservableProperty][property: JsonIgnore] private double _startY;
+    [ObservableProperty][property: JsonIgnore] private double _endX;
+    [ObservableProperty][property: JsonIgnore] private double _endY;
+
+    [JsonIgnore] public bool IsFreeFrom => FromId == Guid.Empty;
+    [JsonIgnore] public bool IsFreeTo => ToId == Guid.Empty;
+    partial void OnFromIdChanged(Guid value) => OnPropertyChanged(nameof(IsFreeFrom));
+    partial void OnToIdChanged(Guid value) => OnPropertyChanged(nameof(IsFreeTo));
 
     [ObservableProperty][property: JsonIgnore] private bool _isSelected;
 

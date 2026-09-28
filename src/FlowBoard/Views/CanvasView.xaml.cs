@@ -15,7 +15,7 @@ namespace FlowBoard.Views;
 /// </summary>
 public partial class CanvasView : UserControl
 {
-    private enum Drag { None, Pan, Move, Resize, Connect, Marquee }
+    private enum Drag { None, Pan, Move, Resize, Connect, Marquee, Pen, DrawLine, DrawFrame, MoveEdge, EdgeEnd }
 
     private CanvasViewModel? _vm;
     private readonly DrawingBrush _dots;
@@ -27,6 +27,13 @@ public partial class CanvasView : UserControl
     private Dictionary<CanvasNode, Point> _startPositions = new();
     private Size _startSize;
     private bool _spaceDown;
+    private readonly List<(double X, double Y)> _penPoints = [];
+    private CanvasNode? _lineStartNode;
+    private Point _lineStartWorld;
+    private CanvasEdge? _edge;
+    private bool _edgeFrom;
+    private List<CanvasEdge> _movingEdges = [];
+    private Dictionary<CanvasEdge, (double FromX, double FromY, double ToX, double ToY)> _edgeStarts = new();
 
     public CanvasView()
     {
@@ -102,6 +109,9 @@ public partial class CanvasView : UserControl
 
     private static double Mod(double v, double m) => ((v % m) + m) % m;
 
+    private static Brush BrushOf(string hex) =>
+        ThemeService.TryParseColor(hex, out var c) ? new SolidColorBrush(c) : Brushes.Orange;
+
     private Point ToWorld(Point screen)
     {
         var d = _vm!.Doc;
@@ -126,7 +136,7 @@ public partial class CanvasView : UserControl
         for (var d = source; d != null && d != Surface; d = d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
         {
             if (d is TextBox) return ("text", (d as FrameworkElement)?.DataContext);
-            if (d is FrameworkElement { Tag: string tag } fe && tag is "node" or "port" or "resize" or "edge") return (tag, fe.DataContext);
+            if (d is FrameworkElement { Tag: string tag } fe && tag is "node" or "port" or "resize" or "edge" or "end-from" or "end-to") return (tag, fe.DataContext);
         }
 
         return (null, null);
@@ -171,12 +181,41 @@ public partial class CanvasView : UserControl
         {
             // Right-click selects what's under the pointer so the context menu acts on it.
             if (item is CanvasNode rn && !rn.IsSelected) _vm.SelectOnly(rn);
+            var cp = ToWorld(p);
+            _vm.ContextPoint = (cp.X, cp.Y);
             return;
         }
 
         if (e.ChangedButton != MouseButton.Left) return;
         var world = ToWorld(p);
         var shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+
+        // Drawing tools work anywhere (also on top of shapes).
+        switch (_vm.Tool)
+        {
+            case CanvasTool.Pen:
+                _penPoints.Clear();
+                _penPoints.Add((world.X, world.Y));
+                PenPreview.Points.Clear();
+                PenPreview.Points.Add(world);
+                PenPreview.Stroke = BrushOf(_vm.PenColor);
+                PenPreview.StrokeThickness = _vm.PenSize;
+                PenPreview.Visibility = Visibility.Visible;
+                BeginDrag(Drag.Pen);
+                e.Handled = true;
+                return;
+            case CanvasTool.Line or CanvasTool.Arrow when kind is null or "node":
+                _lineStartNode = item as CanvasNode;
+                _lineStartWorld = world;
+                BeginDrag(Drag.DrawLine);
+                e.Handled = true;
+                return;
+            case CanvasTool.Frame when kind == null:
+                _lineStartWorld = world;
+                BeginDrag(Drag.DrawFrame);
+                e.Handled = true;
+                return;
+        }
 
         // Shape tools: click on empty space places a shape.
         if (kind == null && ToolShape(_vm.Tool) is { } shape)
@@ -198,6 +237,11 @@ public partial class CanvasView : UserControl
 
         switch (kind)
         {
+            case "end-from" or "end-to" when item is CanvasEdge endEdge:
+                _edge = endEdge;
+                _edgeFrom = kind == "end-from";
+                BeginDrag(Drag.EdgeEnd);
+                break;
 
             case "resize" when item is CanvasNode rn2:
                 _target = rn2;
@@ -216,13 +260,26 @@ public partial class CanvasView : UserControl
                 else if (!node.IsSelected) _vm.SelectOnly(node);
                 foreach (var n in _vm.Doc.Nodes) if (n != node) n.IsEditing = false;
                 _target = node;
-                _startPositions = _vm.SelectedNodes.ToDictionary(n => n, n => new Point(n.X, n.Y));
+                var moving = _vm.SelectedNodes.ToList();
+                foreach (var f in moving.Where(n => n.Shape == NodeShape.Frame).ToList())
+                    moving.AddRange(_vm.ContentsOf(f).Where(c => !moving.Contains(c)));
+                _startPositions = moving.Distinct().ToDictionary(n => n, n => new Point(n.X, n.Y));
+                _movingEdges = moving.Where(n => n.Shape == NodeShape.Frame).SelectMany(f => _vm.FreeEdgesWithin(f.Bounds)).Distinct().ToList();
+                _edgeStarts = _movingEdges.ToDictionary(x => x, x => (x.FromX, x.FromY, x.ToX, x.ToY));
                 BeginDrag(Drag.Move);
                 break;
 
             case "edge" when item is CanvasEdge edge:
-                if (e.ClickCount == 2) _ = _vm.EditEdgeLabel(edge);
-                else _vm.SelectEdge(edge, shift);
+                if (e.ClickCount == 2)
+                {
+                    _ = _vm.EditEdgeLabel(edge);
+                    break;
+                }
+
+                if (!edge.IsSelected || shift) _vm.SelectEdge(edge, shift);
+                // Free lines can be dragged around.
+                _movingEdges = _vm.SelectedEdges.Where(x => x.IsFreeFrom || x.IsFreeTo).ToList();
+                if (_movingEdges.Count > 0) BeginDrag(Drag.MoveEdge);
                 break;
 
             default:
@@ -288,6 +345,54 @@ public partial class CanvasView : UserControl
                     n.Y = s.Y + dy;
                 }
 
+                foreach (var (ed, st) in _edgeStarts)
+                {
+                    if (ed.IsFreeFrom) { ed.FromX = st.FromX + dx; ed.FromY = st.FromY + dy; }
+                    if (ed.IsFreeTo) { ed.ToX = st.ToX + dx; ed.ToY = st.ToY + dy; }
+                    _vm.UpdateEdge(ed);
+                }
+
+                break;
+
+            case Drag.Pen:
+                var pw = ToWorld(p);
+                var lastPt = _penPoints[^1];
+                if (Math.Abs(pw.X - lastPt.X) + Math.Abs(pw.Y - lastPt.Y) >= 1.5 / z)
+                {
+                    _penPoints.Add((pw.X, pw.Y));
+                    PenPreview.Points.Add(pw);
+                }
+
+                break;
+
+            case Drag.DrawLine:
+                var lw = ToWorld(p);
+                var endNode = NodeAtScreen(p);
+                Box fromBox = _lineStartNode?.Bounds ?? new Box(_lineStartWorld.X, _lineStartWorld.Y, 0, 0);
+                Box toBox2 = endNode != null && endNode != _lineStartNode ? endNode.Bounds : new Box(lw.X, lw.Y, 0, 0);
+                var ls = CanvasGeometry.Route(fromBox, toBox2, EdgeStyle.Straight, _vm.Tool == CanvasTool.Arrow);
+                ConnectPreview.Data = Geometry.Parse((ls.Path + " " + ls.Arrow).Trim());
+                ConnectPreview.Visibility = Visibility.Visible;
+                break;
+
+            case Drag.DrawFrame:
+                var fr = new Rect(_start, p);
+                Canvas.SetLeft(Marquee, fr.X);
+                Canvas.SetTop(Marquee, fr.Y);
+                Marquee.Width = fr.Width;
+                Marquee.Height = fr.Height;
+                Marquee.Visibility = Visibility.Visible;
+                break;
+
+            case Drag.MoveEdge:
+                if (firstMove) _vm.Checkpoint();
+                _vm.MoveFreeEdges(_movingEdges, (p.X - _last.X) / z, (p.Y - _last.Y) / z);
+                break;
+
+            case Drag.EdgeEnd when _edge != null:
+                if (firstMove) _vm.Checkpoint();
+                var ew = ToWorld(p);
+                _vm.SetEdgeEnd(_edge, _edgeFrom, ew.X, ew.Y, null);
                 break;
 
             case Drag.Resize when _target != null:
@@ -349,6 +454,50 @@ public partial class CanvasView : UserControl
             }
         }
 
+        var upWorld = ToWorld(p);
+        switch (_drag)
+        {
+            case Drag.Pen:
+                PenPreview.Visibility = Visibility.Collapsed;
+                PenPreview.Points.Clear();
+                if (_penPoints.Count > 1) _vm.AddInk(_penPoints);
+                break;
+            case Drag.DrawLine:
+                ConnectPreview.Visibility = Visibility.Collapsed;
+                var endNode = NodeAtScreen(p);
+                if (endNode == _lineStartNode) endNode = null;
+                var len = Math.Abs(upWorld.X - _lineStartWorld.X) + Math.Abs(upWorld.Y - _lineStartWorld.Y);
+                if (len * _vm.Doc.Zoom > 6 || endNode != null)
+                    _vm.AddFreeLine(_lineStartWorld.X, _lineStartWorld.Y, _lineStartNode, upWorld.X, upWorld.Y, endNode, _vm.Tool == CanvasTool.Arrow);
+                break;
+            case Drag.DrawFrame:
+                if (_moved)
+                {
+                    var x = Math.Min(_lineStartWorld.X, upWorld.X);
+                    var y = Math.Min(_lineStartWorld.Y, upWorld.Y);
+                    var w = Math.Abs(upWorld.X - _lineStartWorld.X);
+                    var h = Math.Abs(upWorld.Y - _lineStartWorld.Y);
+                    var frame = _vm.AddNodeAt(NodeShape.Frame, x + w / 2, y + h / 2);
+                    frame.X = _vm.SnapValue(x);
+                    frame.Y = _vm.SnapValue(y);
+                    frame.Width = Math.Max(120, _vm.SnapValue(w));
+                    frame.Height = Math.Max(80, _vm.SnapValue(h));
+                }
+                else
+                {
+                    _vm.AddNodeAt(NodeShape.Frame, upWorld.X, upWorld.Y);
+                }
+
+                _vm.Tool = CanvasTool.Select;
+                break;
+            case Drag.EdgeEnd when _edge != null && _moved:
+                _vm.SetEdgeEnd(_edge, _edgeFrom, upWorld.X, upWorld.Y, NodeAtScreen(p));
+                break;
+        }
+
+        _edge = null;
+        _movingEdges = [];
+        _edgeStarts = new();
         Marquee.Visibility = Visibility.Collapsed;
         Cursor = null;
         _drag = Drag.None;
@@ -495,6 +644,18 @@ public partial class CanvasView : UserControl
             case Key.C when mods == ModifierKeys.None:
                 _vm.Tool = CanvasTool.Connector;
                 break;
+            case Key.L when mods == ModifierKeys.None:
+                _vm.Tool = CanvasTool.Line;
+                break;
+            case Key.A when mods == ModifierKeys.None:
+                _vm.Tool = CanvasTool.Arrow;
+                break;
+            case Key.P when mods == ModifierKeys.None:
+                _vm.Tool = CanvasTool.Pen;
+                break;
+            case Key.F when mods == ModifierKeys.None:
+                _vm.Tool = CanvasTool.Frame;
+                break;
             case Key.I when mods == ModifierKeys.None:
                 _vm.AddImageCommand.Execute(null);
                 break;
@@ -538,7 +699,7 @@ public partial class CanvasView : UserControl
     private void OnRenderRequested(object? sender, string what)
     {
         if (_vm == null) return;
-        if (_vm.Doc.Nodes.Count == 0)
+        if (_vm.IsEmpty)
         {
             _vm.Main.ShowToast("The canvas is empty.", isError: true);
             return;

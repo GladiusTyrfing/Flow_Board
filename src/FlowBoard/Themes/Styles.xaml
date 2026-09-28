@@ -38,6 +38,7 @@
     <conv:IndentToMarginConverter x:Key="IndentMargin" />
     <conv:SymbolNameConverter x:Key="SymbolName" />
     <conv:StoryboardIconConverter x:Key="StoryboardIcon" />
+    <conv:StatusBrushConverter x:Key="StatusBrush" />
 
     <CubicEase x:Key="EaseOut" EasingMode="EaseOut" />
 
@@ -377,7 +378,6 @@
                         </Trigger>
                         <Trigger Property="IsKeyboardFocused" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Fb.InputBrush}" />
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Fb.AccentBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -408,7 +408,6 @@
                         </Trigger>
                         <Trigger Property="IsKeyboardFocused" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Fb.InputBrush}" />
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Fb.AccentBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

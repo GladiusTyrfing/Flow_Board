@@ -87,8 +87,11 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         Board.Mode = snap.Mode;
         Board.Shots.Clear();
         foreach (var s in snap.Shots) Board.Shots.Add(s);
+        Board.Aspect = snap.Aspect;
         OnPropertyChanged(nameof(IsAnimation));
         OnPropertyChanged(nameof(ShotWord));
+        OnPropertyChanged(nameof(AspectRatio));
+        OnPropertyChanged(nameof(FrameHeight));
     }
 
     // ---------- name ----------
@@ -166,17 +169,33 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
 
     // ---------- frame image ----------
 
+    public double AspectRatio => Storyboard.ParseAspect(Board.Aspect);
+
+    /// <summary>Frame height for the 276 px wide shot columns.</summary>
+    public double FrameHeight => Math.Clamp(276 / AspectRatio, 110, 420);
+
+    public string[] AspectChoices => Storyboard.AspectChoices;
+    public string[] Statuses => Shot.Statuses;
+
+    [RelayCommand]
+    private void SetAspect(string aspect)
+    {
+        Checkpoint();
+        Board.Aspect = aspect;
+        OnPropertyChanged(nameof(AspectRatio));
+        OnPropertyChanged(nameof(FrameHeight));
+    }
+
+    [RelayCommand]
+    private void ToggleFramesOnly() => Board.FramesOnly = !Board.FramesOnly;
+
     [RelayCommand]
     private void PickImage(Shot shot)
     {
         try
         {
             var rel = MediaStore.PickImage(Board.Id);
-            if (rel == null) return;
-            Checkpoint();
-            shot.ImagePath = rel;
-            shot.SketchPath = null;
-            shot.SketchBackgroundPath = null;
+            if (rel != null) SetNewImage(shot, rel);
         }
         catch (Exception ex)
         {
@@ -194,10 +213,7 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
             return;
         }
 
-        Checkpoint();
-        shot.ImagePath = rel;
-        shot.SketchPath = null;
-        shot.SketchBackgroundPath = null;
+        SetNewImage(shot, rel);
     }
 
     public void DropImage(Shot shot, string file)
@@ -205,10 +221,7 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         if (!MediaStore.IsImageFile(file)) return;
         try
         {
-            Checkpoint();
-            shot.ImagePath = MediaStore.ImportFile(file, Board.Id);
-            shot.SketchPath = null;
-            shot.SketchBackgroundPath = null;
+            SetNewImage(shot, MediaStore.ImportFile(file, Board.Id));
         }
         catch (Exception ex)
         {
@@ -216,13 +229,82 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         }
     }
 
+    /// <summary>A new picture goes in straight away, then the crop dialog opens (crop, or keep the whole image).</summary>
+    private void SetNewImage(Shot shot, string rel)
+    {
+        Checkpoint();
+        shot.ImagePath = rel;
+        shot.OriginalImagePath = rel;
+        shot.SketchPath = null;
+        shot.SketchBackgroundPath = null;
+        shot.ImageFit = false;
+        shot.CropX = shot.CropY = shot.CropW = shot.CropH = 0;
+        CropImage(shot);
+    }
+
+    [RelayCommand]
+    private void CropImage(Shot shot)
+    {
+        var source = shot.OriginalImagePath ?? shot.ImagePath;
+        if (source == null) return;
+        System.Windows.Rect? previous = shot.CropW > 0 ? new System.Windows.Rect(shot.CropX, shot.CropY, shot.CropW, shot.CropH) : null;
+        Main.ShowDialog(new ImageCropViewModel(source, Board.Id, AspectRatio, previous, r =>
+        {
+            Checkpoint();
+            shot.OriginalImagePath = r.OriginalPath;
+            shot.ImagePath = r.ImagePath;
+            shot.ImageFit = r.Fit;
+            (shot.CropX, shot.CropY, shot.CropW, shot.CropH) = r.Fit ? (0d, 0d, 0d, 0d) : (r.Crop.X, r.Crop.Y, r.Crop.Width, r.Crop.Height);
+            shot.SketchPath = null;
+            shot.SketchBackgroundPath = null;
+        }, $"Frame {shot.Number}: crop or fit"));
+    }
+
+    [RelayCommand]
+    private void ToggleFit(Shot shot)
+    {
+        Checkpoint();
+        shot.ImageFit = !shot.ImageFit;
+    }
+
     [RelayCommand]
     private void ClearImage(Shot shot)
     {
         Checkpoint();
         shot.ImagePath = null;
+        shot.OriginalImagePath = null;
         shot.SketchPath = null;
         shot.SketchBackgroundPath = null;
+        shot.ImageFit = false;
+    }
+
+    /// <summary>Pick several images at once: one new shot per image, in file order.</summary>
+    [RelayCommand]
+    private void ImportImagesAsShots()
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = MediaStore.ImageFilter, Multiselect = true, Title = "Import images as shots" };
+        if (dlg.ShowDialog() != true || dlg.FileNames.Length == 0) return;
+        Checkpoint();
+        foreach (var f in dlg.FileNames.OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var rel = MediaStore.ImportFile(f, Board.Id);
+                Board.Shots.Add(new Shot { Title = Path.GetFileNameWithoutExtension(f), ImagePath = rel, OriginalImagePath = rel });
+            }
+            catch (Exception ex)
+            {
+                Main.ShowToast($"Couldn't add {Path.GetFileName(f)}: {ex.Message}", isError: true);
+            }
+        }
+
+        OnPropertyChanged(nameof(Summary));
+    }
+
+    [RelayCommand]
+    private void SetStatus(object[] args)
+    {
+        if (args is [Shot s, string status]) s.Status = status == "None" ? string.Empty : status;
     }
 
     [RelayCommand]
@@ -239,6 +321,8 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
     {
         Checkpoint();
         shot.ImagePath = pngRelative;
+        shot.OriginalImagePath = null;
+        shot.ImageFit = false;
         shot.SketchPath = inkRelative;
         shot.SketchBackgroundPath = backgroundRelative;
     }
@@ -349,6 +433,31 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         catch (Exception ex)
         {
             Main.ShowToast($"Couldn't start recording: {ex.Message}", isError: true);
+        }
+    }
+
+    /// <summary>Uses an audio file from the PC as the frame's voice line.</summary>
+    [RelayCommand]
+    private void ImportVoice(Shot shot)
+    {
+        var file = MediaStore.PickAudio(multiple: false).FirstOrDefault();
+        if (file == null) return;
+        try
+        {
+            var rel = MediaStore.ImportFile(file, Board.Id);
+            var seconds = MediaStore.AudioSeconds(AppPaths.ToFull(rel));
+            Checkpoint();
+            shot.VoiceNote = new Attachment
+            {
+                Kind = AttachmentKind.Voice, Name = Path.GetFileName(file), RelativePath = rel,
+                Size = new FileInfo(AppPaths.ToFull(rel)).Length, DurationSeconds = seconds,
+            };
+            if (shot.DurationSeconds < seconds) shot.DurationSeconds = Math.Ceiling(seconds * 2) / 2;
+            OnPropertyChanged(nameof(Summary));
+        }
+        catch (Exception ex)
+        {
+            Main.ShowToast($"Couldn't add the audio: {ex.Message}", isError: true);
         }
     }
 

@@ -18,6 +18,10 @@ public enum CanvasTool
     Sticky,
     Text,
     Connector,
+    Line,
+    Arrow,
+    Pen,
+    Frame,
 }
 
 /// <summary>Infinite canvas for flowcharts, mind maps and mood boards.</summary>
@@ -58,7 +62,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
     public bool HasEdgeSelection => Doc.Edges.Any(e => e.IsSelected);
     public bool HasSelection => HasNodeSelection || HasEdgeSelection;
     public string ZoomText => $"{Math.Round(Doc.Zoom * 100)}%";
-    public bool IsEmpty => Doc.Nodes.Count == 0;
+    public bool IsEmpty => Doc.Nodes.Count == 0 && Doc.Edges.Count == 0;
 
     // ================= wiring =================
 
@@ -102,6 +106,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
     private void OnEdgesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         if (e.NewItems != null) foreach (CanvasEdge edge in e.NewItems) UpdateEdge(edge);
+        OnPropertyChanged(nameof(IsEmpty));
         RaiseSelection();
     }
 
@@ -140,18 +145,24 @@ public sealed partial class CanvasViewModel : DocumentViewModel
 
     public void UpdateEdge(CanvasEdge edge)
     {
-        if (FindNode(edge.FromId) is not { } a || FindNode(edge.ToId) is not { } b)
+        Box? a = edge.IsFreeFrom ? new Box(edge.FromX, edge.FromY, 0, 0) : FindNode(edge.FromId)?.Bounds;
+        Box? b = edge.IsFreeTo ? new Box(edge.ToX, edge.ToY, 0, 0) : FindNode(edge.ToId)?.Bounds;
+        if (a == null || b == null)
         {
             edge.PathData = string.Empty;
             edge.ArrowData = string.Empty;
             return;
         }
 
-        var shape = CanvasGeometry.Route(a.Bounds, b.Bounds, edge.Style, edge.Arrow);
+        var shape = CanvasGeometry.Route(a.Value, b.Value, edge.Style, edge.Arrow, edge.StartArrow, edge.Thickness);
         edge.PathData = shape.Path;
         edge.ArrowData = shape.Arrow;
         edge.LabelX = shape.LabelX;
         edge.LabelY = shape.LabelY;
+        edge.StartX = shape.X1;
+        edge.StartY = shape.Y1;
+        edge.EndX = shape.X2;
+        edge.EndY = shape.Y2;
     }
 
     public void UpdateAllEdges()
@@ -205,6 +216,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
         NodeShape.Text => (200, 40),
         NodeShape.Image => (260, 180),
         NodeShape.Card => (240, 96),
+        NodeShape.Frame => (480, 320),
         _ => (170, 70),
     };
 
@@ -214,6 +226,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
         NodeShape.Diamond => "#F97316",
         NodeShape.Ellipse => "#10B981",
         NodeShape.Text => "#00000000",
+        NodeShape.Frame => "#64748B",
         _ => "#8B5CF6",
     };
 
@@ -231,12 +244,227 @@ public sealed partial class CanvasViewModel : DocumentViewModel
         };
         Doc.Nodes.Add(node);
         SelectOnly(node);
-        if (edit && shape is not (NodeShape.Image or NodeShape.Card)) node.IsEditing = true;
+        if (shape == NodeShape.Frame)
+        {
+            node.Text = string.IsNullOrEmpty(text) ? "Section" : text;
+            node.Z = Doc.Nodes.Count == 1 ? 0 : Doc.Nodes.Min(n => n.Z) - 1; // frames sit behind everything
+        }
+
+        if (edit && shape is not (NodeShape.Image or NodeShape.Card or NodeShape.Ink)) node.IsEditing = true;
         return node;
     }
 
+    // ================= pen, lines, frames =================
+
+    [ObservableProperty] private string _penColor = "#F97316";
+    [ObservableProperty] private double _penSize = 3;
+
+    [RelayCommand] private void SetPenColor(string hex) => PenColor = hex;
+
+    [RelayCommand]
+    private void SetPenSize(string size)
+    {
+        if (double.TryParse(size, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var v)) PenSize = v;
+    }
+
+    /// <summary>Turns a freehand stroke (world points) into an ink shape that can be moved and resized.</summary>
+    public CanvasNode? AddInk(IReadOnlyList<(double X, double Y)> points)
+    {
+        if (points.Count < 2) return null;
+        var pad = PenSize / 2 + 1;
+        double minX = points.Min(p => p.X) - pad, minY = points.Min(p => p.Y) - pad;
+        double maxX = points.Max(p => p.X) + pad, maxY = points.Max(p => p.Y) + pad;
+        var sb = new System.Text.StringBuilder();
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        sb.Append(inv, $"M {points[0].X - minX:0.#},{points[0].Y - minY:0.#}");
+        foreach (var p in points.Skip(1)) sb.Append(inv, $" L {p.X - minX:0.#},{p.Y - minY:0.#}");
+        Checkpoint();
+        var node = new CanvasNode
+        {
+            Shape = NodeShape.Ink, X = minX, Y = minY, Width = Math.Max(4, maxX - minX), Height = Math.Max(4, maxY - minY),
+            PathData = sb.ToString(), Fill = PenColor, StrokeWidth = PenSize, Z = NextZ(),
+            InkWidth = Math.Max(4, maxX - minX), InkHeight = Math.Max(4, maxY - minY),
+        };
+        Doc.Nodes.Add(node);
+        return node;
+    }
+
+    /// <summary>A line or arrow drawn on its own. Ends dropped on a shape stick to it.</summary>
+    public CanvasEdge AddFreeLine(double x1, double y1, CanvasNode? fromNode, double x2, double y2, CanvasNode? toNode, bool arrow)
+    {
+        Checkpoint();
+        var edge = new CanvasEdge
+        {
+            FromId = fromNode?.Id ?? Guid.Empty, ToId = toNode?.Id ?? Guid.Empty,
+            FromX = x1, FromY = y1, ToX = x2, ToY = y2,
+            Arrow = arrow, Style = fromNode != null && toNode != null ? EdgeStyle.Curved : EdgeStyle.Straight,
+            Color = _lastEdgeColor ?? "#98A2B3", Thickness = 2.5,
+        };
+        Doc.Edges.Add(edge);
+        foreach (var n in Doc.Nodes) n.IsSelected = false;
+        foreach (var e in Doc.Edges) e.IsSelected = e == edge;
+        RaiseSelection();
+        return edge;
+    }
+
+    private string? _lastEdgeColor;
+
+    /// <summary>Moves the free ends of the selected lines (lines attached to shapes follow their shapes).</summary>
+    public void MoveFreeEdges(IEnumerable<CanvasEdge> edges, double dx, double dy)
+    {
+        foreach (var e in edges)
+        {
+            if (e.IsFreeFrom) { e.FromX += dx; e.FromY += dy; }
+            if (e.IsFreeTo) { e.ToX += dx; e.ToY += dy; }
+            UpdateEdge(e);
+        }
+    }
+
+    /// <summary>Drags one end of a line; dropping it on a shape attaches it, elsewhere it becomes free.</summary>
+    public void SetEdgeEnd(CanvasEdge e, bool from, double x, double y, CanvasNode? attach)
+    {
+        if (from)
+        {
+            e.FromId = attach?.Id ?? Guid.Empty;
+            e.FromX = x;
+            e.FromY = y;
+        }
+        else
+        {
+            e.ToId = attach?.Id ?? Guid.Empty;
+            e.ToX = x;
+            e.ToY = y;
+        }
+
+        UpdateEdge(e);
+    }
+
+    /// <summary>Shapes that lie completely inside a frame move with it.</summary>
+    public IEnumerable<CanvasNode> ContentsOf(CanvasNode frame)
+    {
+        var b = frame.Bounds;
+        return Doc.Nodes.Where(n => n != frame && n.X >= b.X && n.Y >= b.Y && n.X + n.Width <= b.Right && n.Y + n.Height <= b.Bottom);
+    }
+
+    /// <summary>Edges drawn freely inside a moving selection move along.</summary>
+    public IEnumerable<CanvasEdge> FreeEdgesWithin(Box b) =>
+        Doc.Edges.Where(e => (e.IsFreeFrom || e.IsFreeTo)
+                             && (!e.IsFreeFrom || b.Contains(e.FromX, e.FromY))
+                             && (!e.IsFreeTo || b.Contains(e.ToX, e.ToY)));
+
+    // ================= align & distribute =================
+
+    [RelayCommand]
+    private void Align(string mode)
+    {
+        var nodes = SelectedNodes.ToList();
+        if (nodes.Count < 2) return;
+        Checkpoint();
+        double left = nodes.Min(n => n.X), right = nodes.Max(n => n.X + n.Width);
+        double top = nodes.Min(n => n.Y), bottom = nodes.Max(n => n.Y + n.Height);
+        foreach (var n in nodes)
+        {
+            switch (mode)
+            {
+                case "left": n.X = left; break;
+                case "center": n.X = (left + right) / 2 - n.Width / 2; break;
+                case "right": n.X = right - n.Width; break;
+                case "top": n.Y = top; break;
+                case "middle": n.Y = (top + bottom) / 2 - n.Height / 2; break;
+                case "bottom": n.Y = bottom - n.Height; break;
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void Distribute(string axis)
+    {
+        var nodes = SelectedNodes.ToList();
+        if (nodes.Count < 3) return;
+        Checkpoint();
+        if (axis == "h")
+        {
+            nodes = nodes.OrderBy(n => n.X).ToList();
+            var gap = (nodes[^1].X + nodes[^1].Width - nodes[0].X - nodes.Sum(n => n.Width)) / (nodes.Count - 1);
+            var x = nodes[0].X;
+            foreach (var n in nodes) { n.X = x; x += n.Width + gap; }
+        }
+        else
+        {
+            nodes = nodes.OrderBy(n => n.Y).ToList();
+            var gap = (nodes[^1].Y + nodes[^1].Height - nodes[0].Y - nodes.Sum(n => n.Height)) / (nodes.Count - 1);
+            var y = nodes[0].Y;
+            foreach (var n in nodes) { n.Y = y; y += n.Height + gap; }
+        }
+    }
+
+    [RelayCommand]
+    private void MatchSize()
+    {
+        var nodes = SelectedNodes.ToList();
+        if (nodes.Count < 2) return;
+        Checkpoint();
+        var first = nodes[0];
+        foreach (var n in nodes.Skip(1)) { n.Width = first.Width; n.Height = first.Height; }
+    }
+
+    [RelayCommand]
+    private void SetThickness(string value)
+    {
+        var edges = SelectedEdges.ToList();
+        if (edges.Count == 0 || !double.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var t)) return;
+        Checkpoint();
+        foreach (var e in edges)
+        {
+            e.Thickness = t;
+            UpdateEdge(e);
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleStartArrow()
+    {
+        var edges = SelectedEdges.ToList();
+        if (edges.Count == 0) return;
+        Checkpoint();
+        var on = !edges[0].StartArrow;
+        foreach (var e in edges)
+        {
+            e.StartArrow = on;
+            UpdateEdge(e);
+        }
+    }
+
+    // ================= right-click on empty space =================
+
+    /// <summary>World point of the last right-click on empty canvas.</summary>
+    public (double X, double Y) ContextPoint { get; set; }
+
+    [RelayCommand]
+    private void AddShapeAtContext(NodeShape shape) => AddNodeAt(shape, ContextPoint.X, ContextPoint.Y);
+
+    [RelayCommand]
+    private void PasteAtContext()
+    {
+        if (!PasteImageFromClipboard(ContextPoint)) Paste();
+    }
+
+    [RelayCommand]
+    private void CropNode(CanvasNode? node)
+    {
+        node ??= SelectedNodes.FirstOrDefault(n => n.Shape == NodeShape.Image);
+        if (node?.ImagePath is not { } path) return;
+        Main.ShowDialog(new ImageCropViewModel(path, Doc.Id, 0, null, r =>
+        {
+            Checkpoint();
+            node.ImagePath = r.ImagePath;
+            if (Converters.ImageLoader.Load(node.ImageFullPath, 0) is { } bmp && bmp.PixelWidth > 0)
+                node.Height = Math.Max(Grid, node.Width * bmp.PixelHeight / bmp.PixelWidth);
+        }));
+    }
+
     private string LastFill(NodeShape shape) =>
-        shape is NodeShape.Sticky or NodeShape.Text ? DefaultFill(shape) : (_lastFill ?? DefaultFill(shape));
+        shape is NodeShape.Sticky or NodeShape.Text or NodeShape.Frame ? DefaultFill(shape) : (_lastFill ?? DefaultFill(shape));
 
     private string? _lastFill;
 
@@ -356,7 +584,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
 
     public void BeginEdit(CanvasNode node)
     {
-        if (node.Shape is NodeShape.Image or NodeShape.Card) return;
+        if (node.Shape is NodeShape.Image or NodeShape.Card or NodeShape.Ink) return;
         Checkpoint();
         SelectOnly(node);
         node.IsEditing = true;
@@ -455,6 +683,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
     private void SetFill(string hex)
     {
         var nodes = SelectedNodes.ToList();
+        if (Tool == CanvasTool.Pen) PenColor = hex;
         _lastFill = hex;
         if (nodes.Count == 0) return;
         Checkpoint();
@@ -464,7 +693,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
     [RelayCommand]
     private void SetShape(NodeShape shape)
     {
-        var nodes = SelectedNodes.Where(n => n.Shape is not (NodeShape.Image or NodeShape.Card)).ToList();
+        var nodes = SelectedNodes.Where(n => n.Shape is not (NodeShape.Image or NodeShape.Card or NodeShape.Ink or NodeShape.Frame)).ToList();
         if (nodes.Count == 0) return;
         Checkpoint();
         foreach (var n in nodes)
@@ -580,6 +809,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
     [RelayCommand]
     private void SetEdgeColor(string hex)
     {
+        _lastEdgeColor = hex;
         var edges = SelectedEdges.ToList();
         if (edges.Count == 0) return;
         Checkpoint();
@@ -669,7 +899,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
     [RelayCommand]
     public void ZoomToFit()
     {
-        if (Doc.Nodes.Count == 0)
+        if (IsEmpty)
         {
             Doc.Zoom = 1;
             Doc.OffsetX = ViewportWidth / 2;
@@ -686,11 +916,19 @@ public sealed partial class CanvasViewModel : DocumentViewModel
 
     public Box ContentBounds(double pad)
     {
-        if (Doc.Nodes.Count == 0) return new Box(0, 0, 1, 1);
-        var l = Doc.Nodes.Min(n => n.X) - pad;
-        var t = Doc.Nodes.Min(n => n.Y) - pad;
-        var r = Doc.Nodes.Max(n => n.X + n.Width) + pad;
-        var btm = Doc.Nodes.Max(n => n.Y + n.Height) + pad;
+        if (Doc.Nodes.Count == 0 && Doc.Edges.Count == 0) return new Box(0, 0, 1, 1);
+        var l = Doc.Nodes.Count == 0 ? double.MaxValue : Doc.Nodes.Min(n => n.X) - pad;
+        var t = Doc.Nodes.Count == 0 ? double.MaxValue : Doc.Nodes.Min(n => n.Y) - pad;
+        var r = Doc.Nodes.Count == 0 ? double.MinValue : Doc.Nodes.Max(n => n.X + n.Width) + pad;
+        var btm = Doc.Nodes.Count == 0 ? double.MinValue : Doc.Nodes.Max(n => n.Y + n.Height) + pad;
+        foreach (var e in Doc.Edges.Where(e => e.IsFreeFrom || e.IsFreeTo))
+        {
+            l = Math.Min(l, Math.Min(e.StartX, e.EndX) - pad);
+            t = Math.Min(t, Math.Min(e.StartY, e.EndY) - pad);
+            r = Math.Max(r, Math.Max(e.StartX, e.EndX) + pad);
+            btm = Math.Max(btm, Math.Max(e.StartY, e.EndY) + pad);
+        }
+
         return new Box(l, t, r - l, btm - t);
     }
 

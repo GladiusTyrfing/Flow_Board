@@ -501,10 +501,13 @@ public sealed partial class CardDetailViewModel : DialogViewModel
                 var dest = AppPaths.UniquePath(AppPaths.CardFolder(Card.Id), Path.GetFileName(src));
                 File.Copy(src, dest);
                 var ext = Path.GetExtension(src).ToLowerInvariant();
-                var kind = Attachment.ImageExtensions.Contains(ext) ? AttachmentKind.Image : AttachmentKind.File;
+                var kind = Attachment.ImageExtensions.Contains(ext) ? AttachmentKind.Image
+                    : MediaStore.IsAudioFile(dest) ? AttachmentKind.Voice
+                    : AttachmentKind.File;
                 var att = new Attachment
                 {
                     Kind = kind, Name = Path.GetFileName(dest), RelativePath = AppPaths.ToRelative(dest), Size = new FileInfo(dest).Length,
+                    DurationSeconds = kind == AttachmentKind.Voice ? MediaStore.AudioSeconds(dest) : 0,
                 };
                 Card.Attachments.Add(att);
                 if (kind == AttachmentKind.Image && Card.CoverAttachmentId == null && string.IsNullOrEmpty(Card.CoverColor))
@@ -724,6 +727,14 @@ public sealed partial class CardDetailViewModel : DialogViewModel
     }
 
     [RelayCommand] private Task CancelRecording() => Recorder.CancelAsync();
+
+    /// <summary>Adds audio files from the PC as voice notes.</summary>
+    [RelayCommand]
+    private void ImportVoice()
+    {
+        var files = MediaStore.PickAudio(multiple: true);
+        if (files.Length > 0) AddFilesFromPaths(files);
+    }
 
     [RelayCommand]
     private void TogglePlay(Attachment a)

@@ -16,7 +16,7 @@ public readonly record struct Box(double X, double Y, double W, double H)
 }
 
 /// <summary>Path (WPF path mini-language), arrow head and label position for a connector.</summary>
-public sealed record EdgeShape(string Path, string Arrow, double LabelX, double LabelY);
+public sealed record EdgeShape(string Path, string Arrow, double LabelX, double LabelY, double X1 = 0, double Y1 = 0, double X2 = 0, double Y2 = 0);
 
 /// <summary>Connector routing between two boxes (pure math, no WPF so it can be unit tested).</summary>
 public static class CanvasGeometry
@@ -39,18 +39,22 @@ public static class CanvasGeometry
         return (a.CenterX, t > 0 ? a.Bottom : a.Y, 0, t, b.CenterX, t > 0 ? b.Y : b.Bottom, 0, -t);
     }
 
-    public static EdgeShape Route(Box a, Box b, EdgeStyle style, bool arrow)
+    public static EdgeShape Route(Box a, Box b, EdgeStyle style, bool arrow, bool startArrow = false, double thickness = 2)
     {
         var (x1, y1, nx1, ny1, x2, y2, nx2, ny2) = Anchors(a, b);
+        // A free end (a 0-size box) is the exact point.
+        if (a.W <= 0.01 && a.H <= 0.01) (x1, y1) = (a.X, a.Y);
+        if (b.W <= 0.01 && b.H <= 0.01) (x2, y2) = (b.X, b.Y);
         var sb = new StringBuilder();
         sb.Append("M ").Append(F(x1)).Append(',').Append(F(y1)).Append(' ');
-        double dirX, dirY, lx, ly;
+        double dirX, dirY, lx, ly, sdx, sdy;
         switch (style)
         {
             case EdgeStyle.Straight:
                 sb.Append("L ").Append(F(x2)).Append(',').Append(F(y2));
                 dirX = x2 - x1;
                 dirY = y2 - y1;
+                (sdx, sdy) = (x1 - x2, y1 - y2);
                 lx = (x1 + x2) / 2;
                 ly = (y1 + y2) / 2;
                 break;
@@ -64,6 +68,7 @@ public static class CanvasGeometry
                       .Append("L ").Append(F(x2)).Append(',').Append(F(y2));
                     dirX = x2 - mx;
                     dirY = 0;
+                    (sdx, sdy) = (x1 - mx, 0);
                     lx = mx;
                     ly = (y1 + y2) / 2;
                 }
@@ -75,6 +80,7 @@ public static class CanvasGeometry
                       .Append("L ").Append(F(x2)).Append(',').Append(F(y2));
                     dirX = 0;
                     dirY = y2 - my;
+                    (sdx, sdy) = (0, y1 - my);
                     lx = (x1 + x2) / 2;
                     ly = my;
                 }
@@ -85,9 +91,21 @@ public static class CanvasGeometry
                     dirY = -ny2;
                 }
 
+                if (Math.Abs(sdx) + Math.Abs(sdy) < 0.01)
+                {
+                    sdx = -nx1;
+                    sdy = -ny1;
+                }
+
                 break;
 
             default:
+                if (a.W <= 0.01 && b.W <= 0.01)
+                {
+                    // Two free points: a gentle curve would have no direction to follow, so draw it straight.
+                    goto case EdgeStyle.Straight;
+                }
+
                 var dist = Math.Sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
                 var k = Math.Max(30, dist * 0.45);
                 double c1x = x1 + nx1 * k, c1y = y1 + ny1 * k, c2x = x2 + nx2 * k, c2y = y2 + ny2 * k;
@@ -96,12 +114,16 @@ public static class CanvasGeometry
                   .Append(F(x2)).Append(',').Append(F(y2));
                 dirX = x2 - c2x;
                 dirY = y2 - c2y;
+                (sdx, sdy) = (x1 - c1x, y1 - c1y);
                 lx = 0.125 * x1 + 0.375 * c1x + 0.375 * c2x + 0.125 * x2;
                 ly = 0.125 * y1 + 0.375 * c1y + 0.375 * c2y + 0.125 * y2;
                 break;
         }
 
-        return new EdgeShape(sb.ToString(), arrow ? ArrowHead(x2, y2, dirX, dirY) : string.Empty, lx, ly);
+        var size = 8 + thickness * 1.6;
+        var heads = (arrow ? ArrowHead(x2, y2, dirX, dirY, size) : string.Empty)
+                    + (startArrow ? " " + ArrowHead(x1, y1, sdx, sdy, size) : string.Empty);
+        return new EdgeShape(sb.ToString(), heads.Trim(), lx, ly, x1, y1, x2, y2);
     }
 
     /// <summary>Filled triangle with its tip at (x, y) pointing along (dx, dy).</summary>
