@@ -105,6 +105,18 @@
                             <TextBlock Text="Style" Margin="6,0,0,0" Visibility="{Binding Main.IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
                         </StackPanel>
                     </Button>
+                    <Button Style="{StaticResource Fb.HeaderButton}" Command="{Binding ToggleAllCollapsedCommand}" ToolTip="Collapse every shot to its title and picture, or expand them all">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding AllCollapsed, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+                                <ui:SymbolIcon Symbol="ArrowMinimizeVertical24" FontSize="16" />
+                                <TextBlock Text="Collapse all" Margin="6,0,0,0" Visibility="{Binding Main.IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding AllCollapsed, Converter={StaticResource BoolToVis}}">
+                                <ui:SymbolIcon Symbol="ArrowMaximizeVertical24" FontSize="16" />
+                                <TextBlock Text="Expand all" Margin="6,0,0,0" Visibility="{Binding Main.IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
+                            </StackPanel>
+                        </Grid>
+                    </Button>
                     <ToggleButton Style="{StaticResource Fb.HeaderToggle}" IsChecked="{Binding Board.FramesOnly}" ToolTip="Show only the frames (hide the notes)">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="SlideMultiple24" FontSize="16" />
@@ -204,6 +216,7 @@
                                                     <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
                                                 <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{DynamicResource Fb.AccentGradientBrush}" Padding="8,3" VerticalAlignment="Center"
                                                         ToolTip="Drag the column to reorder" Cursor="SizeAll">
@@ -284,7 +297,11 @@
                                                         Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.OpenShotCardCommand}" CommandParameter="{Binding}">
                                                     <ui:SymbolIcon Symbol="TaskListLtr24" FontSize="15" Foreground="{DynamicResource Fb.AccentTextBrush}" />
                                                 </Button>
-                                                <Button Grid.Column="4" Style="{StaticResource Fb.IconButton}" Width="28" Height="28" h:Behaviors.ClickOpensContextMenu="True" ToolTip="Shot menu">
+                                                <Button Grid.Column="4" Style="{StaticResource Fb.IconButton}" Width="28" Height="28" ToolTip="Collapse / expand this shot"
+                                                        Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.ToggleShotCollapsedCommand}" CommandParameter="{Binding}">
+                                                    <ui:SymbolIcon x:Name="CollapseIcon" Symbol="ChevronUp24" FontSize="14" />
+                                                </Button>
+                                                <Button Grid.Column="5" Style="{StaticResource Fb.IconButton}" Width="28" Height="28" h:Behaviors.ClickOpensContextMenu="True" ToolTip="Shot menu">
                                                     <ui:SymbolIcon Symbol="MoreVertical24" FontSize="15" />
                                                     <Button.ContextMenu>
                                                         <ContextMenu>
@@ -381,6 +398,7 @@
                                                         </Border>
                                                     </Grid>
     
+                                                    <Grid x:Name="Details">
                                                     <StackPanel Visibility="{Binding DataContext.Board.FramesOnly, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
                                                     <!-- Scene + date -->
                                                     <Grid Margin="0,10,0,0">
@@ -603,12 +621,19 @@
                                                         </DockPanel>
                                                     </StackPanel>
                                                     </StackPanel>
+                                                    </Grid>
                                                 </StackPanel>
                                             </ScrollViewer>
                                         </DockPanel>
                                     </Border>
                                 </Grid>
                                 <DataTemplate.Triggers>
+                                    <!-- Collapsed: only the title row and the picture -->
+                                    <DataTrigger Binding="{Binding IsCollapsed}" Value="True">
+                                        <Setter TargetName="Details" Property="Visibility" Value="Collapsed" />
+                                        <Setter TargetName="Card" Property="VerticalAlignment" Value="Top" />
+                                        <Setter TargetName="CollapseIcon" Property="Symbol" Value="ChevronDown24" />
+                                    </DataTrigger>
                                     <DataTrigger Binding="{Binding Number}" Value="1">
                                         <Setter TargetName="Connector" Property="Visibility" Value="Hidden" />
                                         <Setter TargetName="ConnectorDot" Property="Visibility" Value="Hidden" />

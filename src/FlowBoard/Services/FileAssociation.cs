@@ -59,7 +59,7 @@ public static class FileAssociation
     {
         try
         {
-            var target = Path.Combine(AppPaths.AppDir, "flowboard-project-v2.ico");
+            var target = Path.Combine(AppPaths.AppDir, "flowboard-project-v3.ico");
             var info = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/project.ico"));
             if (info == null) return null;
             using var src = info.Stream;

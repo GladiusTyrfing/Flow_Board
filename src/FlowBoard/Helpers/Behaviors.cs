@@ -37,6 +37,12 @@ public static class Behaviors
         {
             fe.SetValue(ClipHookedProperty, true);
             fe.SizeChanged += (_, _) => UpdateClip(fe);
+            // An area that starts hidden (e.g. the board area while Home is showing) may never get a
+            // SizeChanged when it appears: refresh the clip once it is laid out.
+            fe.IsVisibleChanged += (_, _) =>
+            {
+                if (fe.IsVisible) fe.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () => UpdateClip(fe));
+            };
         }
 
         UpdateClip(fe);
@@ -44,6 +50,13 @@ public static class Behaviors
 
     private static void UpdateClip(FrameworkElement fe)
     {
+        if (fe.ActualWidth <= 0 || fe.ActualHeight <= 0)
+        {
+            // Not laid out yet: a zero-size clip would hide everything, so don't clip until there is a size.
+            fe.Clip = null;
+            return;
+        }
+
         var r = GetClipRadius(fe);
         // Radius 0 still clips (sharp corners) so content never spills outside rounded parents.
         fe.Clip = new RectangleGeometry(new Rect(0, 0, fe.ActualWidth, fe.ActualHeight), r, r);

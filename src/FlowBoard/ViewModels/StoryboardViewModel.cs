@@ -19,6 +19,27 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         RefreshCardLinks();
     }
 
+    // ---------- expand / collapse ----------
+
+    /// <summary>True when every shot is collapsed (the header button then offers "Expand all").</summary>
+    public bool AllCollapsed => Board.Shots.Count > 0 && Board.Shots.All(s => s.IsCollapsed);
+
+    [RelayCommand]
+    private void ToggleShotCollapsed(Shot? shot)
+    {
+        if (shot == null) return;
+        shot.IsCollapsed = !shot.IsCollapsed;
+        OnPropertyChanged(nameof(AllCollapsed));
+    }
+
+    [RelayCommand]
+    private void ToggleAllCollapsed()
+    {
+        var collapse = !AllCollapsed;
+        foreach (var s in Board.Shots) s.IsCollapsed = collapse;
+        OnPropertyChanged(nameof(AllCollapsed));
+    }
+
     // ---------- links to cards (Done follows both ways) ----------
 
     public void RefreshCardLinks()
@@ -113,6 +134,7 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
 
     private void OnShotsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        OnPropertyChanged(nameof(AllCollapsed));
         Renumber();
         OnPropertyChanged(nameof(Summary));
     }

@@ -138,6 +138,9 @@ public partial class Shot : ObservableObject
     partial void OnVoiceNoteChanged(Attachment? value) => OnPropertyChanged(nameof(HasVoice));
     partial void OnStatusChanged(string value) => ModelEvents.RaiseShotStatus(this);
 
+    /// <summary>Collapsed shots show only their title row and picture.</summary>
+    [ObservableProperty] private bool _isCollapsed;
+
     /// <summary>How many cards link to this shot (kept up to date by the storyboard view).</summary>
     [ObservableProperty][property: JsonIgnore] private int _linkedCardCount;
 
