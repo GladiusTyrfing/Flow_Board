@@ -3,7 +3,8 @@
                     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                     xmlns:vm="clr-namespace:FlowBoard.ViewModels"
                     xmlns:views="clr-namespace:FlowBoard.Views"
-                    xmlns:h="clr-namespace:FlowBoard.Helpers">
+                    xmlns:h="clr-namespace:FlowBoard.Helpers"
+                    xmlns:c="clr-namespace:FlowBoard.Controls">
 
     <!-- Larger dialogs live in their own views -->
     <DataTemplate DataType="{x:Type vm:CardDetailViewModel}">
@@ -29,6 +30,18 @@
     </DataTemplate>
     <DataTemplate DataType="{x:Type vm:AnimaticViewModel}">
         <views:AnimaticView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:ColorDialogViewModel}">
+        <Border Style="{StaticResource Fb.Dialog}" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <StackPanel>
+                <TextBlock Text="{Binding Title}" Style="{StaticResource Fb.DialogTitle}" Margin="0,0,0,14" />
+                <c:ColorPicker Color="{Binding Color, Mode=TwoWay}" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                    <Button Style="{StaticResource Fb.SubtleButton}" Content="Cancel" Command="{Binding CloseCommand}" Margin="0,0,8,0" />
+                    <Button Style="{StaticResource Fb.AccentButton}" Content="Use color" Command="{Binding ApplyCommand}" IsDefault="True" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
     </DataTemplate>
     <DataTemplate DataType="{x:Type vm:ImageCropViewModel}">
         <views:ImageCropView />

@@ -56,6 +56,8 @@ public static class NoteMarkdown
         }
     }
 
+    private static string Md(NoteBlock b) => RichText.ToMarkdown(b.GetSpans());
+
     public static string ToMarkdown(NotePage page, Func<LinkTarget, Guid, string?>? linkTitle = null)
     {
         var sb = new StringBuilder();
@@ -68,17 +70,17 @@ public static class NoteMarkdown
             if (previous != null && !(isList && IsListType(previous.Value))) sb.AppendLine();
             switch (b.Type)
             {
-                case BlockType.Heading1: sb.Append("## ").AppendLine(b.Text); break;
-                case BlockType.Heading2: sb.Append("### ").AppendLine(b.Text); break;
-                case BlockType.Heading3: sb.Append("#### ").AppendLine(b.Text); break;
-                case BlockType.Bullet: sb.Append(pad).Append("- ").AppendLine(b.Text); break;
-                case BlockType.Numbered: sb.Append(pad).Append(b.Number).Append(". ").AppendLine(b.Text); break;
-                case BlockType.Todo: sb.Append(pad).Append(b.IsChecked ? "- [x] " : "- [ ] ").AppendLine(b.Text); break;
+                case BlockType.Heading1: sb.Append("## ").AppendLine(Md(b)); break;
+                case BlockType.Heading2: sb.Append("### ").AppendLine(Md(b)); break;
+                case BlockType.Heading3: sb.Append("#### ").AppendLine(Md(b)); break;
+                case BlockType.Bullet: sb.Append(pad).Append("- ").AppendLine(Md(b)); break;
+                case BlockType.Numbered: sb.Append(pad).Append(b.Number).Append(". ").AppendLine(Md(b)); break;
+                case BlockType.Todo: sb.Append(pad).Append(b.IsChecked ? "- [x] " : "- [ ] ").AppendLine(Md(b)); break;
                 case BlockType.Quote:
-                    foreach (var line in b.Text.Split('\n')) sb.Append("> ").AppendLine(line.TrimEnd('\r'));
+                    foreach (var line in Md(b).Split('\n')) sb.Append("> ").AppendLine(line.TrimEnd('\r'));
                     break;
                 case BlockType.Callout:
-                    foreach (var line in b.Text.Split('\n')) sb.Append("> 💡 ").AppendLine(line.TrimEnd('\r'));
+                    foreach (var line in Md(b).Split('\n')) sb.Append("> 💡 ").AppendLine(line.TrimEnd('\r'));
                     break;
                 case BlockType.Code: sb.AppendLine("```").AppendLine(b.Text).AppendLine("```"); break;
                 case BlockType.Divider: sb.AppendLine("---"); break;
@@ -87,7 +89,7 @@ public static class NoteMarkdown
                     var title = b.LinkId is { } id ? linkTitle?.Invoke(b.LinkKind, id) ?? b.Text : b.Text;
                     sb.Append("→ ").Append(title).Append(" (").Append(b.LinkKind).AppendLine(")");
                     break;
-                default: sb.Append(pad).AppendLine(b.Text); break;
+                default: sb.Append(pad).AppendLine(Md(b)); break;
             }
 
             previous = b.Type;

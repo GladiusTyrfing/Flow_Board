@@ -454,6 +454,28 @@
         </Setter>
     </Style>
 
+    <!-- Rich text with no chrome (note blocks). -->
+    <Style x:Key="Fb.BareRichText" TargetType="RichTextBox">
+        <Setter Property="Foreground" Value="{DynamicResource Fb.TextBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource Fb.TextBrush}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource Fb.AccentBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="AcceptsTab" Value="False" />
+        <Setter Property="AcceptsReturn" Value="True" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="FontFamily" Value="{StaticResource Fb.Font}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RichTextBox">
+                    <ScrollViewer x:Name="PART_ContentHost" Focusable="False" Background="{TemplateBinding Background}"
+                                  HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" Padding="{TemplateBinding Padding}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Bordered input with rounded corners. -->
     <Style x:Key="Fb.Input" TargetType="TextBox" BasedOn="{StaticResource Fb.InlineTextBox}">
         <Setter Property="Background" Value="{DynamicResource Fb.InputBrush}" />

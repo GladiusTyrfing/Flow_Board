@@ -284,11 +284,61 @@ public enum LinkTarget
     Note,
 }
 
+/// <summary>A run of text with one formatting (bold, italic, underline, strike, code, color, highlight).</summary>
+public sealed class TextSpan
+{
+    public string Text { get; set; } = string.Empty;
+    public bool Bold { get; set; }
+    public bool Italic { get; set; }
+    public bool Underline { get; set; }
+    public bool Strike { get; set; }
+    public bool Code { get; set; }
+    public string? Color { get; set; }
+    public string? Highlight { get; set; }
+
+    [JsonIgnore] public bool IsPlain => !Bold && !Italic && !Underline && !Strike && !Code && Color == null && Highlight == null;
+
+    public bool SameStyle(TextSpan o) =>
+        Bold == o.Bold && Italic == o.Italic && Underline == o.Underline && Strike == o.Strike && Code == o.Code
+        && Color == o.Color && Highlight == o.Highlight;
+
+    public TextSpan With(string text) => new()
+    {
+        Text = text, Bold = Bold, Italic = Italic, Underline = Underline, Strike = Strike, Code = Code, Color = Color, Highlight = Highlight,
+    };
+}
+
+/// <summary>What a link block points to, resolved when the page opens (not saved).</summary>
+public sealed class LinkPreview
+{
+    public string Title { get; init; } = string.Empty;
+    public string Subtitle { get; init; } = string.Empty;
+    public string Icon { get; init; } = "Link24";
+    /// <summary>Board background spec (for board thumbnails).</summary>
+    public string? Background { get; init; }
+    /// <summary>Full image paths (storyboard frames, canvas images, card cover).</summary>
+    public List<string> Images { get; init; } = [];
+    public bool IsMissing { get; init; }
+}
+
 public partial class NotePage : ObservableObject
 {
     [ObservableProperty] private Guid _id = Guid.NewGuid();
     [ObservableProperty] private string _title = "Untitled page";
     [ObservableProperty] private string _icon = "DocumentText24";
+    /// <summary>Full-width pages use the whole window; otherwise text sits in a comfortable reading column.</summary>
+    [ObservableProperty] private bool _fullWidth = true;
+    /// <summary>Banner image at the top of the page (relative path).</summary>
+    [ObservableProperty] private string? _coverPath;
+
+    [JsonIgnore] public string? CoverFullPath => CoverPath == null ? null : Path.Combine(AppPaths.DataDir, CoverPath);
+    [JsonIgnore] public bool HasCover => CoverPath != null;
+
+    partial void OnCoverPathChanged(string? value)
+    {
+        OnPropertyChanged(nameof(CoverFullPath));
+        OnPropertyChanged(nameof(HasCover));
+    }
     [ObservableProperty] private bool _isStarred;
     [ObservableProperty] private DateTime _createdAt = DateTime.Now;
     [ObservableProperty] private DateTime _updatedAt = DateTime.Now;
@@ -306,10 +356,45 @@ public partial class NoteBlock : ObservableObject
     [ObservableProperty] private LinkTarget _linkKind;
     [ObservableProperty] private Guid? _linkId;
 
+    /// <summary>Formatted text. Null means the block is plain <see cref="Text"/>.</summary>
+    [ObservableProperty] private List<TextSpan>? _spans;
+
     [ObservableProperty][property: JsonIgnore] private int _number = 1;
     [ObservableProperty][property: JsonIgnore] private bool _focusRequested;
+    /// <summary>Bumped whenever the content changes from code (the editor then reloads it).</summary>
+    [ObservableProperty][property: JsonIgnore] private int _contentVersion;
+    [ObservableProperty][property: JsonIgnore] private LinkPreview? _link;
+
+    private bool _fromSpans;
 
     [JsonIgnore] public string? ImageFullPath => ImagePath == null ? null : Path.Combine(AppPaths.DataDir, ImagePath);
+    [JsonIgnore] public bool IsEmpty => Text.Length == 0;
 
     partial void OnImagePathChanged(string? value) => OnPropertyChanged(nameof(ImageFullPath));
+
+    /// <summary>The block's text as formatted spans (a single plain span when it has no formatting).</summary>
+    public List<TextSpan> GetSpans() => Spans is { Count: > 0 } s ? s.Select(x => x.With(x.Text)).ToList() : [new TextSpan { Text = Text }];
+
+    /// <summary>Replaces the content. <paramref name="fromEditor"/> = the change came from the editor itself (no reload).</summary>
+    public void SetSpans(IEnumerable<TextSpan> spans, bool fromEditor = false)
+    {
+        var list = Services.RichText.Normalize(spans);
+        _fromSpans = true;
+        Spans = list.All(s => s.IsPlain) ? null : list;
+        var plain = Services.RichText.PlainText(list);
+        var changed = Text != plain;
+        Text = plain;
+        _fromSpans = false;
+        if (!fromEditor) ContentVersion++;
+        else if (!changed) OnPropertyChanged(nameof(Spans));
+    }
+
+    partial void OnTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsEmpty));
+        if (_fromSpans) return;
+        // Plain text set from code (caption box, undo, tests): formatting no longer matches.
+        if (Spans != null && Services.RichText.PlainText(Spans) != value) Spans = null;
+        ContentVersion++;
+    }
 }

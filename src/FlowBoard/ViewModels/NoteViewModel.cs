@@ -26,6 +26,7 @@ public sealed partial class NoteViewModel : DocumentViewModel
         Page.Blocks.CollectionChanged += OnBlocksChanged;
         Page.PropertyChanged += OnPageChanged;
         Renumber();
+        RefreshLinks();
     }
 
     public NotePage Page { get; }
@@ -85,6 +86,8 @@ public sealed partial class NoteViewModel : DocumentViewModel
 
     private void OnBlocksChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        OnPropertyChanged(nameof(Outline));
+        OnPropertyChanged(nameof(ShowTemplates));
         if (e.NewItems != null) foreach (NoteBlock b in e.NewItems) { b.PropertyChanged -= OnBlockChanged; b.PropertyChanged += OnBlockChanged; }
         if (e.OldItems != null) foreach (NoteBlock b in e.OldItems) b.PropertyChanged -= OnBlockChanged;
         Renumber();
@@ -100,11 +103,16 @@ public sealed partial class NoteViewModel : DocumentViewModel
                 if (!_converting) ApplyShortcut(b);
                 UpdateSlash(b);
                 Touch();
+                if (b.Type is BlockType.Heading1 or BlockType.Heading2 or BlockType.Heading3) OnPropertyChanged(nameof(Outline));
+                break;
+            case nameof(NoteBlock.Spans):
+                Touch();
                 break;
             case nameof(NoteBlock.Type):
             case nameof(NoteBlock.Indent):
                 Renumber();
                 Touch();
+                OnPropertyChanged(nameof(Outline));
                 break;
             case nameof(NoteBlock.IsChecked):
                 Touch();
@@ -137,9 +145,12 @@ public sealed partial class NoteViewModel : DocumentViewModel
         if (snap == null) return;
         Page.Title = snap.Title;
         Page.Icon = snap.Icon;
+        Page.CoverPath = snap.CoverPath;
+        Page.FullWidth = snap.FullWidth;
         Page.Blocks.Clear();
         foreach (var b in snap.Blocks) Page.Blocks.Add(b);
         if (Page.Blocks.Count == 0) Page.Blocks.Add(new NoteBlock());
+        RefreshLinks();
         Focus(Page.Blocks[0], -1);
     }
 
@@ -155,7 +166,7 @@ public sealed partial class NoteViewModel : DocumentViewModel
         Checkpoint();
         _converting = true;
         b.Type = hit.Type;
-        b.Text = hit.Text;
+        b.SetSpans(RichText.RemovePrefix(b.GetSpans(), b.Text.Length - hit.Text.Length));
         _converting = false;
         if (hit.Type == BlockType.Divider)
         {
@@ -170,6 +181,16 @@ public sealed partial class NoteViewModel : DocumentViewModel
 
     private void UpdateSlash(NoteBlock b)
     {
+        // "@" on an empty line = link to a card, board, storyboard, canvas or page.
+        if (b.Text == "@" && b.Type != BlockType.Code && !_converting)
+        {
+            _converting = true;
+            b.SetSpans([]);
+            _converting = false;
+            _ = TurnInto(b, BlockType.Link);
+            return;
+        }
+
         if (b.Type is BlockType.Code || !b.Text.StartsWith('/') || b.Text.Contains(' ') || b.Text.Contains('\n'))
         {
             if (SlashBlock == b) CloseSlash();
@@ -208,7 +229,7 @@ public sealed partial class NoteViewModel : DocumentViewModel
         CloseSlash();
         if (option == null || b == null) return;
         _converting = true;
-        b.Text = string.Empty;
+        b.SetSpans([]);
         _converting = false;
         await TurnInto(b, option.Type);
     }
@@ -236,13 +257,17 @@ public sealed partial class NoteViewModel : DocumentViewModel
         }
 
         caret = Math.Clamp(caret, 0, b.Text.Length);
-        var rest = b.Text[caret..];
+        var (left, right) = RichText.Split(b.GetSpans(), caret);
         _converting = true;
-        b.Text = b.Text[..caret];
+        b.SetSpans(left);
         _converting = false;
-        var type = NoteMarkdown.IsListType(b.Type) || b.Type is BlockType.Quote or BlockType.Callout && rest.Length > 0 ? b.Type : BlockType.Paragraph;
+        var restLength = RichText.PlainText(right).Length;
+        var type = NoteMarkdown.IsListType(b.Type) || b.Type is BlockType.Quote or BlockType.Callout && restLength > 0 ? b.Type : BlockType.Paragraph;
         if (!NoteMarkdown.HasText(b.Type)) type = BlockType.Paragraph;
-        var next = InsertAfter(b, type, rest);
+        var next = InsertAfter(b, type);
+        _converting = true;
+        next.SetSpans(right);
+        _converting = false;
         next.Indent = NoteMarkdown.IsListType(type) ? b.Indent : 0;
         Focus(next, 0);
     }
@@ -277,7 +302,7 @@ public sealed partial class NoteViewModel : DocumentViewModel
 
         var caret = prev.Text.Length;
         _converting = true;
-        prev.Text += b.Text;
+        prev.SetSpans(RichText.Concat(prev.GetSpans(), b.GetSpans()));
         _converting = false;
         Page.Blocks.Remove(b);
         Focus(prev, caret);
@@ -294,7 +319,7 @@ public sealed partial class NoteViewModel : DocumentViewModel
         if (NoteMarkdown.HasText(next.Type))
         {
             _converting = true;
-            b.Text += next.Text;
+            b.SetSpans(RichText.Concat(b.GetSpans(), next.GetSpans()));
             _converting = false;
         }
 
@@ -405,7 +430,9 @@ public sealed partial class NoteViewModel : DocumentViewModel
                 }
 
                 Checkpoint();
-                ReplaceOrInsert(b, new NoteBlock { Type = BlockType.Link, LinkKind = pick.Value.Kind, LinkId = pick.Value.Id, Text = pick.Value.Title });
+                var link = new NoteBlock { Type = BlockType.Link, LinkKind = pick.Value.Kind, LinkId = pick.Value.Id, Text = pick.Value.Title };
+                link.Link = Preview(link);
+                ReplaceOrInsert(b, link);
                 return;
             case BlockType.Divider:
                 Checkpoint();
@@ -493,6 +520,143 @@ public sealed partial class NoteViewModel : DocumentViewModel
     {
         if (Page.Blocks.FirstOrDefault(x => NoteMarkdown.HasText(x.Type)) is { } b) Focus(b, 0);
         else AddAtEnd();
+    }
+
+    // ================= outline, cover, width, templates =================
+
+    /// <summary>Headings of the page (for the outline panel).</summary>
+    public IEnumerable<NoteBlock> Outline => Page.Blocks.Where(b => b.Type is BlockType.Heading1 or BlockType.Heading2 or BlockType.Heading3 && b.Text.Length > 0).ToList();
+
+    [ObservableProperty] private bool _showOutline;
+
+    /// <summary>The block that last had the cursor (inserts from the toolbar go below it).</summary>
+    public NoteBlock? LastFocused { get; set; }
+
+    [RelayCommand]
+    private void GoTo(NoteBlock b) => Focus(b, -1);
+
+    [RelayCommand] private void ToggleFullWidth() => Page.FullWidth = !Page.FullWidth;
+
+    [RelayCommand]
+    private void AddCover()
+    {
+        try
+        {
+            var rel = MediaStore.PickImage(Page.Id);
+            if (rel == null) return;
+            Main.ShowDialog(new ImageCropViewModel(rel, Page.Id, 4, null, r =>
+            {
+                Checkpoint();
+                Page.CoverPath = r.ImagePath;
+            }, "Page cover"));
+        }
+        catch (Exception ex)
+        {
+            Main.ShowToast($"Couldn't add the cover: {ex.Message}", isError: true);
+        }
+    }
+
+    [RelayCommand]
+    private void RemoveCover()
+    {
+        Checkpoint();
+        Page.CoverPath = null;
+    }
+
+    /// <summary>Inserts a block of the given type below the block you were typing in (toolbar buttons).</summary>
+    [RelayCommand]
+    private async Task Insert(string type)
+    {
+        if (!Enum.TryParse<BlockType>(type, out var t)) return;
+        var anchor = LastFocused != null && Page.Blocks.Contains(LastFocused) ? LastFocused : Page.Blocks.LastOrDefault();
+        NoteBlock target;
+        if (anchor is { Text: "" } && NoteMarkdown.HasText(anchor.Type)) target = anchor;
+        else
+        {
+            Checkpoint();
+            target = InsertAfter(anchor, BlockType.Paragraph);
+        }
+
+        await TurnInto(target, t);
+    }
+
+    public bool ShowTemplates => Page.Blocks.Count <= 1 && Page.Blocks.All(b => b.Text.Length == 0 && NoteMarkdown.HasText(b.Type));
+
+    public static readonly string[] TemplateNames = ["Meeting notes", "Project brief", "Script / screenplay", "Shot list", "To-do list", "Journal"];
+    public string[] Templates => TemplateNames;
+
+    [RelayCommand]
+    private void ApplyTemplate(string name)
+    {
+        Checkpoint();
+        var blocks = PageTemplates.Build(name, DateTime.Now);
+        Page.Blocks.Clear();
+        foreach (var b in blocks) Page.Blocks.Add(b);
+        if (Page.Title.StartsWith("Untitled page", StringComparison.Ordinal)) Page.Title = name == "Journal" ? $"Journal — {DateTime.Now:d MMM yyyy}" : name;
+        Focus(Page.Blocks.FirstOrDefault(b => NoteMarkdown.HasText(b.Type) && b.Text.Length == 0) ?? Page.Blocks[0], -1);
+    }
+
+    /// <summary>Resolves what every link block points to (title, board colors, frame thumbnails…).</summary>
+    public void RefreshLinks()
+    {
+        foreach (var b in Page.Blocks.Where(b => b.Type == BlockType.Link)) b.Link = Preview(b);
+    }
+
+    private LinkPreview Preview(NoteBlock b)
+    {
+        var ws = Main.Workspace;
+        if (b.LinkId is not { } id) return new LinkPreview { Title = b.Text, IsMissing = true };
+        switch (b.LinkKind)
+        {
+            case LinkTarget.Board when ws.Boards.FirstOrDefault(x => x.Id == id) is { } board:
+                return new LinkPreview
+                {
+                    Title = board.Name, Icon = "Board24", Background = board.Background,
+                    Subtitle = $"Board · {board.Lists.Count} lists · {board.ActiveCardCount} cards · {board.AllActiveCards.Count(c => c.IsCompleted)} done",
+                };
+            case LinkTarget.Card when ws.FindCard(id, out var cb, out var cl) is { } card:
+                var due = card.DueDate is { } d ? $" · due {Card.FormatDate(d)}" : string.Empty;
+                return new LinkPreview
+                {
+                    Title = card.Title, Icon = card.IsCompleted ? "CheckmarkCircle24" : "TaskListLtr24",
+                    Subtitle = $"Card · {cb?.Name} › {cl?.Name ?? "archived"}{due}",
+                    Images = card.CoverImagePath is { } cover ? [cover] : [],
+                };
+            case LinkTarget.Storyboard when ws.Storyboards.FirstOrDefault(x => x.Id == id) is { } sb:
+                return new LinkPreview
+                {
+                    Title = sb.Name, Icon = "VideoClip24",
+                    Subtitle = $"{sb.Mode} storyboard · {sb.Shots.Count} {(sb.Mode == StoryboardMode.Animation ? "frames" : "shots")}",
+                    Images = sb.Shots.Where(x => x.ImageFullPath != null).Select(x => x.ImageFullPath!).Take(4).ToList(),
+                };
+            case LinkTarget.Canvas when ws.Canvases.FirstOrDefault(x => x.Id == id) is { } cv:
+                return new LinkPreview
+                {
+                    Title = cv.Name, Icon = "Flowchart24",
+                    Subtitle = $"Canvas · {cv.Nodes.Count} shapes · {cv.Edges.Count} connectors",
+                    Images = cv.Nodes.Where(n => n.ImageFullPath != null).Select(n => n.ImageFullPath!).Take(4).ToList(),
+                };
+            case LinkTarget.Note when ws.Notes.FirstOrDefault(x => x.Id == id) is { } note:
+                return new LinkPreview
+                {
+                    Title = note.Title, Icon = note.Icon,
+                    Subtitle = $"Page · edited {note.UpdatedAt:d MMM}",
+                    Images = note.CoverFullPath is { } c ? [c] : [],
+                };
+            default:
+                return new LinkPreview { Title = b.Text, Subtitle = "This item was deleted", Icon = "LinkDismiss24", IsMissing = true };
+        }
+    }
+
+    [RelayCommand]
+    private void CropBlockImage(NoteBlock b)
+    {
+        if (b.ImagePath is not { } path) return;
+        Main.ShowDialog(new ImageCropViewModel(path, Page.Id, 0, null, r =>
+        {
+            Checkpoint();
+            b.ImagePath = r.ImagePath;
+        }));
     }
 
     // ================= export =================

@@ -91,6 +91,13 @@ public sealed partial class MainViewModel
 
     public void ShowToast(string text, bool isError) => ShowToast(text, null, null, isError);
 
+    public async Task<string?> PickColorAsync(string title, string? initial)
+    {
+        var vm = new ColorDialogViewModel { Title = title, Color = string.IsNullOrEmpty(initial) ? "#8B5CF6" : initial };
+        ShowDialog(vm);
+        return await vm.Result;
+    }
+
     // ================= Undo / Redo =================
 
     [RelayCommand]

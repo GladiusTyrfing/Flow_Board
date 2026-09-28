@@ -150,6 +150,8 @@ public sealed class ShortcutsViewModel : DialogViewModel
                 new("Double-click", "Add a shape (or edit the one under the mouse)"),
                 new("Drag a dot on a shape", "Connect it — drop on empty space to create a connected shape"),
                 new("V / R / B / O / D / S / T / C / I", "Select / rounded / box / ellipse / diamond / sticky / text / connector / image"),
+                new("L / A / P / F", "Line / arrow / pen (freehand) / section frame"),
+                new("Right-click empty space", "Add a shape, paste, tidy up, zoom to fit"),
                 new("Tab / Enter", "Add a connected child / sibling (mind map)"),
                 new("F2", "Edit the selected shape's text"),
                 new("Space + drag, middle-drag", "Pan"),
@@ -167,6 +169,10 @@ public sealed class ShortcutsViewModel : DialogViewModel
                 new("Ctrl + Enter", "Tick a to-do (leave a code block)"),
                 new("Ctrl + Alt + 1 / 2 / 3 / 0", "Heading 1 / 2 / 3 / text"),
                 new("Ctrl + V", "Paste an image as a block"),
+                new("@", "Link a card, board, storyboard, canvas or page"),
+                new("Select text", "Formatting bar: bold, italic, underline, strike, code, color, highlight"),
+                new("Ctrl + B / I / U", "Bold / italic / underline"),
+                new("Ctrl + Shift + X / Ctrl + E / Ctrl + Shift + H", "Strikethrough / inline code / highlight"),
             ]),
             new("Storyboards & timeline",
             [
@@ -261,4 +267,24 @@ public sealed partial class NewBoardViewModel : DialogViewModel
         Templates.Remove(t);
         if (SelectedTemplate == t) SelectedTemplate = Templates.FirstOrDefault();
     }
+}
+
+/// <summary>Pick any color (used where a palette sits in a menu).</summary>
+public sealed partial class ColorDialogViewModel : DialogViewModel
+{
+    private readonly TaskCompletionSource<string?> _tcs = new();
+
+    public string Title { get; init; } = "Pick a color";
+    [ObservableProperty] private string _color = "#8B5CF6";
+    public Task<string?> Result => _tcs.Task;
+
+    [RelayCommand]
+    private void Apply()
+    {
+        Controls.ColorPicker.Remember(Color);
+        _tcs.TrySetResult(Color);
+        MainViewModel.Instance.CloseDialog(this);
+    }
+
+    public override void OnClosed() => _tcs.TrySetResult(null);
 }

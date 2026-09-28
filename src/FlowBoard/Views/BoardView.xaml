@@ -547,6 +547,10 @@
                                                     </MultiBinding>
                                                 </MenuItem.CommandParameter>
                                             </MenuItem>
+                                            <Separator />
+                                            <MenuItem Header="Custom color…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=PickListColorCommand}" CommandParameter="{Binding}">
+                                                <MenuItem.Icon><ui:SymbolIcon Symbol="Color24" /></MenuItem.Icon>
+                                            </MenuItem>
                                         </MenuItem>
                                         <MenuItem Header="Set WIP limit…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=SetWipLimitCommand}" CommandParameter="{Binding}">
                                             <MenuItem.Icon><ui:SymbolIcon Symbol="Warning24" /></MenuItem.Icon>

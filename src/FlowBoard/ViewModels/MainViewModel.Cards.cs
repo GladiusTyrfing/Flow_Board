@@ -69,6 +69,13 @@ public sealed partial class MainViewModel
     }
 
     [RelayCommand]
+    private async Task PickListColor(BoardList list)
+    {
+        var hex = await PickColorAsync($"Color for \"{list.Name}\"", list.Color);
+        if (hex != null) list.Color = hex;
+    }
+
+    [RelayCommand]
     private async Task SetWipLimit(BoardList list)
     {
         var text = await PromptAsync(

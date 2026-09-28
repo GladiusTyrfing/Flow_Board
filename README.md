@@ -17,7 +17,7 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 - Start / due dates with time, quick picks (Today, Tomorrow, Weekend, Next week) and reminders
 - Multiple checklists with progress bars; paste many lines to add many items; convert an item into a card
 - **Attachments:** any file, drag & drop from Explorer, or **Ctrl+V to paste screenshots**; image thumbnails, image preview, card covers
-- **Voice notes:** record from your microphone with a live level meter, play back with seek
+- **Voice notes:** record from your microphone with a live level meter, or import audio files (wav, mp3, m4a…); play back with seek
 - Links, cover colors/images, comments and an automatic activity log
 - **Time tracking** (start/stop timer, manual log) and a **Pomodoro focus timer** that logs time to the card
 
@@ -31,19 +31,23 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 
 **Storyboards** (switch between **Film** and **Animation**)
 - A row of shot columns joined by connectors: frame image (pick, paste, drop, or **sketch** with pen/tablet — also over a photo), scene, date, description, tags
+- **Crop** each frame (16:9, 4:3, 2.39:1, 1:1, 9:16 … or free) or show the whole image; choose the storyboard's frame shape; import a folder of images as shots; production status per shot; "frames only" overview
 - Film: shot type, angle, movement, lens, location, a "shots required" checklist and an equipment list
-- Animation: action, dialogue, timing per frame, transition (cut, fade, dissolve, wipe) and a **recorded voice line**
+- Animation: action, dialogue, timing per frame, transition (cut, fade, dissolve, wipe) and a **voice line** — record it or use an audio file from your PC
 - **Animatic player**: plays the frames with their timing and voice lines; export the storyboard as PNG, print it, or turn every shot into a card
 
 **Canvas & flowcharts**
 - Infinite canvas with pan/zoom and a dot grid; boxes, rounded boxes, ellipses, decision diamonds, sticky notes, text, images and **live cards** from your boards
 - Drag from a shape's dot to connect (drop on empty space to create the next shape); curved, straight or elbow connectors with arrows, labels, colors, dashes
 - Mind-map keys (Tab = child, Enter = sibling), snap to grid, marquee select, copy/paste/duplicate, paste or drop images, **one-click tidy-up layout**, export PNG / print
+- Draw **free lines and arrows** anywhere (ends stick to shapes), **freehand pen**, **sections** that carry their contents, align & distribute, line thickness and double-headed arrows, crop images, right-click menu
 
 **Notes / docs pages**
 - Block editor: headings, to-dos, bulleted and numbered lists, quotes, callouts, code, dividers, images and links to cards, boards, storyboards, canvases or other pages
 - Type `/` for the block menu or use Markdown shortcuts (`#`, `-`, `1.`, `[]`, `>`, ```` ``` ````, `---`); Tab to indent, Alt+↑/↓ to move blocks
-- Page icons, word count and reading time, export/copy as Markdown, turn open to-dos into cards
+- **Rich text**: bold, italic, underline, strikethrough, inline code, any text color and highlight — select text for the formatting bar
+- Type `@` (or use the Link button) to embed a **preview card** of a board, storyboard, canvas, page or card
+- Page icons and **cover images**, full-width or reading-width pages, an **outline** of headings, page templates (meeting notes, brief, script, shot list, to-dos, journal), word count and reading time, export/copy as Markdown, turn open to-dos into cards
 
 **Dashboard**
 - Open / done-this-week / overdue / due-soon / focus time / streak tiles, a 14-day "completed per day" chart, open cards by priority, time per board, an "up next" agenda and "jump back in"
@@ -56,6 +60,7 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 - Windows notifications for due-date reminders and Pomodoro phases, tray icon, "keep running in tray", start with Windows
 - **Global hotkeys** that work from any app (quick add a card, show/hide) — customizable
 - Dark / light / follow-Windows theme, accent colors, Mica / Acrylic backdrops, smooth animations
+- A full **color picker** (any color, hex, recent colors) next to every palette: labels, lists, covers, board backgrounds, canvas, sketches, note text
 - Autosave every 2 seconds, rolling automatic backups, full zip backup & restore, portable mode
 
 ## Hotkeys

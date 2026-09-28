@@ -59,6 +59,15 @@ public class CanvasGeometryTests
     }
 
     [Fact]
+    public void Free_lines_start_and_end_exactly_at_their_points_with_two_heads()
+    {
+        var shape = CanvasGeometry.Route(new Box(10, 20, 0, 0), new Box(200, 20, 0, 0), EdgeStyle.Curved, arrow: true, startArrow: true);
+        Assert.StartsWith("M 10,20 L 200,20", shape.Path);
+        Assert.Equal(2, shape.Arrow.Count(ch => ch == 'Z'));
+        Assert.Equal((10.0, 20.0, 200.0, 20.0), (shape.X1, shape.Y1, shape.X2, shape.Y2));
+    }
+
+    [Fact]
     public void Snap_rounds_to_grid() => Assert.Equal(40, CanvasGeometry.Snap(47, 20));
 
     [Fact]

@@ -1,19 +1,32 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using FlowBoard.Helpers;
 using FlowBoard.Models;
 using FlowBoard.Services;
 using FlowBoard.ViewModels;
 
 namespace FlowBoard.Views;
 
-/// <summary>Keyboard flow of the block editor: Enter splits, Backspace merges, arrows move between blocks, "/" menu.</summary>
+/// <summary>
+/// Keyboard flow of the block editor (Enter splits, Backspace merges, arrows move between blocks, "/" menu)
+/// and rich text: every block is a RichTextBox kept in sync with the block's formatted spans.
+/// </summary>
 public partial class NoteView : UserControl
 {
+    private static readonly string[] TextColors = ["#9CA3AF", "#EF4444", "#F97316", "#EAB308", "#22C55E", "#14B8A6", "#3B82F6", "#8B5CF6", "#EC4899", "#A16207"];
+    private static readonly string[] HighlightColors = ["#66FACC15", "#6622C55E", "#663B82F6", "#66A855F7", "#66EC4899", "#66EF4444", "#66F97316", "#6694A3B8"];
+
     private NoteViewModel? _vm;
+    private readonly HashSet<RichTextBox> _loading = [];
+    private RichTextBox? _active;
+    private bool _pickerOpen;
+    private bool _highlightMode;
+    private string _lastHighlight = HighlightColors[0];
 
     public NoteView()
     {
@@ -33,7 +46,7 @@ public partial class NoteView : UserControl
         };
         Loaded += (_, _) =>
         {
-            // New pages start in the title; existing ones at the end of the first line.
+            // New pages start in the title.
             if (_vm == null) return;
             if (_vm.Page.Title.StartsWith("Untitled page", StringComparison.Ordinal) && _vm.Page.Blocks.All(b => b.Text.Length == 0))
             {
@@ -41,8 +54,103 @@ public partial class NoteView : UserControl
                 TitleBox.SelectAll();
             }
         };
-        Unloaded += (_, _) => SlashPopup.IsOpen = false;
+        Unloaded += (_, _) =>
+        {
+            SlashPopup.IsOpen = false;
+            HideFormatBar();
+        };
+        Scroller.ScrollChanged += (_, _) => HideFormatBar();
     }
+
+    // ================= editor <-> block sync =================
+
+    private void OnEditorLoaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RichTextBox box || box.DataContext is not NoteBlock block) return;
+        DataObject.AddPastingHandler(box, OnPasting);
+        block.PropertyChanged -= OnBlockPropertyChanged;
+        block.PropertyChanged += OnBlockPropertyChanged;
+        LoadInto(box, block);
+    }
+
+    private void OnEditorUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RichTextBox box || box.DataContext is not NoteBlock block) return;
+        DataObject.RemovePastingHandler(box, OnPasting);
+        block.PropertyChanged -= OnBlockPropertyChanged;
+        if (_active == box) _active = null;
+    }
+
+    private void OnBlockPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is not NoteBlock block) return;
+        if (e.PropertyName is nameof(NoteBlock.ContentVersion) or nameof(NoteBlock.IsChecked) && EditorFor(block) is { } box)
+        {
+            // Reload after the current input event finishes (the change may come from inside TextChanged).
+            Dispatcher.BeginInvoke(DispatcherPriority.Send, () => LoadInto(box, block));
+        }
+    }
+
+    private void LoadInto(RichTextBox box, NoteBlock block)
+    {
+        // Skip if the editor already shows exactly this content.
+        if (!_loading.Add(box)) return;
+        try
+        {
+            var current = RichDoc.Read(box);
+            var wanted = block.GetSpans();
+            var same = RichText.PlainText(current) == block.Text && current.Count == RichText.Normalize(wanted).Count
+                       && current.Zip(RichText.Normalize(wanted)).All(p => p.First.SameStyle(p.Second) && p.First.Text == p.Second.Text);
+            if (!same || box.Document.Blocks.Count == 0)
+            {
+                var caret = box.IsKeyboardFocusWithin ? RichDoc.OffsetOf(box, box.CaretPosition) : -1;
+                box.IsUndoEnabled = false;
+                RichDoc.Load(box, wanted);
+                box.IsUndoEnabled = true;
+                if (caret >= 0) box.CaretPosition = RichDoc.PointerAt(box, Math.Min(caret, block.Text.Length));
+            }
+
+            // Ticked to-dos are struck through.
+            if (box.Document.Blocks.FirstBlock is Paragraph p)
+                p.TextDecorations = block.Type == BlockType.Todo && block.IsChecked ? TextDecorations.Strikethrough : null;
+        }
+        finally
+        {
+            _loading.Remove(box);
+        }
+    }
+
+    private void OnEditorTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (sender is not RichTextBox box || _loading.Contains(box) || box.DataContext is not NoteBlock block) return;
+        _loading.Add(box);
+        try
+        {
+            block.SetSpans(RichDoc.Read(box), fromEditor: true);
+        }
+        finally
+        {
+            _loading.Remove(box);
+        }
+    }
+
+    /// <summary>Pasted text arrives as plain text (formatting from web pages or Word would clash with the theme).</summary>
+    private static void OnPasting(object sender, DataObjectPastingEventArgs e)
+    {
+        if (!e.DataObject.GetDataPresent(DataFormats.UnicodeText)) return;
+        var text = e.DataObject.GetData(DataFormats.UnicodeText) as string ?? string.Empty;
+        var clean = new DataObject();
+        clean.SetData(DataFormats.UnicodeText, text.Replace("\r\n", "\n").Replace('\r', '\n'));
+        e.DataObject = clean;
+        e.FormatToApply = DataFormats.UnicodeText;
+    }
+
+    private void OnEditorFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (_vm != null && sender is RichTextBox { DataContext: NoteBlock b }) _vm.LastFocused = b;
+    }
+
+    // ================= focus & slash menu =================
 
     private void OnVmChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -53,12 +161,12 @@ public partial class NoteView : UserControl
             return;
         }
 
-        // A block that was just added has no text box yet: wait for layout.
+        // A block that was just added has no editor yet: wait for layout.
         Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
         {
-            if (_vm is { IsSlashOpen: true, SlashBlock: { } b } && EditorFor(b) is { } tb)
+            if (_vm is { IsSlashOpen: true, SlashBlock: { } b } && EditorFor(b) is { } box)
             {
-                SlashPopup.PlacementTarget = tb;
+                SlashPopup.PlacementTarget = box;
                 SlashPopup.IsOpen = true;
             }
         });
@@ -66,6 +174,8 @@ public partial class NoteView : UserControl
 
     private void OnBlocksLostFocus(object sender, KeyboardFocusChangedEventArgs e)
     {
+        if (!FormatBar.IsMouseOver && !ColorMenu.IsMouseOver && !_pickerOpen && e.NewFocus is not RichTextBox) HideFormatBar();
+
         // Clicking an entry in the "/" menu must not close it first.
         if (_vm is not { IsSlashOpen: true } || SlashPopup.IsMouseOver) return;
         if ((e.NewFocus as FrameworkElement)?.DataContext == _vm.SlashBlock) return; // focus is moving into the "/" block
@@ -75,22 +185,37 @@ public partial class NoteView : UserControl
     private void OnFocusRequested(object? sender, (NoteBlock Block, int Caret) e) =>
         Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
         {
-            if (EditorFor(e.Block) is not { } tb) return;
-            tb.Focus();
-            tb.CaretIndex = e.Caret < 0 ? tb.Text.Length : Math.Min(e.Caret, tb.Text.Length);
-            tb.BringIntoView();
+            if (e.Block.Type == BlockType.Image)
+            {
+                if (FindNamed<TextBox>(Container(e.Block), "Caption") is { } caption)
+                {
+                    caption.Focus();
+                    caption.CaretIndex = caption.Text.Length;
+                }
+
+                return;
+            }
+
+            if (EditorFor(e.Block) is not { } box)
+            {
+                if (Container(e.Block) is FrameworkElement fe) fe.BringIntoView();
+                return;
+            }
+
+            LoadInto(box, e.Block);
+            box.Focus();
+            box.CaretPosition = e.Caret < 0 ? box.Document.ContentEnd : RichDoc.PointerAt(box, Math.Min(e.Caret, e.Block.Text.Length));
+            box.BringIntoView();
         });
 
-    /// <summary>The text box of a block (the caption box for images).</summary>
-    private TextBox? EditorFor(NoteBlock block)
-    {
-        if (BlocksHost.ItemContainerGenerator.ContainerFromItem(block) is not DependencyObject container) return null;
-        var name = block.Type == BlockType.Image ? "Caption" : "Editor";
-        return FindNamed<TextBox>(container, name);
-    }
+    private DependencyObject? Container(NoteBlock block) => BlocksHost.ItemContainerGenerator.ContainerFromItem(block) as DependencyObject;
 
-    private static T? FindNamed<T>(DependencyObject root, string name) where T : FrameworkElement
+    private RichTextBox? EditorFor(NoteBlock block) =>
+        Container(block) is { } c && NoteMarkdown.HasText(block.Type) ? FindNamed<RichTextBox>(c, "Editor") : null;
+
+    private static T? FindNamed<T>(DependencyObject? root, string name) where T : FrameworkElement
     {
+        if (root == null) return null;
         for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
         {
             var child = VisualTreeHelper.GetChild(root, i);
@@ -101,15 +226,35 @@ public partial class NoteView : UserControl
         return null;
     }
 
+    // ================= keyboard =================
+
     private void OnBlockKey(object sender, KeyEventArgs e)
     {
-        if (_vm == null || e.OriginalSource is not TextBox { DataContext: NoteBlock block } tb) return;
+        if (_vm == null) return;
         var mods = Keyboard.Modifiers;
         var ctrl = mods.HasFlag(ModifierKeys.Control);
         var shift = mods.HasFlag(ModifierKeys.Shift);
         var alt = mods.HasFlag(ModifierKeys.Alt);
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
-        var isCaption = tb.Name == "Caption";
+
+        // Image captions are plain text boxes.
+        if (e.OriginalSource is TextBox { Name: "Caption", DataContext: NoteBlock cap } tb)
+        {
+            if (key == Key.Enter)
+            {
+                _vm.Enter(cap, cap.Text.Length);
+                e.Handled = true;
+            }
+            else if (key == Key.Back && tb.CaretIndex == 0 && tb.SelectionLength == 0 && cap.Text.Length == 0)
+            {
+                _vm.DeleteBlockCommand.Execute(cap);
+                e.Handled = true;
+            }
+
+            return;
+        }
+
+        if (e.OriginalSource is not RichTextBox { DataContext: NoteBlock block } box) return;
 
         // ----- "/" menu -----
         if (_vm.IsSlashOpen && _vm.SlashBlock == block)
@@ -136,45 +281,31 @@ public partial class NoteView : UserControl
             }
         }
 
-        var caret = tb.CaretIndex;
-        var noSelection = tb.SelectionLength == 0;
+        var caret = RichDoc.OffsetOf(box, box.CaretPosition);
+        var noSelection = box.Selection.IsEmpty;
         switch (key)
         {
             case Key.Enter when ctrl && block.Type == BlockType.Todo:
                 block.IsChecked = !block.IsChecked;
                 break;
             case Key.Enter when ctrl || (!shift && block.Type != BlockType.Code):
-                if (!noSelection) tb.SelectedText = string.Empty;
-                tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
-                _vm.Enter(block, ctrl ? block.Text.Length : tb.CaretIndex);
+                if (!noSelection) box.Selection.Text = string.Empty;
+                Sync(box, block);
+                _vm.Enter(block, ctrl ? block.Text.Length : RichDoc.OffsetOf(box, box.CaretPosition));
+                break;
+            case Key.Enter when shift || block.Type == BlockType.Code:
+                // New line inside the block.
+                box.CaretPosition = box.CaretPosition.InsertLineBreak();
                 break;
             case Key.Back when caret == 0 && noSelection:
-                if (isCaption)
-                {
-                    if (block.Text.Length == 0) _vm.DeleteBlockCommand.Execute(block);
-                    else return;
-                }
-                else
-                {
-                    _vm.BackspaceAtStart(block);
-                }
-
+                _vm.BackspaceAtStart(block);
                 break;
-            case Key.Delete when caret == tb.Text.Length && noSelection && !isCaption:
+            case Key.Delete when caret >= block.Text.Length && noSelection:
                 _vm.DeleteAtEnd(block);
                 break;
             case Key.Tab when !ctrl:
-                if (block.Type == BlockType.Code && !shift)
-                {
-                    tb.SelectedText = "    ";
-                    tb.CaretIndex += 4;
-                    tb.SelectionLength = 0;
-                }
-                else
-                {
-                    _vm.Indent(block, shift ? -1 : 1);
-                }
-
+                if (block.Type == BlockType.Code && !shift) box.CaretPosition.InsertTextInRun("    ");
+                else _vm.Indent(block, shift ? -1 : 1);
                 break;
             case Key.Up when alt:
                 _vm.MoveUpCommand.Execute(block);
@@ -182,20 +313,21 @@ public partial class NoteView : UserControl
             case Key.Down when alt:
                 _vm.MoveDownCommand.Execute(block);
                 break;
-            case Key.Up when !shift && tb.GetLineIndexFromCharacterIndex(caret) <= 0:
+            case Key.Up when !shift && RichDoc.IsOnFirstLine(box):
                 _vm.FocusSibling(block, -1, caret);
                 break;
-            case Key.Down when !shift && IsOnLastLine(tb):
-                _vm.FocusSibling(block, 1, caret - tb.GetCharacterIndexFromLineIndex(Math.Max(0, tb.GetLineIndexFromCharacterIndex(caret))));
+            case Key.Down when !shift && RichDoc.IsOnLastLine(box):
+                var lineStart = box.CaretPosition.GetLineStartPosition(0) ?? box.Document.ContentStart;
+                _vm.FocusSibling(block, 1, caret - RichDoc.OffsetOf(box, lineStart));
                 break;
             case Key.Left when caret == 0 && noSelection && !shift:
                 _vm.FocusSibling(block, -1, -1);
                 break;
-            case Key.Right when caret == tb.Text.Length && noSelection && !shift:
+            case Key.Right when caret >= block.Text.Length && noSelection && !shift:
                 _vm.FocusSibling(block, 1, 0);
                 break;
-            case Key.V when ctrl && !isCaption:
-                if (!_vm.PasteImage(block)) return;
+            case Key.V when ctrl && !shift:
+                if (!_vm.PasteImage(block)) return; // not an image: normal (plain text) paste
                 break;
             case Key.D when ctrl:
                 _vm.DuplicateBlockCommand.Execute(block);
@@ -209,6 +341,19 @@ public partial class NoteView : UserControl
             case Key.D0 when ctrl && alt:
                 _ = _vm.TurnInto(block, BlockType.Paragraph);
                 break;
+            case Key.E when ctrl:
+                ToggleCode(box);
+                break;
+            case Key.X when ctrl && shift:
+                ToggleDecoration(box, TextDecorationLocation.Strikethrough);
+                break;
+            case Key.H when ctrl && shift:
+                ApplyHighlight(box, _lastHighlight);
+                break;
+            case Key.U when ctrl:
+                // The built-in toggle replaces strikethrough; keep both.
+                ToggleDecoration(box, TextDecorationLocation.Underline);
+                break;
             default:
                 return;
         }
@@ -216,11 +361,176 @@ public partial class NoteView : UserControl
         e.Handled = true;
     }
 
-    private static bool IsOnLastLine(TextBox tb)
+    private static void Sync(RichTextBox box, NoteBlock block) => block.SetSpans(RichDoc.Read(box), fromEditor: true);
+
+    // ================= formatting bar =================
+
+    private void OnEditorSelectionChanged(object sender, RoutedEventArgs e)
     {
-        var line = tb.GetLineIndexFromCharacterIndex(tb.CaretIndex);
-        return line < 0 || line >= tb.LineCount - 1;
+        if (sender is not RichTextBox box || !box.IsKeyboardFocusWithin) return;
+        if (box.Selection.IsEmpty)
+        {
+            if (!_pickerOpen && !ColorMenu.IsMouseOver) HideFormatBar();
+            return;
+        }
+
+        _active = box;
+        var rect = box.Selection.Start.GetCharacterRect(LogicalDirection.Forward);
+        if (FormatBar.PlacementTarget != box)
+        {
+            FormatBar.IsOpen = false;
+            FormatBar.PlacementTarget = box;
+        }
+
+        FormatBar.HorizontalOffset = Math.Max(0, rect.Left - 8);
+        FormatBar.VerticalOffset = rect.Top - 50;
+        if (!FormatBar.IsOpen) FormatBar.IsOpen = true;
     }
+
+    private void HideFormatBar()
+    {
+        FormatBar.IsOpen = false;
+        ColorMenu.IsOpen = false;
+    }
+
+    private RichTextBox? Target => _active is { } b && !b.Selection.IsEmpty ? b : null;
+
+    private void AfterFormat(RichTextBox box)
+    {
+        if (box.DataContext is NoteBlock block) Sync(box, block);
+    }
+
+    private void OnBold(object sender, RoutedEventArgs e)
+    {
+        if (Target is not { } box) return;
+        _vm?.Checkpoint();
+        var current = box.Selection.GetPropertyValue(TextElement.FontWeightProperty);
+        box.Selection.ApplyPropertyValue(TextElement.FontWeightProperty,
+            current is FontWeight fw && fw.ToOpenTypeWeight() >= 600 ? FontWeights.Normal : FontWeights.Bold);
+        AfterFormat(box);
+    }
+
+    private void OnItalic(object sender, RoutedEventArgs e)
+    {
+        if (Target is not { } box) return;
+        _vm?.Checkpoint();
+        var current = box.Selection.GetPropertyValue(TextElement.FontStyleProperty);
+        box.Selection.ApplyPropertyValue(TextElement.FontStyleProperty, current is FontStyle fs && fs == FontStyles.Italic ? FontStyles.Normal : FontStyles.Italic);
+        AfterFormat(box);
+    }
+
+    private void OnUnderline(object sender, RoutedEventArgs e)
+    {
+        if (Target is { } box) ToggleDecoration(box, TextDecorationLocation.Underline);
+    }
+
+    private void OnStrike(object sender, RoutedEventArgs e)
+    {
+        if (Target is { } box) ToggleDecoration(box, TextDecorationLocation.Strikethrough);
+    }
+
+    private void OnCode(object sender, RoutedEventArgs e)
+    {
+        if (Target is { } box) ToggleCode(box);
+    }
+
+    private void ToggleDecoration(RichTextBox box, TextDecorationLocation where)
+    {
+        if (box.Selection.IsEmpty) return;
+        _vm?.Checkpoint();
+        var current = box.Selection.GetPropertyValue(Inline.TextDecorationsProperty) as TextDecorationCollection;
+        var has = current?.Any(d => d.Location == where) == true;
+        var next = new TextDecorationCollection(current?.Where(d => d.Location != where) ?? []);
+        if (!has) next.Add(where == TextDecorationLocation.Underline ? TextDecorations.Underline : TextDecorations.Strikethrough);
+        box.Selection.ApplyPropertyValue(Inline.TextDecorationsProperty, next);
+        AfterFormat(box);
+    }
+
+    private void ToggleCode(RichTextBox box)
+    {
+        if (box.Selection.IsEmpty) return;
+        _vm?.Checkpoint();
+        var isCode = box.Selection.GetPropertyValue(TextElement.FontFamilyProperty) is FontFamily ff && ff.Source.Contains("Mono", StringComparison.OrdinalIgnoreCase);
+        box.Selection.ApplyPropertyValue(TextElement.FontFamilyProperty, isCode ? (FontFamily)FindResource("Fb.Font") : RichDoc.CodeFont);
+        AfterFormat(box);
+    }
+
+    private void OnClearFormat(object sender, RoutedEventArgs e)
+    {
+        if (Target is not { } box) return;
+        _vm?.Checkpoint();
+        box.Selection.ClearAllProperties();
+        AfterFormat(box);
+    }
+
+    private static string? Hex(Brush b) => b is SolidColorBrush s ? $"#{s.Color.R:X2}{s.Color.G:X2}{s.Color.B:X2}" : null;
+
+    private void OnTextColorMenu(object sender, RoutedEventArgs e) => OpenColorMenu(highlight: false);
+
+    private void OnHighlightMenu(object sender, RoutedEventArgs e) => OpenColorMenu(highlight: true);
+
+    private void OpenColorMenu(bool highlight)
+    {
+        _highlightMode = highlight;
+        ColorMenuTitle.Text = highlight ? "HIGHLIGHT" : "TEXT COLOR";
+        ColorSwatches.ItemsSource = highlight ? HighlightColors : TextColors;
+        ColorMenu.IsOpen = true;
+    }
+
+    private void OnSwatchPicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: string hex }) ApplyColor(hex);
+    }
+
+    private void OnCustomColor(object? sender, string hex)
+    {
+        // Custom highlights are made see-through so text stays readable in both themes.
+        ApplyColor(_highlightMode ? "#66" + hex.TrimStart('#') : hex);
+    }
+
+    private void OnResetColor(object sender, RoutedEventArgs e) => ApplyColor(null);
+
+    private void ApplyColor(string? hex)
+    {
+        ColorMenu.IsOpen = false;
+        if (_active is not { } box || box.Selection.IsEmpty) return;
+        if (_highlightMode)
+        {
+            ApplyHighlight(box, hex);
+            return;
+        }
+
+        _vm?.Checkpoint();
+
+        if (hex != null && ThemeService.TryParseColor(hex, out var c)) box.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, new SolidColorBrush(c));
+        else box.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, box.Foreground);
+        AfterFormat(box);
+        if (hex == null && box.DataContext is NoteBlock block)
+            block.SetSpans(block.GetSpans().Select(s => { if (s.Color == Hex(box.Foreground)) s.Color = null; return s; }));
+    }
+
+    private void ApplyHighlight(RichTextBox box, string? hex)
+    {
+        if (box.Selection.IsEmpty) return;
+        _vm?.Checkpoint();
+        if (hex != null && ThemeService.TryParseColor(hex, out var c))
+        {
+            _lastHighlight = hex;
+            box.Selection.ApplyPropertyValue(TextElement.BackgroundProperty, new SolidColorBrush(c));
+        }
+        else
+        {
+            box.Selection.ApplyPropertyValue(TextElement.BackgroundProperty, Brushes.Transparent);
+        }
+
+        AfterFormat(box);
+    }
+
+    private void OnPickerOpened(object? sender, EventArgs e) => _pickerOpen = true;
+
+    private void OnPickerClosed(object? sender, EventArgs e) => _pickerOpen = false;
+
+    // ================= misc =================
 
     private void OnSlashClick(object sender, MouseButtonEventArgs e)
     {

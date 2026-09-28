@@ -22,6 +22,8 @@
     <Compile Include="..\..\src\FlowBoard\Services\SmartParser.cs" Link="Core\Services\SmartParser.cs" />
     <Compile Include="..\..\src\FlowBoard\Services\CanvasGeometry.cs" Link="Core\Services\CanvasGeometry.cs" />
     <Compile Include="..\..\src\FlowBoard\Services\NoteMarkdown.cs" Link="Core\Services\NoteMarkdown.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\RichText.cs" Link="Core\Services\RichText.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\PageTemplates.cs" Link="Core\Services\PageTemplates.cs" />
     <Compile Include="..\..\src\FlowBoard\Services\DashboardStats.cs" Link="Core\Services\DashboardStats.cs" />
   </ItemGroup>
 
