@@ -62,9 +62,13 @@ public static class BoardThemeService
     {
         if (board == null)
         {
-            foreach (var k in Keys) host.Resources.Remove(k);
+            foreach (var k in Keys.Concat(RadiusKeys)) host.Resources.Remove(k);
             return;
         }
+
+        // Board-specific corner roundness (negative = inherit the app setting).
+        if (board.CornerRadius >= 0) ApplyRadius(host.Resources, board.CornerRadius);
+        else foreach (var k in RadiusKeys) host.Resources.Remove(k);
 
         var p = Resolve(board.Theme);
         var listA = (byte)Math.Round(255 * Math.Clamp(board.ListOpacity, 0, 1));

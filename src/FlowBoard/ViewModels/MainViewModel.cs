@@ -116,6 +116,7 @@ public sealed partial class MainViewModel : ObservableObject
             case nameof(AppSettings.AccentColor):
             case nameof(AppSettings.Backdrop):
             case nameof(AppSettings.AccentPreset):
+            case nameof(AppSettings.CornerRadius):
                 ThemeService.Apply();
                 break;
             case nameof(AppSettings.StartWithWindows):

@@ -83,6 +83,7 @@ public static class ThemeService
         var accent = CurrentAccent;
         ApplicationAccentColorManager.Apply(accent.Primary, theme);
         SetAccentResources(accent);
+        ApplyRadius(Application.Current.Resources, s.CornerRadius);
 
         if (_window is FluentWindow fw)
         {
@@ -92,6 +93,31 @@ public static class ThemeService
 
         ThemeApplied?.Invoke(null, EventArgs.Empty);
     }
+
+    /// <summary>
+    /// One roundness value drives every corner: small chips, controls, grouped pills and large panels.
+    /// Also feeds WPF-UI's own corner keys so its text boxes, check boxes and menus match.
+    /// </summary>
+    public static void ApplyRadius(ResourceDictionary res, double r)
+    {
+        r = Math.Clamp(r, 0, 24);
+        var large = r <= 0 ? 0 : r + 6;
+        res["Fb.RadiusSmall"] = new CornerRadius(Math.Min(r, 6));
+        res["Fb.Radius"] = new CornerRadius(r);
+        res["Fb.RadiusGroup"] = new CornerRadius(r <= 0 ? 0 : r + 3);
+        res["Fb.RadiusLarge"] = new CornerRadius(large);
+        res["Fb.RadiusValue"] = r;
+        res["Fb.RadiusLargeValue"] = large;
+        res["ControlCornerRadius"] = new CornerRadius(r);
+        res["OverlayCornerRadius"] = new CornerRadius(large);
+        res["PopupCornerRadius"] = new CornerRadius(large);
+    }
+
+    public static readonly string[] RadiusKeys =
+    [
+        "Fb.RadiusSmall", "Fb.Radius", "Fb.RadiusGroup", "Fb.RadiusLarge", "Fb.RadiusValue", "Fb.RadiusLargeValue",
+        "ControlCornerRadius", "OverlayCornerRadius", "PopupCornerRadius",
+    ];
 
     private static void SetAccentResources(AccentPreset accent)
     {

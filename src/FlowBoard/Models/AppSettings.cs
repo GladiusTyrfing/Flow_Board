@@ -14,6 +14,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private string _accentPreset = "Aurora";
     /// <summary>Soft colored glow behind the whole app.</summary>
     [ObservableProperty] private bool _auroraBackground = true;
+    /// <summary>Corner roundness for the whole app, in pixels (0 = sharp).</summary>
+    [ObservableProperty] private double _cornerRadius = 8;
     [ObservableProperty] private string _displayName = Environment.UserName;
     [ObservableProperty] private bool _minimizeToTray = true;
     [ObservableProperty] private bool _startWithWindows;

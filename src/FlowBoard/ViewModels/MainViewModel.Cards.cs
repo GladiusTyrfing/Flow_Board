@@ -308,6 +308,37 @@ public sealed partial class MainViewModel
     }
 
     [RelayCommand]
+    private void ToggleCardExpanded(Card card) => card.IsExpanded = !card.IsExpanded;
+
+    [RelayCommand]
+    private void ExpandAllCards(BoardList? list) => SetExpanded(list, true);
+
+    [RelayCommand]
+    private void CollapseAllCards(BoardList? list) => SetExpanded(list, false);
+
+    private void SetExpanded(BoardList? list, bool expanded)
+    {
+        var cards = list?.Cards ?? CurrentBoard?.AllActiveCards ?? [];
+        foreach (var c in cards) c.IsExpanded = expanded;
+    }
+
+    [RelayCommand]
+    private void ToggleVoice(Attachment a)
+    {
+        try
+        {
+            Player.Toggle(a);
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"Couldn't play: {ex.Message}", isError: true);
+        }
+    }
+
+    [RelayCommand]
+    private void PreviewImage(Attachment a) => ShowDialog(new ImagePreviewViewModel(a));
+
+    [RelayCommand]
     private void ToggleCardTimer(Card card)
     {
         if (card.IsTimerRunning) Timer.Stop();

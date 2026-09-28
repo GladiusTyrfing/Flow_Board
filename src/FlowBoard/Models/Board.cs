@@ -20,6 +20,8 @@ public partial class Board : ObservableObject
     [ObservableProperty] private double _cardOpacity = 0.96;
     /// <summary>Blur radius applied to the board wallpaper (0 = sharp).</summary>
     [ObservableProperty] private double _backgroundBlur;
+    /// <summary>Corner roundness for this board's lists and cards; negative = use the app setting.</summary>
+    [ObservableProperty] private double _cornerRadius = -1;
     [ObservableProperty] private DateTime _createdAt = DateTime.Now;
     [ObservableProperty] private DateTime _lastOpened = DateTime.Now;
     [ObservableProperty] private BoardViewMode _viewMode = BoardViewMode.Board;

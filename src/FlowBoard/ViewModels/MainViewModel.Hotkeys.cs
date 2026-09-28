@@ -125,6 +125,9 @@ public sealed partial class MainViewModel
             case Key.X:
                 ToggleComplete(card);
                 return true;
+            case Key.V:
+                card.IsExpanded = !card.IsExpanded;
+                return true;
             case Key.C:
                 ArchiveCard(card);
                 ClearSticky();

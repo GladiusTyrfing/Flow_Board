@@ -24,6 +24,8 @@ public partial class Card : ObservableObject
     [ObservableProperty] private Guid? _coverAttachmentId;
     [ObservableProperty] private Guid? _archivedFromListId;
     [ObservableProperty] private DateTime? _archivedAt;
+    /// <summary>Shows details (description, checklists, files, voice notes…) right on the board.</summary>
+    [ObservableProperty] private bool _isExpanded;
     [ObservableProperty] private ObservableCollection<Guid> _labelIds = [];
     [ObservableProperty] private ObservableCollection<Checklist> _checklists = [];
     [ObservableProperty] private ObservableCollection<Attachment> _attachments = [];
@@ -72,6 +74,8 @@ public partial class Card : ObservableObject
     [JsonIgnore] public IEnumerable<Attachment> FileAttachments => Attachments.Where(a => a.Kind != AttachmentKind.Voice);
     [JsonIgnore] public IEnumerable<Attachment> VoiceNotes => Attachments.Where(a => a.Kind == AttachmentKind.Voice);
     [JsonIgnore] public IEnumerable<Attachment> ImageAttachments => Attachments.Where(a => a.Kind == AttachmentKind.Image);
+    [JsonIgnore] public IEnumerable<Attachment> OtherFiles => Attachments.Where(a => a.Kind is AttachmentKind.File or AttachmentKind.Link);
+    [JsonIgnore] public Comment? LatestComment => Comments.Where(c => !c.IsActivity).OrderByDescending(c => c.CreatedAt).FirstOrDefault();
     [JsonIgnore] public IEnumerable<Comment> CommentsNewestFirst => Comments.OrderByDescending(c => c.CreatedAt);
 
     [JsonIgnore]
@@ -280,6 +284,7 @@ public partial class Card : ObservableObject
         OnPropertyChanged(nameof(FileAttachments));
         OnPropertyChanged(nameof(VoiceNotes));
         OnPropertyChanged(nameof(ImageAttachments));
+        OnPropertyChanged(nameof(OtherFiles));
         RaiseCover();
     }
 
@@ -289,6 +294,7 @@ public partial class Card : ObservableObject
     {
         OnPropertyChanged(nameof(CommentCount));
         OnPropertyChanged(nameof(CommentsNewestFirst));
+        OnPropertyChanged(nameof(LatestComment));
     }
 
     private void OnTimeEntriesCollectionChanged(object? s, NotifyCollectionChangedEventArgs e) => RaiseTime();

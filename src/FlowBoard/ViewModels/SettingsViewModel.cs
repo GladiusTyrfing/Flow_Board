@@ -76,6 +76,29 @@ public sealed partial class BoardSettingsViewModel : DialogViewModel
 
     public IReadOnlyList<BoardThemePreset> Presets => BoardThemeService.Presets;
 
+    /// <summary>When on, this board uses the app-wide corner roundness.</summary>
+    public bool UseAppRadius
+    {
+        get => Board.CornerRadius < 0;
+        set
+        {
+            Board.CornerRadius = value ? -1 : _main.Settings.CornerRadius;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(BoardRadius));
+        }
+    }
+
+    public double BoardRadius
+    {
+        get => Board.CornerRadius < 0 ? _main.Settings.CornerRadius : Board.CornerRadius;
+        set
+        {
+            Board.CornerRadius = Math.Round(value);
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(UseAppRadius));
+        }
+    }
+
     [RelayCommand] private void SetTab(string tab) => Tab = tab;
 
     [RelayCommand] private void SetTheme(string name) => Board.Theme = name;

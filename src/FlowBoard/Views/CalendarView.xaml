@@ -12,7 +12,7 @@
     <UserControl.Resources>
         <!-- Compact card chip used inside day cells and the "no date" tray -->
         <DataTemplate x:Key="CalendarCardTemplate" DataType="{x:Type models:Card}">
-            <Border x:Name="Chip" CornerRadius="7" Padding="6,3" Margin="0,0,0,3" Background="{DynamicResource Fb.CardBrush}" Cursor="Hand"
+            <Border x:Name="Chip" CornerRadius="{DynamicResource Fb.RadiusSmall}" Padding="6,3" Margin="0,0,0,3" Background="{DynamicResource Fb.CardBrush}" Cursor="Hand"
                     BorderThickness="0,0,0,0" ToolTip="{Binding Title}" MouseLeftButtonUp="Chip_MouseLeftButtonUp"
                     PreviewMouseLeftButtonDown="Chip_PreviewMouseLeftButtonDown">
                 <Grid>
@@ -60,7 +60,7 @@
             <ColumnDefinition Width="240" />
         </Grid.ColumnDefinitions>
 
-        <Border CornerRadius="20" Background="{DynamicResource Fb.SurfaceBrush}" Padding="12" BorderThickness="1" BorderBrush="{DynamicResource Fb.ListBorderBrush}" Effect="{StaticResource Fb.CardShadow}">
+        <Border CornerRadius="{DynamicResource Fb.RadiusLarge}" Background="{DynamicResource Fb.SurfaceBrush}" Padding="12" BorderThickness="1" BorderBrush="{DynamicResource Fb.ListBorderBrush}" Effect="{StaticResource Fb.CardShadow}">
             <DockPanel>
                 <!-- Header -->
                 <Grid DockPanel.Dock="Top" Margin="4,0,4,10">
@@ -104,11 +104,11 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:CalendarDay}">
-                            <Border x:Name="Cell" Margin="3" CornerRadius="12" Background="{DynamicResource Fb.CalendarCellBrush}" Padding="4"
+                            <Border x:Name="Cell" Margin="3" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.CalendarCellBrush}" Padding="4"
                                     BorderThickness="1.5" BorderBrush="Transparent">
                                 <DockPanel>
                                     <Grid DockPanel.Dock="Top" Margin="2,0,0,2">
-                                        <Border x:Name="DayBadge" HorizontalAlignment="Left" CornerRadius="11" MinWidth="22" Height="22" Padding="5,0">
+                                        <Border x:Name="DayBadge" HorizontalAlignment="Left" CornerRadius="{DynamicResource Fb.Radius}" MinWidth="22" Height="22" Padding="5,0">
                                             <TextBlock x:Name="DayText" Text="{Binding DayText}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
                                                        HorizontalAlignment="Center" Foreground="{DynamicResource Fb.TextBrush}" />
                                         </Border>
@@ -150,7 +150,7 @@
         </Border>
 
         <!-- Unscheduled tray -->
-        <Border Grid.Column="1" Margin="12,0,0,0" CornerRadius="20" BorderThickness="1" BorderBrush="{DynamicResource Fb.ListBorderBrush}" Background="{DynamicResource Fb.ListBrush}" Padding="10" Effect="{StaticResource Fb.CardShadow}">
+        <Border Grid.Column="1" Margin="12,0,0,0" CornerRadius="{DynamicResource Fb.RadiusLarge}" BorderThickness="1" BorderBrush="{DynamicResource Fb.ListBorderBrush}" Background="{DynamicResource Fb.ListBrush}" Padding="10" Effect="{StaticResource Fb.CardShadow}">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Top" Margin="2,0,0,8">
                     <TextBlock Text="No due date" Style="{StaticResource Fb.SectionTitle}" />

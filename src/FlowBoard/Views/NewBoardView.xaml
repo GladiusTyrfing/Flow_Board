@@ -11,14 +11,14 @@
              x:Name="Root"
              d:DataContext="{d:DesignInstance vm:NewBoardViewModel}">
     <Border Style="{StaticResource Fb.Dialog}" Width="760" Margin="0,24">
-        <Grid>
+        <Grid h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="300" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <!-- Live preview -->
-            <Border CornerRadius="14,0,0,14" Background="{Binding Background, Converter={StaticResource BoardBackground}}">
+            <Border CornerRadius="0" Background="{Binding Background, Converter={StaticResource BoardBackground}}">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20">
                     <TextBlock Text="{Binding PreviewName}" Foreground="White" FontSize="20" FontWeight="Bold"
                                TextTrimming="CharacterEllipsis" MaxWidth="240" Margin="0,0,0,14" />
@@ -30,7 +30,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Width="76" Height="92" CornerRadius="6" Background="{DynamicResource Fb.ListBrush}" Margin="0,0,6,6" Padding="6">
+                                <Border Width="76" Height="92" CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{DynamicResource Fb.ListBrush}" Margin="0,0,6,6" Padding="6">
                                     <StackPanel>
                                         <TextBlock Text="{Binding}" FontSize="10" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Fb.TextBrush}" />
                                         <Border Height="14" CornerRadius="3" Margin="0,5,0,0" Background="{DynamicResource Fb.CardBrush}" />

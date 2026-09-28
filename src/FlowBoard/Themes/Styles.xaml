@@ -1,7 +1,8 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:conv="clr-namespace:FlowBoard.Converters"
-                    xmlns:h="clr-namespace:FlowBoard.Helpers">
+                    xmlns:h="clr-namespace:FlowBoard.Helpers"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
     <!-- ============ Converters ============ -->
     <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
@@ -31,6 +32,14 @@
     <conv:PercentConverter x:Key="Percent" />
 
     <CubicEase x:Key="EaseOut" EasingMode="EaseOut" />
+
+    <!-- Corner radius tokens (defaults; replaced at runtime from Settings → Appearance → Corner roundness) -->
+    <CornerRadius x:Key="Fb.RadiusSmall">6</CornerRadius>
+    <CornerRadius x:Key="Fb.Radius">8</CornerRadius>
+    <CornerRadius x:Key="Fb.RadiusGroup">11</CornerRadius>
+    <CornerRadius x:Key="Fb.RadiusLarge">14</CornerRadius>
+    <sys:Double x:Key="Fb.RadiusValue">8</sys:Double>
+    <sys:Double x:Key="Fb.RadiusLargeValue">14</sys:Double>
 
     <!-- Bundled typeface (Plus Jakarta Sans, SIL OFL) with Segoe UI as fallback. -->
     <FontFamily x:Key="Fb.Font">/Assets/Fonts/#Plus Jakarta Sans, Segoe UI</FontFamily>
@@ -136,7 +145,7 @@
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="h:Behaviors.CornerRadius" Value="10" />
+        <Setter Property="h:Behaviors.CornerRadius" Value="{DynamicResource Fb.Radius}" />
         <Setter Property="Template" Value="{StaticResource Fb.ButtonTemplate}" />
     </Style>
 
@@ -154,7 +163,7 @@
         <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="Padding" Value="16,8" />
-        <Setter Property="h:Behaviors.CornerRadius" Value="999" />
+        <Setter Property="h:Behaviors.CornerRadius" Value="{DynamicResource Fb.Radius}" />
     </Style>
 
     <Style x:Key="Fb.DangerButton" TargetType="Button" BasedOn="{StaticResource Fb.GhostButton}">
@@ -163,7 +172,7 @@
         <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="Padding" Value="16,8" />
-        <Setter Property="h:Behaviors.CornerRadius" Value="999" />
+        <Setter Property="h:Behaviors.CornerRadius" Value="{DynamicResource Fb.Radius}" />
     </Style>
 
     <Style x:Key="Fb.IconButton" TargetType="Button" BasedOn="{StaticResource Fb.GhostButton}">
@@ -172,7 +181,7 @@
         <Setter Property="Padding" Value="0" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="Foreground" Value="{DynamicResource Fb.MutedTextBrush}" />
-        <Setter Property="h:Behaviors.CornerRadius" Value="999" />
+        <Setter Property="h:Behaviors.CornerRadius" Value="{DynamicResource Fb.Radius}" />
     </Style>
 
     <!-- Buttons inside the floating board header -->
@@ -190,7 +199,7 @@
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-        <Setter Property="h:Behaviors.CornerRadius" Value="10" />
+        <Setter Property="h:Behaviors.CornerRadius" Value="{DynamicResource Fb.Radius}" />
         <Setter Property="Template" Value="{StaticResource Fb.ButtonTemplate}" />
         <Style.Triggers>
             <Trigger Property="IsChecked" Value="True">
@@ -199,7 +208,7 @@
         </Style.Triggers>
     </Style>
 
-    <!-- Color swatch: Background carries the color; ring on hover / when Tag="selected" -->
+    <!-- Color swatch: Background carries the color; ring on hover / when Tag="selected" (drawn inside its bounds, never clipped) -->
     <Style x:Key="Fb.SwatchButton" TargetType="Button">
         <Setter Property="Width" Value="40" />
         <Setter Property="Height" Value="30" />
@@ -209,34 +218,15 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Grid RenderTransformOrigin="0.5,0.5">
-                        <Grid.RenderTransform>
-                            <ScaleTransform x:Name="Scale" />
-                        </Grid.RenderTransform>
-                        <Border x:Name="Ring" CornerRadius="11" BorderThickness="2" BorderBrush="Transparent" Margin="-4" />
-                        <Border CornerRadius="8" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="1">
+                    <Grid>
+                        <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="1">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
+                        <Border x:Name="Ring" CornerRadius="{DynamicResource Fb.Radius}" BorderThickness="2.5" BorderBrush="Transparent" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Ring" Property="BorderBrush" Value="{DynamicResource Fb.MutedTextBrush}" />
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="Scale" Storyboard.TargetProperty="ScaleX" To="1.06" Duration="0:0:0.12" />
-                                        <DoubleAnimation Storyboard.TargetName="Scale" Storyboard.TargetProperty="ScaleY" To="1.06" Duration="0:0:0.12" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="Scale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.15" />
-                                        <DoubleAnimation Storyboard.TargetName="Scale" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.15" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="Tag" Value="selected">
                             <Setter TargetName="Ring" Property="BorderBrush" Value="{DynamicResource Fb.AccentBrush}" />
@@ -259,8 +249,8 @@
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
                     <Grid Background="Transparent">
-                        <Border x:Name="Bg" CornerRadius="999" Background="Transparent" />
-                        <Border x:Name="Sel" CornerRadius="999" Background="{DynamicResource Fb.AccentGradientBrush}" Opacity="0" />
+                        <Border x:Name="Bg" CornerRadius="{DynamicResource Fb.Radius}" Background="Transparent" />
+                        <Border x:Name="Sel" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.AccentGradientBrush}" Opacity="0" />
                         <ContentPresenter x:Name="Cp" Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"
                                           TextElement.Foreground="{TemplateBinding Foreground}" />
                     </Grid>
@@ -296,7 +286,7 @@
 
     <!-- Container for a group of Fb.Segment items -->
     <Style x:Key="Fb.SegmentGroup" TargetType="Border">
-        <Setter Property="CornerRadius" Value="999" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Fb.RadiusGroup}" />
         <Setter Property="Padding" Value="3" />
         <Setter Property="Background" Value="{DynamicResource Fb.SubtleBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Fb.DividerBrush}" />
@@ -363,7 +353,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
-                    <Border x:Name="Bd" CornerRadius="10" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    <Border x:Name="Bd" CornerRadius="{DynamicResource Fb.Radius}" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}">
                         <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" Focusable="False"
                                       HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
@@ -396,7 +386,7 @@
         <Setter Property="Background" Value="{DynamicResource Fb.PanelBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Fb.PanelBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Fb.RadiusLarge}" />
     </Style>
 
     <!-- Floating pill in the board header (board-themed) -->
@@ -404,7 +394,7 @@
         <Setter Property="Background" Value="{DynamicResource Fb.HeaderBarBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Fb.ListBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Fb.RadiusGroup}" />
         <Setter Property="Padding" Value="6,5" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
@@ -413,7 +403,7 @@
         <Setter Property="Background" Value="{DynamicResource Fb.SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Fb.PanelBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Fb.RadiusLarge}" />
         <Setter Property="Padding" Value="16" />
         <Setter Property="Margin" Value="14,6,14,24" />
         <Setter Property="Effect" Value="{StaticResource Fb.PopupShadow}" />
@@ -425,7 +415,7 @@
         <Setter Property="Background" Value="{DynamicResource Fb.SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Fb.PanelBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="22" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Fb.RadiusLarge}" />
         <Setter Property="Effect" Value="{StaticResource Fb.PopupShadow}" />
         <Setter Property="TextElement.Foreground" Value="{DynamicResource Fb.TextBrush}" />
         <Setter Property="HorizontalAlignment" Value="Center" />
@@ -436,7 +426,7 @@
         <Setter Property="Background" Value="{DynamicResource Fb.SurfaceAltBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Fb.DividerBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Fb.RadiusLarge}" />
         <Setter Property="Padding" Value="16" />
         <Setter Property="Margin" Value="0,0,0,14" />
     </Style>
@@ -468,7 +458,7 @@
 
     <!-- Tiny rounded pill used for badges -->
     <Style x:Key="Fb.Badge" TargetType="Border">
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Fb.RadiusSmall}" />
         <Setter Property="Padding" Value="6,2" />
         <Setter Property="Margin" Value="0,4,6,0" />
         <Setter Property="VerticalAlignment" Value="Center" />

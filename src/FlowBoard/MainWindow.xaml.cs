@@ -52,7 +52,8 @@ public partial class MainWindow : FluentWindow
 
     private void OnBoardPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(Models.Board.Theme) or nameof(Models.Board.ListOpacity) or nameof(Models.Board.CardOpacity))
+        if (e.PropertyName is nameof(Models.Board.Theme) or nameof(Models.Board.ListOpacity) or nameof(Models.Board.CardOpacity)
+            or nameof(Models.Board.CornerRadius))
             BoardThemeService.Apply(BoardArea, _themedBoard);
     }
 

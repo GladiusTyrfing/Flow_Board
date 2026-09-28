@@ -8,7 +8,7 @@
              xmlns:models="clr-namespace:FlowBoard.Models"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:MainViewModel}">
-    <Border Margin="14" CornerRadius="20" BorderThickness="1" BorderBrush="{DynamicResource Fb.ListBorderBrush}" Background="{DynamicResource Fb.SurfaceBrush}" Padding="4" Effect="{StaticResource Fb.CardShadow}">
+    <Border Margin="14" CornerRadius="{DynamicResource Fb.RadiusLarge}" BorderThickness="1" BorderBrush="{DynamicResource Fb.ListBorderBrush}" Background="{DynamicResource Fb.SurfaceBrush}" Padding="4" Effect="{StaticResource Fb.CardShadow}">
         <DockPanel>
             <Grid DockPanel.Dock="Top" Margin="12,10,12,8">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -65,7 +65,7 @@
                     <DataGridTemplateColumn Header="List" Width="*" SortMemberPath="ListIndex">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate DataType="{x:Type vm:TableRow}">
-                                <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" Background="{DynamicResource Fb.SubtleBrush}">
+                                <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Padding="6,2" HorizontalAlignment="Left" Background="{DynamicResource Fb.SubtleBrush}">
                                     <TextBlock Text="{Binding ListName}" FontSize="12" Foreground="{DynamicResource Fb.TextBrush}" />
                                 </Border>
                             </DataTemplate>
@@ -83,7 +83,7 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="{x:Type models:Label}">
-                                            <Border CornerRadius="4" MinWidth="28" Height="16" Padding="6,0" Margin="0,1,4,1"
+                                            <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" MinWidth="28" Height="16" Padding="6,0" Margin="0,1,4,1"
                                                     Background="{Binding Color, Converter={StaticResource HexToBrush}}">
                                                 <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"
                                                            Foreground="{Binding Color, Converter={StaticResource ContrastBrush}}" />
@@ -115,7 +115,7 @@
                     <DataGridTemplateColumn Header="Due" Width="140" SortMemberPath="DueSort">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate DataType="{x:Type vm:TableRow}">
-                                <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" Background="{Binding Card.DueState, Converter={StaticResource DueStateToBrush}}"
+                                <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Padding="6,2" HorizontalAlignment="Left" Background="{Binding Card.DueState, Converter={StaticResource DueStateToBrush}}"
                                         Visibility="{Binding Card.HasDue, Converter={StaticResource BoolToVis}}">
                                     <TextBlock Text="{Binding Card.DueText}" FontSize="12" Foreground="{Binding Card.DueState, Converter={StaticResource DueStateToForeground}}" />
                                 </Border>

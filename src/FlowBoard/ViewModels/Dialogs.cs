@@ -110,6 +110,7 @@ public sealed class ShortcutsViewModel : DialogViewModel
             [
                 new("Enter / Space / E", "Open the card"),
                 new("X", "Mark complete / incomplete"),
+                new("V", "Expand / collapse the card's details on the board"),
                 new("C", "Archive"),
                 new("Delete", "Delete"),
                 new("Ctrl + D", "Duplicate"),

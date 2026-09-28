@@ -200,6 +200,22 @@ public class CoreTests
     }
 
     [Fact]
+    public void BoardStyleAndExpandedCards_Persist()
+    {
+        var board = SampleBoard();
+        board.Theme = "Plum";
+        board.ListOpacity = 0.3;
+        board.CornerRadius = 0;
+        board.Lists[0].Cards[0].IsExpanded = true;
+        var back = Json.DeserializeBoard(Json.SerializeBoard(board));
+        Assert.Equal("Plum", back.Theme);
+        Assert.Equal(0.3, back.ListOpacity);
+        Assert.Equal(0, back.CornerRadius);
+        Assert.True(back.Lists[0].Cards[0].IsExpanded);
+        Assert.Equal(-1, new Board().CornerRadius); // new boards follow the app setting
+    }
+
+    [Fact]
     public void WelcomeBoard_IsValid()
     {
         var board = TemplateService.CreateWelcomeBoard("Tester");

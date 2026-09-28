@@ -33,7 +33,7 @@
                         <ItemsControl ItemsSource="{Binding Board.ArchivedCards}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:Card}">
-                                    <Border CornerRadius="8" Padding="12,8" Margin="0,0,0,6" Background="{DynamicResource Fb.CardBrush}">
+                                    <Border CornerRadius="{DynamicResource Fb.Radius}" Padding="12,8" Margin="0,0,0,6" Background="{DynamicResource Fb.CardBrush}">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
@@ -65,7 +65,7 @@
                         <ItemsControl ItemsSource="{Binding Board.ArchivedLists}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:BoardList}">
-                                    <Border CornerRadius="8" Padding="12,8" Margin="0,0,0,6" Background="{DynamicResource Fb.CardBrush}">
+                                    <Border CornerRadius="{DynamicResource Fb.Radius}" Padding="12,8" Margin="0,0,0,6" Background="{DynamicResource Fb.CardBrush}">
                                         <Grid>
                                             <StackPanel>
                                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{DynamicResource Fb.TextBrush}" />

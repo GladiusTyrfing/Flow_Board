@@ -6,6 +6,7 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:FlowBoard.ViewModels"
              xmlns:services="clr-namespace:FlowBoard.Services"
+             xmlns:h="clr-namespace:FlowBoard.Helpers"
              mc:Ignorable="d"
              x:Name="Root"
              d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
@@ -43,7 +44,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
                         <Grid Background="Transparent">
-                            <Border x:Name="Bg" CornerRadius="12" Background="Transparent" />
+                            <Border x:Name="Bg" CornerRadius="{DynamicResource Fb.Radius}" Background="Transparent" />
                             <Border x:Name="Bar" Width="4" Height="18" CornerRadius="2" HorizontalAlignment="Left" Margin="2,0,0,0"
                                     Background="{DynamicResource Fb.AccentGradientBrush}" Opacity="0" />
                             <ContentPresenter Margin="16,10" TextElement.FontWeight="SemiBold" />
@@ -75,14 +76,14 @@
     </UserControl.Resources>
 
     <Border Style="{StaticResource Fb.Dialog}" Width="860" MaxHeight="660" VerticalAlignment="Stretch" Margin="0,20">
-        <Grid>
+        <Grid h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="220" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <!-- ============ Navigation ============ -->
-            <Border CornerRadius="22,0,0,22" Background="{DynamicResource Fb.SurfaceAltBrush}" BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="0,0,1,0">
+            <Border CornerRadius="0" Background="{DynamicResource Fb.SurfaceAltBrush}" BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="0,0,1,0">
                 <DockPanel Margin="14,22,14,16">
                     <TextBlock DockPanel.Dock="Top" Text="Settings" Style="{StaticResource Fb.GradientTitle}" FontSize="24" Margin="8,0,0,18" />
                     <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Fb.Muted}" Margin="8,0,0,0">
@@ -182,6 +183,28 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+
+                        <DockPanel Style="{StaticResource Row}">
+                            <StackPanel DockPanel.Dock="Right" Width="240" VerticalAlignment="Center">
+                                <Slider Minimum="0" Maximum="24" Value="{Binding Settings.CornerRadius}" SmallChange="1" LargeChange="4"
+                                        IsSnapToTickEnabled="True" TickFrequency="1" />
+                                <!-- Live preview: a card and a button using the current radius -->
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <Border Width="90" Height="36" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.CardBrush}"
+                                            BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="1">
+                                        <TextBlock Text="Card" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Button Style="{StaticResource Fb.AccentButton}" Content="Button" Margin="8,0,0,0" Padding="12,6" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Style="{StaticResource RowTitle}">
+                                    <Run Text="Corner roundness" />
+                                    <Run Text="{Binding Settings.CornerRadius, StringFormat='{}{0:0} px', Mode=OneWay}" Foreground="{DynamicResource Fb.MutedTextBrush}" FontWeight="Normal" />
+                                </TextBlock>
+                                <TextBlock Text="One value for every button, card, list and window. 0 = sharp. Each board can override it in its Style panel." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
 
                         <DockPanel Style="{StaticResource Row}">
                             <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.AuroraBackground}" />

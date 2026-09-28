@@ -106,7 +106,7 @@
                                                     <Binding Path="DataContext.Board.Theme" ElementName="Root" />
                                                 </MultiBinding>
                                             </Button.Tag>
-                                            <Border Width="52" Height="28" CornerRadius="6" Background="{Binding CardPreview}">
+                                            <Border Width="52" Height="28" CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{Binding CardPreview}">
                                                 <StackPanel VerticalAlignment="Center" Margin="7,0">
                                                     <Border Height="3" Width="28" HorizontalAlignment="Left" CornerRadius="2" Background="{Binding TextPreview}" />
                                                     <Border Height="3" Width="18" HorizontalAlignment="Left" CornerRadius="2" Margin="0,4,0,0" Background="{Binding TextPreview}" Opacity="0.5" />
@@ -136,6 +136,21 @@
                             </Grid>
                             <Slider Minimum="0.1" Maximum="1" Value="{Binding Board.CardOpacity}" SmallChange="0.05" LargeChange="0.1" Margin="0,6,0,0" />
                         </StackPanel>
+                        <TextBlock Text="CORNERS" Style="{StaticResource Fb.Caption}" Margin="0,4,0,10" />
+                        <StackPanel Style="{StaticResource SliderRow}">
+                            <DockPanel>
+                                <CheckBox DockPanel.Dock="Right" Content="Use app setting" IsChecked="{Binding UseAppRadius}" VerticalAlignment="Center" />
+                                <TextBlock VerticalAlignment="Center">
+                                    <Run Text="Roundness" FontWeight="SemiBold" />
+                                    <Run Text="{Binding BoardRadius, StringFormat='{}{0:0} px', Mode=OneWay}" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                </TextBlock>
+                            </DockPanel>
+                            <Slider Minimum="0" Maximum="24" Value="{Binding BoardRadius}" SmallChange="1" LargeChange="4"
+                                    IsSnapToTickEnabled="True" TickFrequency="1" Margin="0,6,0,0" />
+                            <TextBlock Style="{StaticResource Fb.Muted}" Text="0 = sharp corners. Affects this board's lists, cards and header." Margin="0,2,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Text="BACKGROUND" Style="{StaticResource Fb.Caption}" Margin="0,4,0,10" />
                         <StackPanel Style="{StaticResource SliderRow}">
                             <Grid>
                                 <TextBlock Text="Background blur" FontWeight="SemiBold" />
@@ -245,7 +260,7 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <Border CornerRadius="999" Height="34" Padding="14,0" Background="{Binding Color, Converter={StaticResource HexToBrush}}">
+                                        <Border CornerRadius="{DynamicResource Fb.Radius}" Height="34" Padding="14,0" Background="{Binding Color, Converter={StaticResource HexToBrush}}">
                                             <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalAlignment="Center"
                                                      FontWeight="Bold" Foreground="{Binding Color, Converter={StaticResource ContrastBrush}}"
                                                      CaretBrush="{Binding Color, Converter={StaticResource ContrastBrush}}">

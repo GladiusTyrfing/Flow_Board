@@ -27,18 +27,26 @@ public static class Behaviors
     public static double GetClipRadius(DependencyObject d) => (double)d.GetValue(ClipRadiusProperty);
     public static void SetClipRadius(DependencyObject d, double v) => d.SetValue(ClipRadiusProperty, v);
 
+    private static readonly DependencyProperty ClipHookedProperty = DependencyProperty.RegisterAttached(
+        "ClipHooked", typeof(bool), typeof(Behaviors), new PropertyMetadata(false));
+
     private static void OnClipRadiusChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not FrameworkElement fe) return;
-        void Update()
+        if (!(bool)fe.GetValue(ClipHookedProperty))
         {
-            var r = GetClipRadius(fe);
-            fe.Clip = r <= 0 ? null : new RectangleGeometry(new Rect(0, 0, fe.ActualWidth, fe.ActualHeight), r, r);
+            fe.SetValue(ClipHookedProperty, true);
+            fe.SizeChanged += (_, _) => UpdateClip(fe);
         }
 
-        fe.SizeChanged -= (_, _) => Update();
-        fe.SizeChanged += (_, _) => Update();
-        Update();
+        UpdateClip(fe);
+    }
+
+    private static void UpdateClip(FrameworkElement fe)
+    {
+        var r = GetClipRadius(fe);
+        // Radius 0 still clips (sharp corners) so content never spills outside rounded parents.
+        fe.Clip = new RectangleGeometry(new Rect(0, 0, fe.ActualWidth, fe.ActualHeight), r, r);
     }
 
     // ---------- Focus when a bound flag becomes true ----------

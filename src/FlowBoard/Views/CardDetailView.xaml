@@ -39,7 +39,7 @@
 
     <Border x:Name="Card" Style="{StaticResource Fb.Dialog}" MaxWidth="1100" Margin="32,20" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
             AllowDrop="True" DragOver="Card_DragOver" DragLeave="Card_DragLeave" Drop="Card_Drop">
-        <Grid h:Behaviors.ClipRadius="22">
+        <Grid h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -53,7 +53,7 @@
                     <ComboBox MinWidth="170" ItemsSource="{Binding Lists}" SelectedItem="{Binding CurrentList}" DisplayMemberPath="Name"
                               ToolTip="Move this card to another list" IsEnabled="{Binding IsArchived, Converter={StaticResource InverseBool}}" />
                     <TextBlock Text="{Binding Board.Name}" Style="{StaticResource Fb.Muted}" VerticalAlignment="Center" Margin="10,0,0,0" />
-                    <Border Margin="12,0,0,0" CornerRadius="6" Padding="10,4" Background="#33F5CD47"
+                    <Border Margin="12,0,0,0" CornerRadius="{DynamicResource Fb.RadiusSmall}" Padding="10,4" Background="#33F5CD47"
                             Visibility="{Binding IsArchived, Converter={StaticResource BoolToVis}}">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="Archive24" FontSize="14" Foreground="#F5CD47" />
@@ -207,7 +207,7 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="{x:Type models:Label}">
-                                            <Border CornerRadius="999" MinWidth="44" Height="30" Padding="14,0" Margin="0,0,6,6"
+                                            <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" MinWidth="44" Height="30" Padding="14,0" Margin="0,0,6,6"
                                                     Background="{Binding Color, Converter={StaticResource HexToBrush}}">
                                                 <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontWeight="SemiBold"
                                                            Foreground="{Binding Color, Converter={StaticResource ContrastBrush}}" />
@@ -266,7 +266,7 @@
                             </StackPanel>
                             <StackPanel Margin="0,0,24,8" Visibility="{Binding Card.HasTrackedTime, Converter={StaticResource BoolToVis}}">
                                 <TextBlock Text="Time tracked" Style="{StaticResource Fb.Caption}" Margin="0,0,0,4" />
-                                <Border CornerRadius="6" Padding="10,6" Background="{DynamicResource Fb.SubtleBrush}">
+                                <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Padding="10,6" Background="{DynamicResource Fb.SubtleBrush}">
                                     <TextBlock Text="{Binding Card.TrackedTimeText}" FontWeight="SemiBold" />
                                 </Border>
                             </StackPanel>
@@ -282,7 +282,7 @@
                                     Text="{Binding Card.Description, UpdateSourceTrigger=PropertyChanged, Delay=250}" />
 
                         <!-- Drop hint -->
-                        <Border Margin="30,14,0,0" CornerRadius="10" Height="70" BorderThickness="2" Background="{DynamicResource Fb.SubtleBrush}"
+                        <Border Margin="30,14,0,0" CornerRadius="{DynamicResource Fb.Radius}" Height="70" BorderThickness="2" Background="{DynamicResource Fb.SubtleBrush}"
                                 BorderBrush="{DynamicResource Fb.AccentBrush}"
                                 Visibility="{Binding IsDragOver, Converter={StaticResource BoolToVis}}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -304,7 +304,7 @@
                             <ItemsControl ItemsSource="{Binding Card.FileAttachments}" Margin="30,0,0,0">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type models:Attachment}">
-                                        <Border x:Name="Row" CornerRadius="8" Padding="6" Margin="0,0,0,6" Background="Transparent">
+                                        <Border x:Name="Row" CornerRadius="{DynamicResource Fb.Radius}" Padding="6" Margin="0,0,0,6" Background="Transparent">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="112" />
@@ -314,7 +314,7 @@
                                                 <Button Style="{StaticResource Fb.GhostButton}" Padding="0" Height="76" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
                                                         Command="{Binding DataContext.OpenAttachmentCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Open">
                                                     <Grid>
-                                                        <Border CornerRadius="6" Background="{DynamicResource Fb.SubtleHoverBrush}">
+                                                        <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{DynamicResource Fb.SubtleHoverBrush}">
                                                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                                                 <ui:SymbolIcon Symbol="{Binding Converter={StaticResource AttachmentIcon}}" FontSize="24" HorizontalAlignment="Center"
                                                                                Foreground="{DynamicResource Fb.MutedTextBrush}" />
@@ -322,7 +322,7 @@
                                                                            Foreground="{DynamicResource Fb.MutedTextBrush}" />
                                                             </StackPanel>
                                                         </Border>
-                                                        <Border x:Name="Thumb" CornerRadius="6" Visibility="Collapsed">
+                                                        <Border x:Name="Thumb" CornerRadius="{DynamicResource Fb.RadiusSmall}" Visibility="Collapsed">
                                                             <Border.Background>
                                                                 <ImageBrush Stretch="UniformToFill" ImageSource="{Binding FullPath, Converter={StaticResource ImagePath}, ConverterParameter=240}" />
                                                             </Border.Background>
@@ -392,7 +392,7 @@
                             </Grid>
 
                             <!-- Recording panel -->
-                            <Border Margin="30,0,0,8" CornerRadius="10" Padding="12" Background="#26F87168"
+                            <Border Margin="30,0,0,8" CornerRadius="{DynamicResource Fb.Radius}" Padding="12" Background="#26F87168"
                                     Visibility="{Binding Recorder.IsRecording, Converter={StaticResource BoolToVis}}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -431,7 +431,7 @@
                             <ItemsControl ItemsSource="{Binding Card.VoiceNotes}" Margin="30,0,0,0">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type models:Attachment}">
-                                        <Border CornerRadius="10" Padding="8" Margin="0,0,0,6" Background="{DynamicResource Fb.SubtleBrush}">
+                                        <Border CornerRadius="{DynamicResource Fb.Radius}" Padding="8" Margin="0,0,0,6" Background="{DynamicResource Fb.SubtleBrush}">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto" />
@@ -590,7 +590,7 @@
                                 <Button Style="{StaticResource Fb.SubtleButton}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,8"
                                         Content="Log time…" Command="{Binding LogTimeCommand}" />
                             </Grid>
-                            <Border Margin="30,0,0,8" CornerRadius="8" Padding="10,6" Background="#26F87168"
+                            <Border Margin="30,0,0,8" CornerRadius="{DynamicResource Fb.Radius}" Padding="10,6" Background="#26F87168"
                                     Visibility="{Binding Card.IsTimerRunning, Converter={StaticResource BoolToVis}}">
                                 <StackPanel Orientation="Horizontal">
                                     <Ellipse Width="8" Height="8" Fill="#F87168" VerticalAlignment="Center" />
@@ -627,7 +627,7 @@
                 </ScrollViewer>
 
                 <!-- ============ Comments & activity ============ -->
-                <Border Grid.Column="1" Background="{DynamicResource Fb.SurfaceAltBrush}" CornerRadius="0,0,22,0"
+                <Border Grid.Column="1" Background="{DynamicResource Fb.SurfaceAltBrush}" CornerRadius="0"
                         BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="1,0,0,0">
                     <DockPanel Margin="16,14,10,14">
                         <Grid DockPanel.Dock="Top" Margin="0,0,6,10">
@@ -683,7 +683,7 @@
                                                         <Run Text="  " />
                                                         <Run Text="{Binding CreatedAt, Converter={StaticResource RelativeTime}, Mode=OneWay}" Foreground="{DynamicResource Fb.FaintTextBrush}" FontSize="11" />
                                                     </TextBlock>
-                                                    <Border CornerRadius="8" Padding="10,7" Margin="0,4,0,0" Background="{DynamicResource Fb.InputBrush}"
+                                                    <Border CornerRadius="{DynamicResource Fb.Radius}" Padding="10,7" Margin="0,4,0,0" Background="{DynamicResource Fb.InputBrush}"
                                                             BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="1">
                                                         <TextBox Text="{Binding Text, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0"
                                                                  Background="Transparent" Foreground="{DynamicResource Fb.TextBrush}" Padding="0">
@@ -735,7 +735,7 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <CheckBox IsChecked="{Binding IsSelected}" VerticalAlignment="Center" MinWidth="0" />
-                                        <Border Grid.Column="1" CornerRadius="4" Height="32" Padding="10,0" Cursor="Hand"
+                                        <Border Grid.Column="1" CornerRadius="{DynamicResource Fb.RadiusSmall}" Height="32" Padding="10,0" Cursor="Hand"
                                                 Background="{Binding Label.Color, Converter={StaticResource HexToBrush}}" MouseLeftButtonUp="LabelChip_MouseLeftButtonUp">
                                             <TextBlock Text="{Binding Label.Name}" VerticalAlignment="Center" FontWeight="SemiBold"
                                                        Foreground="{Binding Label.Color, Converter={StaticResource ContrastBrush}}" />
@@ -777,7 +777,7 @@
 
                         <!-- Create label -->
                         <TextBlock Text="Create a new label" Style="{StaticResource Fb.Caption}" Margin="0,12,0,6" />
-                        <Border CornerRadius="4" Height="32" Padding="10,0" Margin="0,0,0,8" Background="{Binding NewLabelColor, Converter={StaticResource HexToBrush}}">
+                        <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Height="32" Padding="10,0" Margin="0,0,0,8" Background="{Binding NewLabelColor, Converter={StaticResource HexToBrush}}">
                             <TextBlock Text="{Binding NewLabelName}" VerticalAlignment="Center" FontWeight="SemiBold"
                                        Foreground="{Binding NewLabelColor, Converter={StaticResource ContrastBrush}}" />
                         </Border>

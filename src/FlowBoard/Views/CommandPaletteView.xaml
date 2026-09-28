@@ -47,7 +47,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <Border Width="32" Height="32" CornerRadius="8" Background="{DynamicResource Fb.SubtleBrush}" Margin="0,0,12,0">
+                            <Border Width="32" Height="32" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" Margin="0,0,12,0">
                                 <ui:SymbolIcon Symbol="{Binding Icon}" FontSize="16" Foreground="{DynamicResource Fb.TextBrush}" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -56,7 +56,7 @@
                                            Visibility="{Binding Subtitle, Converter={StaticResource HasValueToVis}}" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Border CornerRadius="4" Padding="6,1" Margin="8,0,0,0" Background="{DynamicResource Fb.SubtleHoverBrush}"
+                                <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Padding="6,1" Margin="8,0,0,0" Background="{DynamicResource Fb.SubtleHoverBrush}"
                                         Visibility="{Binding Shortcut, Converter={StaticResource HasValueToVis}}">
                                     <TextBlock Text="{Binding Shortcut}" FontSize="11" FontFamily="Consolas" Foreground="{DynamicResource Fb.MutedTextBrush}" />
                                 </Border>

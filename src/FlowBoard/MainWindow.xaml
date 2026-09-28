@@ -80,7 +80,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <Border Width="28" Height="20" CornerRadius="6" HorizontalAlignment="Left" BorderThickness="1" BorderBrush="{DynamicResource Fb.PanelBorderBrush}"
+                        <Border Width="28" Height="20" CornerRadius="{DynamicResource Fb.RadiusSmall}" HorizontalAlignment="Left" BorderThickness="1" BorderBrush="{DynamicResource Fb.PanelBorderBrush}"
                                 Background="{Binding Background, Converter={StaticResource BoardThumbnail}}" />
                         <TextBlock Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                    Foreground="{DynamicResource Fb.TextBrush}" FontSize="14" />
@@ -140,7 +140,7 @@
                 <Button Width="440" Height="30" Cursor="IBeam" Command="{Binding OpenCommandPaletteCommand}" ToolTip="Search (Ctrl+K)">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border x:Name="Bd" CornerRadius="999" Background="{DynamicResource Fb.SubtleBrush}" BorderThickness="1"
+                            <Border x:Name="Bd" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" BorderThickness="1"
                                     BorderBrush="{DynamicResource Fb.PanelBorderBrush}" Padding="14,0,6,0">
                                 <Grid>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -148,7 +148,7 @@
                                         <TextBlock Margin="8,0,0,0" Text="Search cards, boards and commands" FontSize="13"
                                                    Foreground="{DynamicResource Fb.MutedTextBrush}" />
                                     </StackPanel>
-                                    <Border HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="999" Padding="8,2"
+                                    <Border HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="{DynamicResource Fb.RadiusSmall}" Padding="8,2"
                                             Background="{DynamicResource Fb.SubtleHoverBrush}">
                                         <TextBlock Text="Ctrl K" FontSize="11" Foreground="{DynamicResource Fb.MutedTextBrush}" />
                                     </Border>
@@ -168,7 +168,7 @@
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
 
                     <!-- Running time tracker -->
-                    <Border CornerRadius="15" Height="30" Padding="10,0,4,0" Margin="0,0,6,0" Background="#33F87168"
+                    <Border CornerRadius="{DynamicResource Fb.Radius}" Height="30" Padding="10,0,4,0" Margin="0,0,6,0" Background="#33F87168"
                             Visibility="{Binding Timer.IsRunning, Converter={StaticResource BoolToVis}}">
                         <StackPanel Orientation="Horizontal">
                             <Ellipse Width="8" Height="8" Fill="#F87168" VerticalAlignment="Center" h:Behaviors.AnimateIn="pop" />
@@ -188,7 +188,7 @@
                     <ToggleButton x:Name="PomodoroToggle" Height="30" Margin="0,0,6,0" Cursor="Hand" ToolTip="Focus timer (Ctrl+P)">
                         <ToggleButton.Template>
                             <ControlTemplate TargetType="ToggleButton">
-                                <Border x:Name="Bd" CornerRadius="15" Padding="10,0" Background="{DynamicResource Fb.SubtleBrush}">
+                                <Border x:Name="Bd" CornerRadius="{DynamicResource Fb.Radius}" Padding="10,0" Background="{DynamicResource Fb.SubtleBrush}">
                                     <ContentPresenter VerticalAlignment="Center" />
                                 </Border>
                                 <ControlTemplate.Triggers>
@@ -368,14 +368,14 @@
             </Border>
 
             <!-- Board area -->
-            <Grid x:Name="BoardArea" Grid.Column="1" h:Behaviors.ClipRadius="20">
+            <Grid x:Name="BoardArea" Grid.Column="1" h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}">
                 <Border x:Name="BoardBackground" Margin="-48" Background="{Binding CurrentBoard.Background, Converter={StaticResource BoardBackground}}">
                     <Border.Effect>
                         <BlurEffect Radius="{Binding CurrentBoard.BackgroundBlur}" KernelType="Gaussian" RenderingBias="Performance" />
                     </Border.Effect>
                 </Border>
                 <Border Background="Black" Opacity="{Binding CurrentBoard.BackgroundDim}" />
-                <Border CornerRadius="20" BorderThickness="1" BorderBrush="{DynamicResource Fb.PanelBorderBrush}" IsHitTestVisible="False" Panel.ZIndex="10" />
+                <Border CornerRadius="{DynamicResource Fb.RadiusLarge}" BorderThickness="1" BorderBrush="{DynamicResource Fb.PanelBorderBrush}" IsHitTestVisible="False" Panel.ZIndex="10" />
 
                 <!-- Empty state -->
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420"
@@ -473,7 +473,7 @@
                                     <StackPanel Orientation="Horizontal">
                                         <ui:SymbolIcon Symbol="Filter24" FontSize="16" />
                                         <TextBlock Text="Filter" Margin="6,0,0,0" />
-                                        <Border Margin="6,0,0,0" CornerRadius="8" MinWidth="18" Padding="5,0" Background="{DynamicResource Fb.AccentBrush}"
+                                        <Border Margin="6,0,0,0" CornerRadius="{DynamicResource Fb.Radius}" MinWidth="18" Padding="5,0" Background="{DynamicResource Fb.AccentBrush}"
                                                 Visibility="{Binding Filter.IsActive, Converter={StaticResource BoolToVis}}">
                                             <TextBlock Text="{Binding Filter.ActiveCount}" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"
                                                        Foreground="{DynamicResource Fb.OnAccentBrush}" />
@@ -498,7 +498,7 @@
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
                                                         <CheckBox IsChecked="{Binding IsSelected}" Margin="0,2">
-                                                            <Border CornerRadius="4" Height="26" MinWidth="200" Padding="10,0"
+                                                            <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Height="26" MinWidth="200" Padding="10,0"
                                                                     Background="{Binding Label.Color, Converter={StaticResource HexToBrush}}">
                                                                 <TextBlock Text="{Binding Label.Name}" VerticalAlignment="Center" FontWeight="SemiBold"
                                                                            Foreground="{Binding Label.Color, Converter={StaticResource ContrastBrush}}" />
@@ -551,6 +551,12 @@
                                             </MenuItem>
                                             <MenuItem Header="Labels…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=OpenBoardSettingsCommand}" CommandParameter="labels">
                                                 <MenuItem.Icon><ui:SymbolIcon Symbol="Tag24" /></MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Expand all cards" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ExpandAllCardsCommand}">
+                                                <MenuItem.Icon><ui:SymbolIcon Symbol="ChevronDown24" /></MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Collapse all cards" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=CollapseAllCardsCommand}">
+                                                <MenuItem.Icon><ui:SymbolIcon Symbol="ChevronUp24" /></MenuItem.Icon>
                                             </MenuItem>
                                             <MenuItem Header="Archived items" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=OpenArchiveCommand}">
                                                 <MenuItem.Icon><ui:SymbolIcon Symbol="Archive24" /></MenuItem.Icon>
@@ -619,7 +625,7 @@
                           Margin="0,0,0,24" Focusable="False">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:ToastMessage}">
-                        <Border x:Name="Toast" Background="{DynamicResource Fb.ToastBrush}" CornerRadius="16" Padding="16,8,8,8" BorderThickness="1" BorderBrush="{DynamicResource Fb.PanelBorderBrush}" Margin="0,6,0,0"
+                        <Border x:Name="Toast" Background="{DynamicResource Fb.ToastBrush}" CornerRadius="{DynamicResource Fb.RadiusLarge}" Padding="16,8,8,8" BorderThickness="1" BorderBrush="{DynamicResource Fb.PanelBorderBrush}" Margin="0,6,0,0"
                                 MinWidth="280" MaxWidth="560" Effect="{StaticResource Fb.PopupShadow}" h:Behaviors.AnimateIn="rise">
                             <Grid>
                                 <Grid.ColumnDefinitions>

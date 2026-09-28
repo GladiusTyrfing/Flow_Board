@@ -14,7 +14,7 @@
     <UserControl.Resources>
         <!-- ================= Card (front) ================= -->
         <DataTemplate x:Key="CardTemplate" DataType="{x:Type models:Card}">
-            <Border x:Name="CardRoot" Margin="2,0,2,10" CornerRadius="14" Background="{DynamicResource Fb.CardBrush}"
+            <Border x:Name="CardRoot" Margin="2,0,2,10" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.CardBrush}"
                     BorderThickness="1" BorderBrush="{DynamicResource Fb.CardBorderBrush}" Cursor="Hand"
                     Effect="{StaticResource Fb.CardShadow}" h:Behaviors.AnimateIn="fade"
                     PreviewMouseLeftButtonDown="Card_PreviewMouseLeftButtonDown" MouseLeftButtonUp="Card_MouseLeftButtonUp"
@@ -90,16 +90,16 @@
                     </ContextMenu>
                 </Border.ContextMenu>
 
-                <StackPanel>
+                <StackPanel h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusValue}">
                     <!-- Image cover -->
-                    <Border Height="150" CornerRadius="13,13,0,0"
+                    <Border Height="150" CornerRadius="0"
                             Visibility="{Binding CoverImagePath, Converter={StaticResource HasValueToVis}}">
                         <Border.Background>
                             <ImageBrush Stretch="UniformToFill" ImageSource="{Binding CoverImagePath, Converter={StaticResource ImagePath}, ConverterParameter=600}" />
                         </Border.Background>
                     </Border>
                     <!-- Color cover -->
-                    <Border Height="34" CornerRadius="13,13,0,0" Background="{Binding CoverColor, Converter={StaticResource HexToBrush}}"
+                    <Border Height="34" CornerRadius="0" Background="{Binding CoverColor, Converter={StaticResource HexToBrush}}"
                             Visibility="{Binding HasCoverColor, Converter={StaticResource BoolToVis}}" />
 
                     <Grid>
@@ -116,7 +116,7 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:Label}">
-                                    <Border CornerRadius="999" MinWidth="36" Height="18" Padding="8,0" Margin="0,0,4,4"
+                                    <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" MinWidth="36" Height="18" Padding="8,0" Margin="0,0,4,4"
                                             Background="{Binding Color, Converter={StaticResource HexToBrush}}" ToolTip="{Binding Name}">
                                         <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="160"
                                                    Foreground="{Binding Color, Converter={StaticResource ContrastBrush}}" />
@@ -130,7 +130,13 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
+                            <Button x:Name="ExpandBtn" Grid.Column="2" Style="{StaticResource Fb.IconButton}" Width="24" Height="24" Margin="6,-2,-4,0"
+                                    VerticalAlignment="Top" Visibility="Hidden" dd:DragDrop.DragSourceIgnore="True" ToolTip="Show details (V)"
+                                    Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ToggleCardExpandedCommand}" CommandParameter="{Binding}">
+                                <ui:SymbolIcon x:Name="ExpandIcon" Symbol="ChevronDown24" FontSize="13" />
+                            </Button>
                             <CheckBox x:Name="Check" Style="{StaticResource Fb.RoundCheck}" Margin="0,1,8,0" VerticalAlignment="Top" Visibility="Collapsed"
                                       IsChecked="{Binding IsCompleted, Mode=OneWay}" dd:DragDrop.DragSourceIgnore="True" ToolTip="Mark complete"
                                       Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ToggleCompleteCommand}" CommandParameter="{Binding}" />
@@ -196,33 +202,139 @@
                                 </StackPanel>
                             </Border>
                         </WrapPanel>
+
+                        <!-- ============ Expanded details (toggle with the arrow or V) ============ -->
+                        <StackPanel Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}" Margin="0,8,0,0" h:Behaviors.AnimateIn="fade">
+                            <Border Height="1" Background="{DynamicResource Fb.DividerBrush}" Margin="0,0,0,8" />
+
+                            <TextBlock Text="{Binding Description}" TextWrapping="Wrap" FontSize="12.5" LineHeight="18" MaxHeight="180" TextTrimming="WordEllipsis"
+                                       Foreground="{DynamicResource Fb.MutedTextBrush}" Margin="0,0,0,8"
+                                       Visibility="{Binding HasDescription, Converter={StaticResource BoolToVis}}" />
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8" Visibility="{Binding HasDates, Converter={StaticResource BoolToVis}}">
+                                <ui:SymbolIcon Symbol="CalendarLtr24" FontSize="13" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                <TextBlock Text="{Binding DueText}" FontSize="12" Margin="6,0,0,0" Foreground="{DynamicResource Fb.TextBrush}" />
+                                <ui:SymbolIcon Symbol="AlertOn24" FontSize="12" Margin="6,0,0,0" Foreground="{DynamicResource Fb.MutedTextBrush}"
+                                               Visibility="{Binding HasReminder, Converter={StaticResource BoolToVis}}" />
+                            </StackPanel>
+
+                            <!-- Checklists: tick items right here -->
+                            <ItemsControl ItemsSource="{Binding Checklists}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:Checklist}">
+                                        <StackPanel Margin="0,0,0,8">
+                                            <Grid Margin="0,0,0,4">
+                                                <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Fb.TextBrush}" />
+                                                <TextBlock Text="{Binding Percent, StringFormat='{}{0}%'}" FontSize="11" HorizontalAlignment="Right" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                            </Grid>
+                                            <ProgressBar Style="{StaticResource Fb.ThinProgress}" Height="4" Value="{Binding Percent, Mode=OneWay}" Margin="0,0,0,4" />
+                                            <ItemsControl ItemsSource="{Binding Items}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type models:ChecklistItem}">
+                                                        <CheckBox IsChecked="{Binding IsDone}" Margin="0,1" MinHeight="0" MinWidth="0" Padding="6,0,0,0" dd:DragDrop.DragSourceIgnore="True">
+                                                            <TextBlock x:Name="ItemText" Text="{Binding Text}" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource Fb.TextBrush}" />
+                                                        </CheckBox>
+                                                        <DataTemplate.Triggers>
+                                                            <DataTrigger Binding="{Binding IsDone}" Value="True">
+                                                                <Setter TargetName="ItemText" Property="TextDecorations" Value="Strikethrough" />
+                                                                <Setter TargetName="ItemText" Property="Foreground" Value="{DynamicResource Fb.MutedTextBrush}" />
+                                                            </DataTrigger>
+                                                        </DataTemplate.Triggers>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Image thumbnails -->
+                            <ItemsControl ItemsSource="{Binding ImageAttachments}" Margin="0,0,0,4">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:Attachment}">
+                                        <Button Style="{StaticResource Fb.SwatchButton}" Width="74" Height="50" Margin="0,0,6,6" ToolTip="{Binding Name}"
+                                                dd:DragDrop.DragSourceIgnore="True"
+                                                Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=PreviewImageCommand}" CommandParameter="{Binding}">
+                                            <Button.Background>
+                                                <ImageBrush Stretch="UniformToFill" ImageSource="{Binding FullPath, Converter={StaticResource ImagePath}, ConverterParameter=200}" />
+                                            </Button.Background>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Files & links -->
+                            <ItemsControl ItemsSource="{Binding OtherFiles}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:Attachment}">
+                                        <Button Style="{StaticResource Fb.GhostButton}" Padding="4,3" Margin="-4,0,0,2" FontSize="12" dd:DragDrop.DragSourceIgnore="True"
+                                                ToolTip="Open" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=OpenAttachmentExternallyCommand}" CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="{Binding Converter={StaticResource AttachmentIcon}}" FontSize="14" Foreground="{DynamicResource Fb.AccentTextBrush}" />
+                                                <TextBlock Text="{Binding Name}" Margin="6,0,0,0" TextTrimming="CharacterEllipsis" MaxWidth="200" />
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Voice notes: play right on the board -->
+                            <ItemsControl ItemsSource="{Binding VoiceNotes}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:Attachment}">
+                                        <Grid Margin="0,2,0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Button Style="{StaticResource Fb.AccentButton}" Width="28" Height="28" Padding="0" dd:DragDrop.DragSourceIgnore="True"
+                                                    Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ToggleVoiceCommand}" CommandParameter="{Binding}">
+                                                <Grid>
+                                                    <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="12"
+                                                                   Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
+                                                    <ui:SymbolIcon Symbol="Pause24" Filled="True" FontSize="12" Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVis}}" />
+                                                </Grid>
+                                            </Button>
+                                            <ProgressBar Grid.Column="1" Style="{StaticResource Fb.ThinProgress}" Height="4" Maximum="1" Margin="8,0"
+                                                         Value="{Binding PlaybackProgress, Mode=OneWay}" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="2" Text="{Binding DurationText}" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Latest comment -->
+                            <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{DynamicResource Fb.SubtleBrush}" Padding="8,6" Margin="0,4,0,0"
+                                    Visibility="{Binding LatestComment, Converter={StaticResource HasValueToVis}}">
+                                <TextBlock TextWrapping="Wrap" FontSize="12" MaxHeight="60" TextTrimming="WordEllipsis">
+                                    <Run Text="{Binding LatestComment.Author, Mode=OneWay}" FontWeight="Bold" />
+                                    <Run Text="{Binding LatestComment.Text, Mode=OneWay}" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
                     </StackPanel>
                     </Grid>
                 </StackPanel>
             </Border>
             <DataTemplate.Triggers>
                 <Trigger SourceName="CardRoot" Property="IsMouseOver" Value="True">
-                    <Trigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetName="CardRoot" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
-                                                 To="-2" Duration="0:0:0.15" EasingFunction="{StaticResource EaseOut}" />
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </Trigger.EnterActions>
-                    <Trigger.ExitActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetName="CardRoot" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
-                                                 To="0" Duration="0:0:0.2" EasingFunction="{StaticResource EaseOut}" />
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </Trigger.ExitActions>
                     <Setter TargetName="CardRoot" Property="Effect" Value="{StaticResource Fb.CardHoverShadow}" />
                     <Setter TargetName="CardRoot" Property="Background" Value="{DynamicResource Fb.CardHoverBrush}" />
                     <Setter TargetName="CardRoot" Property="BorderBrush" Value="{DynamicResource Fb.AccentBrush}" />
                     <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="ExpandBtn" Property="Visibility" Value="Visible" />
                 </Trigger>
+                <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                    <Setter TargetName="ExpandBtn" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="ExpandIcon" Property="Symbol" Value="ChevronUp24" />
+                    <Setter TargetName="ExpandBtn" Property="ToolTip" Value="Hide details (V)" />
+                </DataTrigger>
                 <DataTrigger Binding="{Binding IsCompleted}" Value="True">
                     <Setter TargetName="Check" Property="Visibility" Value="Visible" />
                     <Setter TargetName="Title" Property="Opacity" Value="0.7" />
@@ -245,7 +357,7 @@
         <DataTemplate x:Key="ListTemplate" DataType="{x:Type models:BoardList}">
             <Grid Margin="0,0,12,0" VerticalAlignment="Top">
                 <!-- Expanded -->
-                <Border x:Name="Expanded" Width="284" Background="{DynamicResource Fb.ListBrush}" CornerRadius="20" Padding="8,10,8,8"
+                <Border x:Name="Expanded" Width="284" Background="{DynamicResource Fb.ListBrush}" CornerRadius="{DynamicResource Fb.RadiusLarge}" Padding="8,10,8,8"
                         BorderThickness="1" BorderBrush="{DynamicResource Fb.ListBorderBrush}"
                         VerticalAlignment="Top" h:Behaviors.AnimateIn="rise">
                     <DockPanel>
@@ -285,7 +397,7 @@
                                      h:Behaviors.EscapeCommand="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=CommitListNameCommand}"
                                      h:Behaviors.LostFocusCommand="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=CommitListNameCommand}" />
 
-                            <Border x:Name="CountBadge" Grid.Column="1" CornerRadius="999" Padding="7,1" Margin="4,0" VerticalAlignment="Center"
+                            <Border x:Name="CountBadge" Grid.Column="1" CornerRadius="{DynamicResource Fb.RadiusSmall}" Padding="7,1" Margin="4,0" VerticalAlignment="Center"
                                     Background="{DynamicResource Fb.SubtleBrush}" ToolTip="Cards (and work-in-progress limit)">
                                 <TextBlock x:Name="CountText" Text="{Binding CountText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Fb.MutedTextBrush}" />
                             </Border>
@@ -305,6 +417,12 @@
                                         </MenuItem>
                                         <MenuItem Header="Rename" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=StartRenameListCommand}" CommandParameter="{Binding}">
                                             <MenuItem.Icon><ui:SymbolIcon Symbol="Rename24" /></MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="Expand all cards" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ExpandAllCardsCommand}" CommandParameter="{Binding}">
+                                            <MenuItem.Icon><ui:SymbolIcon Symbol="ChevronDown24" /></MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="Collapse all cards" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=CollapseAllCardsCommand}" CommandParameter="{Binding}">
+                                            <MenuItem.Icon><ui:SymbolIcon Symbol="ChevronUp24" /></MenuItem.Icon>
                                         </MenuItem>
                                         <MenuItem Header="Copy list" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=CopyListCommand}" CommandParameter="{Binding}">
                                             <MenuItem.Icon><ui:SymbolIcon Symbol="Copy24" /></MenuItem.Icon>
@@ -483,7 +601,7 @@
                 </Border>
 
                 <!-- Collapsed -->
-                <Border x:Name="Collapsed" Width="48" MinHeight="200" Background="{DynamicResource Fb.ListBrush}" CornerRadius="20"
+                <Border x:Name="Collapsed" Width="48" MinHeight="200" Background="{DynamicResource Fb.ListBrush}" CornerRadius="{DynamicResource Fb.RadiusLarge}"
                         VerticalAlignment="Top" Visibility="Collapsed" BorderThickness="1" BorderBrush="{DynamicResource Fb.ListBorderBrush}">
                     <Button Style="{StaticResource Fb.GhostButton}" Padding="0,10" VerticalContentAlignment="Top" HorizontalContentAlignment="Center"
                             Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ToggleCollapseListCommand}" CommandParameter="{Binding}"
@@ -535,7 +653,7 @@
             <!-- Add another list -->
             <Grid Width="280" VerticalAlignment="Top">
                 <Button Style="{StaticResource Fb.GhostButton}" Background="{DynamicResource Fb.HeaderBarBrush}" Foreground="{DynamicResource Fb.HeaderTextBrush}"
-                        BorderBrush="{DynamicResource Fb.ListBorderBrush}" BorderThickness="1" Padding="16,13" h:Behaviors.CornerRadius="18"
+                        BorderBrush="{DynamicResource Fb.ListBorderBrush}" BorderThickness="1" Padding="16,13" h:Behaviors.CornerRadius="{DynamicResource Fb.RadiusLarge}"
                         Command="{Binding StartAddListCommand}"
                         Visibility="{Binding IsAddingList, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
                     <StackPanel Orientation="Horizontal">
@@ -543,7 +661,7 @@
                         <TextBlock Text="Add another list" Margin="8,0,0,0" FontWeight="SemiBold" />
                     </StackPanel>
                 </Button>
-                <Border Background="{DynamicResource Fb.ListBrush}" CornerRadius="20" Padding="10" BorderThickness="1" BorderBrush="{DynamicResource Fb.ListBorderBrush}"
+                <Border Background="{DynamicResource Fb.ListBrush}" CornerRadius="{DynamicResource Fb.RadiusLarge}" Padding="10" BorderThickness="1" BorderBrush="{DynamicResource Fb.ListBorderBrush}"
                         Visibility="{Binding IsAddingList, Converter={StaticResource BoolToVis}}" h:Behaviors.AnimateIn="pop">
                     <StackPanel>
                         <ui:TextBox PlaceholderText="Enter list name…" Text="{Binding NewListName, UpdateSourceTrigger=PropertyChanged}"
