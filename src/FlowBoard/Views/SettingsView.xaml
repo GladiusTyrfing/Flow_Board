@@ -254,6 +254,14 @@
                             </StackPanel>
                         </DockPanel>
 
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.ShowMinimap}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Minimap" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Small overview in the corner of boards, storyboards, canvases, timelines and pages. Ctrl+M toggles it." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+
                         <!-- Windows 11 only -->
                         <DockPanel Style="{StaticResource Row}" Visibility="{Binding SupportsBackdrop, Converter={StaticResource BoolToVis}}">
                             <Border DockPanel.Dock="Right" Style="{StaticResource Fb.SegmentGroup}" VerticalAlignment="Center">
@@ -438,18 +446,22 @@
                     <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=data}">
                         <TextBlock Text="Data &amp; backup" Style="{StaticResource PageTitle}" />
                         <Border Style="{StaticResource Fb.Section}">
-                            <TextBlock Style="{StaticResource Fb.Text}" FontSize="13">
-                                <Run Text="Everything is stored locally in" />
-                                <Run Text="{Binding DataDir, Mode=OneWay}" FontFamily="Consolas" FontWeight="Bold" />
+                            <TextBlock Style="{StaticResource Fb.Text}" FontSize="13" TextWrapping="Wrap">
+                                <Run Text="Open project:" />
+                                <Run Text="{Binding Main.ProjectPath, Mode=OneWay, TargetNullValue='none'}" FontFamily="Consolas" FontWeight="Bold" />
                                 <LineBreak />
-                                <Run Text="FlowBoard saves every couple of seconds and keeps rolling backups. Put an empty portable.txt next to FlowBoard.exe to keep data beside the app instead."
+                                <Run Text="New projects go to" />
+                                <Run Text="{Binding ProjectsDir, Mode=OneWay}" FontFamily="Consolas" FontWeight="Bold" />
+                                <LineBreak />
+                                <Run Text="Each project is a .flowboard file with its attachments, wallpapers and rolling backups in folders next to it, so a project folder can be copied or moved as a whole. FlowBoard saves every couple of seconds. App settings live in" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                <Run Text="{Binding AppDir, Mode=OneWay}" FontFamily="Consolas" Foreground="{DynamicResource Fb.MutedTextBrush}" /><Run Text=". Put an empty portable.txt next to FlowBoard.exe to keep settings and new projects beside the app instead."
                                      Foreground="{DynamicResource Fb.MutedTextBrush}" />
                             </TextBlock>
                         </Border>
                         <WrapPanel>
-                            <Button Style="{StaticResource Fb.AccentButton}" Margin="0,0,8,8" Content="Back up to zip…" Command="{Binding Main.BackupNowCommand}" />
-                            <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Restore from zip…" Command="{Binding Main.RestoreBackupCommand}" />
-                            <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Open data folder" Command="{Binding Main.OpenDataFolderCommand}" />
+                            <Button Style="{StaticResource Fb.AccentButton}" Margin="0,0,8,8" Content="Back up project to zip…" Command="{Binding Main.BackupNowCommand}" />
+                            <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Restore zip as project…" Command="{Binding Main.RestoreBackupCommand}" />
+                            <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Show project folder" Command="{Binding Main.ShowProjectInExplorerCommand}" />
                             <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Export current board…" Command="{Binding Main.ExportBoardCommand}" />
                             <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Import board…" Command="{Binding Main.ImportBoardCommand}" />
                         </WrapPanel>

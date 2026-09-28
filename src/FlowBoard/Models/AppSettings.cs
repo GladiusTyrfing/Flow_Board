@@ -50,4 +50,8 @@ public partial class AppSettings : ObservableObject
     /// <summary>System-wide hotkey that shows or hides the FlowBoard window.</summary>
     [ObservableProperty] private string _showHideHotkey = "Ctrl+Alt+F";
     [ObservableProperty] private bool _cardHoverHotkeys = true;
+    /// <summary>Recently opened project files, newest first.</summary>
+    public List<string> RecentProjects { get; set; } = [];
+    /// <summary>Set once the pre-projects data.json has been offered in the recent list.</summary>
+    public bool LegacyWorkspaceListed { get; set; }
 }

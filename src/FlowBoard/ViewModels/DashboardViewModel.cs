@@ -15,7 +15,16 @@ public sealed record PrioritySlice(string Name, int Count, double Fraction, stri
 
 public sealed record RecentItem(string Title, string Subtitle, string Icon, Action Open);
 
-/// <summary>Home overview: what's due, what got done, where the time went.</summary>
+public sealed record StatLine(string Label, string Value);
+
+/// <summary>One section of the project on the home screen: size, a few numbers and a progress bar.</summary>
+public sealed record SectionCard(string Title, string Icon, string Color, int Count, string CountLabel,
+    IReadOnlyList<StatLine> Lines, double Progress, string ProgressText, bool HasProgress, System.Windows.Input.ICommand NewCommand, string NewText);
+
+/// <summary>
+/// Home: with no project open it offers new / open / recent projects; with a project it shows
+/// every section's numbers, what's due, what got done and where the time went.
+/// </summary>
 public sealed partial class DashboardViewModel : DocumentViewModel
 {
     public DashboardViewModel(MainViewModel main) : base(main) => Refresh();
@@ -33,16 +42,59 @@ public sealed partial class DashboardViewModel : DocumentViewModel
     [ObservableProperty] private IReadOnlyList<PrioritySlice> _priorities = [];
     [ObservableProperty] private IReadOnlyList<AgendaEntry> _agenda = [];
     [ObservableProperty] private IReadOnlyList<RecentItem> _recent = [];
+    [ObservableProperty] private IReadOnlyList<SectionCard> _sections = [];
+    [ObservableProperty] private IReadOnlyList<RecentProject> _projects = [];
+    [ObservableProperty] private string _projectSummary = string.Empty;
+
+    public bool HasProject => Main.HasProject;
+    public string ProjectName => Main.ProjectName;
+    public string? ProjectPath => Main.ProjectPath;
+    public bool HasCardStats => Main.HasProject && Main.Workspace.Boards.Count > 0;
 
     [RelayCommand]
     public void Refresh()
     {
         var now = DateTime.Now;
-        var s = DashboardStats.Compute(Main.Workspace, now);
         var name = Main.Settings.DisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
         var part = now.Hour switch { < 5 => "Good night", < 12 => "Good morning", < 18 => "Good afternoon", _ => "Good evening" };
         Greeting = string.IsNullOrEmpty(name) ? part : $"{part}, {name}";
         DateText = now.ToString("dddd, d MMMM");
+        Projects = Main.RecentProjects;
+        OnPropertyChanged(nameof(HasProject));
+        OnPropertyChanged(nameof(ProjectName));
+        OnPropertyChanged(nameof(ProjectPath));
+        OnPropertyChanged(nameof(HasCardStats));
+        if (!Main.HasProject)
+        {
+            Sections = [];
+            Tiles = [];
+            Recent = [];
+            return;
+        }
+
+        var p = ProjectStats.Compute(Main.Workspace, now);
+        ProjectSummary = $"{Plural(p.Boards, "board")} · {Plural(p.Storyboards, "storyboard")} · {Plural(p.Canvases, "canvas", "canvases")} · {Plural(p.Pages, "page")}";
+        Sections =
+        [
+            new("Boards", "Board24", "#8B5CF6", p.Boards, p.Boards == 1 ? "board" : "boards",
+                [new("Lists", p.Lists.ToString()), new("Cards", p.Cards.ToString()), new("Open", (p.Cards - p.CardsDone).ToString())],
+                p.Cards == 0 ? 0 : p.CardsDone / (double)p.Cards, $"{p.CardsDone} of {p.Cards} cards done", p.Cards > 0,
+                Main.NewBoardCommand, "New board"),
+            new("Storyboards", "VideoClip24", "#EC4899", p.Storyboards, p.Storyboards == 1 ? "storyboard" : "storyboards",
+                [new("Shots", p.Shots.ToString()), new("Runtime", ProjectStats.FormatRuntime(p.RuntimeSeconds)), new("With picture", p.ShotsWithPicture.ToString()), new("Voice clips", p.VoiceClips.ToString())],
+                p.Shots == 0 ? 0 : p.ShotsDone / (double)p.Shots, $"{p.ShotsDone} of {p.Shots} shots done or approved", p.Shots > 0,
+                Main.NewStoryboardCommand, "New storyboard"),
+            new("Canvases", "Flowchart24", "#06B6D4", p.Canvases, p.Canvases == 1 ? "canvas" : "canvases",
+                [new("Shapes", p.Shapes.ToString()), new("Frames", p.Frames.ToString()), new("Connections", p.Connections.ToString())],
+                0, string.Empty, false,
+                Main.NewCanvasCommand, "New canvas"),
+            new("Pages", "DocumentText24", "#F59E0B", p.Pages, p.Pages == 1 ? "page" : "pages",
+                [new("Words", p.Words.ToString("N0")), new("Edited this week", p.PagesEditedThisWeek.ToString()), new("To-dos", p.Todos.ToString())],
+                p.Todos == 0 ? 0 : p.TodosDone / (double)p.Todos, $"{p.TodosDone} of {p.Todos} to-dos checked", p.Todos > 0,
+                Main.NewNoteCommand, "New page"),
+        ];
+
+        var s = DashboardStats.Compute(Main.Workspace, now);
 
         var trend = s.CompletedThisWeek - s.CompletedLastWeek;
         Tiles =
@@ -111,6 +163,8 @@ public sealed partial class DashboardViewModel : DocumentViewModel
         Recent = recent.OrderByDescending(r => r.When).Take(6).Select(r => r.Item).ToList();
     }
 
+    private static string Plural(int n, string one, string? many = null) => $"{n} {(n == 1 ? one : many ?? one + "s")}";
+
     private static string BoardColor(Board b)
     {
         // First color of the board background, so bars match the sidebar thumbnails.
@@ -131,4 +185,7 @@ public sealed partial class DashboardViewModel : DocumentViewModel
 
     [RelayCommand]
     private void OpenRecent(RecentItem r) => r.Open();
+
+    [RelayCommand]
+    private void RunSection(SectionCard c) => c.NewCommand.Execute(null);
 }

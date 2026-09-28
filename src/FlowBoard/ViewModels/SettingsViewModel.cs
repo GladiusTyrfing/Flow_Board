@@ -45,7 +45,8 @@ public sealed partial class SettingsViewModel : DialogViewModel
     public AppSettings Settings => Main.Settings;
     public IReadOnlyList<ThemeMode> Themes { get; } = Enum.GetValues<ThemeMode>();
     public IReadOnlyList<BackdropMode> Backdrops { get; } = Enum.GetValues<BackdropMode>();
-    public string DataDir => AppPaths.DataDir;
+    public string AppDir => AppPaths.AppDir;
+    public string ProjectsDir => AppPaths.DefaultProjectsDir;
     public IReadOnlyList<AccentPreset> Accents => ThemeService.AccentPresets;
 
     /// <summary>Which settings page is shown (appearance, general, hotkeys, reminders, focus, data).</summary>

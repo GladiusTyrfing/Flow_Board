@@ -87,7 +87,7 @@
                         </Grid>
                         <TextBlock Style="{StaticResource Fb.Muted}" FontSize="12" VerticalAlignment="Center" Margin="10,0,0,0"
                                    Visibility="{Binding Main.IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}"
-                                   Text="Double-click to add · drag the dots to connect · Tab adds a child" />
+                                   Text="Double-click to add · drag the dots to connect · Tab adds a child · Ctrl + drag moves one shape inside a section" />
                     </StackPanel>
                 </Border>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
@@ -97,7 +97,7 @@
                             <TextBlock Text="Style" Margin="6,0,0,0" Visibility="{Binding Main.IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource Fb.HeaderButton}" Focusable="False" Command="{Binding AutoLayoutCommand}" ToolTip="Tidy up: arrange shapes left to right along the connectors">
+                    <Button Style="{StaticResource Fb.HeaderButton}" Focusable="False" Command="{Binding AutoLayoutCommand}" ToolTip="Tidy up: arrange shapes left to right along the connectors — sections keep their shapes and resize to fit (select one section to tidy just its inside)">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="Organization24" FontSize="16" />
                             <TextBlock Text="Tidy up" Margin="6,0,0,0" Visibility="{Binding Main.IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
@@ -167,7 +167,7 @@
                             <MenuItem.Icon><ui:SymbolIcon Symbol="Diamond24" /></MenuItem.Icon>
                         </MenuItem>
                         <MenuItem Header="Add section (frame) here" Command="{Binding AddShapeAtContextCommand}" CommandParameter="{x:Static models:NodeShape.Frame}">
-                            <MenuItem.Icon><ui:SymbolIcon Symbol="GroupList24" /></MenuItem.Icon>
+                            <MenuItem.Icon><ui:SymbolIcon Symbol="SelectObject24" /></MenuItem.Icon>
                         </MenuItem>
                         <Separator />
                         <MenuItem Header="Paste" InputGestureText="Ctrl+V" Command="{Binding PasteAtContextCommand}">
@@ -317,7 +317,7 @@
                                             <Path x:Name="DiamondShape" Data="M 0.5,0 L 1,0.5 L 0.5,1 L 0,0.5 Z" Stretch="Fill" Fill="{Binding Fill, Converter={StaticResource HexToBrush}}"
                                                   Stroke="#26000000" Visibility="Collapsed" Effect="{StaticResource Fb.CardShadow}" />
                                             <Image x:Name="Picture" Stretch="UniformToFill" Visibility="Collapsed" h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusValue}"
-                                                   Source="{Binding ImageFullPath, Converter={StaticResource ImagePath}, ConverterParameter=720}" />
+                                                   Source="{Binding ImageFullPath, Converter={StaticResource ImagePath}, ConverterParameter=1600}" />
 
                                             <!-- Freehand ink: drawn in its original box and scaled with the shape -->
                                             <Viewbox x:Name="InkBox" Stretch="Fill" Visibility="Collapsed" IsHitTestVisible="False">
@@ -329,7 +329,8 @@
 
                                             <!-- Frame / section -->
                                             <Grid x:Name="FrameBox" Visibility="Collapsed">
-                                                <Rectangle RadiusX="10" RadiusY="10" Fill="{Binding Fill, Converter={StaticResource HexToBrush}}" Opacity="0.08" IsHitTestVisible="False" />
+                                                <!-- The inside is grabbable: dragging it moves the section with everything in it. -->
+                                                <Rectangle RadiusX="10" RadiusY="10" Fill="{Binding Fill, Converter={StaticResource HexToBrush}}" Opacity="0.08" />
                                                 <Rectangle RadiusX="10" RadiusY="10" Stroke="{Binding Fill, Converter={StaticResource HexToBrush}}" StrokeThickness="2" StrokeDashArray="5 3" />
                                                 <Border x:Name="FrameTitle" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,-30,0,0" Padding="10,3" CornerRadius="{DynamicResource Fb.RadiusSmall}"
                                                         Background="{Binding Fill, Converter={StaticResource HexToBrush}}" MinWidth="40">
@@ -590,19 +591,29 @@
                         <ui:SymbolIcon Symbol="TextT24" FontSize="18" />
                     </RadioButton>
                     <RadioButton Style="{StaticResource ToolButton}" GroupName="CvTool" ToolTip="Connector: drag from one shape to another (C)" IsChecked="{Binding Tool, Converter={StaticResource Equals}, ConverterParameter=Connector}">
-                        <ui:SymbolIcon Symbol="ArrowRight24" FontSize="18" />
+                        <Canvas Width="18" Height="16">
+                            <Rectangle Width="6" Height="6" RadiusX="1.5" RadiusY="1.5" StrokeThickness="1.6" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" Canvas.Top="10" />
+                            <Rectangle Width="6" Height="6" RadiusX="1.5" RadiusY="1.5" StrokeThickness="1.6" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" Canvas.Left="12" />
+                            <Path Data="M 6,13 C 11,13 7,3 12,3" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                        </Canvas>
                     </RadioButton>
                     <RadioButton Style="{StaticResource ToolButton}" GroupName="CvTool" ToolTip="Line (L) — drag anywhere; ends stick to shapes" IsChecked="{Binding Tool, Converter={StaticResource Equals}, ConverterParameter=Line}">
                         <Path Data="M 1,15 L 17,1" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
                     </RadioButton>
                     <RadioButton Style="{StaticResource ToolButton}" GroupName="CvTool" ToolTip="Arrow (A) — drag anywhere; ends stick to shapes" IsChecked="{Binding Tool, Converter={StaticResource Equals}, ConverterParameter=Arrow}">
-                        <ui:SymbolIcon Symbol="ArrowUpRight24" FontSize="18" />
+                        <Canvas Width="18" Height="16">
+                            <Path Data="M 1,15 L 16,2" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                            <Path Data="M 8.5,1.5 L 17,1 L 16.2,9 Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                        </Canvas>
                     </RadioButton>
                     <RadioButton Style="{StaticResource ToolButton}" GroupName="CvTool" ToolTip="Pen (P) — draw freehand" IsChecked="{Binding Tool, Converter={StaticResource Equals}, ConverterParameter=Pen}">
                         <ui:SymbolIcon Symbol="Pen24" FontSize="18" />
                     </RadioButton>
                     <RadioButton Style="{StaticResource ToolButton}" GroupName="CvTool" ToolTip="Section / frame (F) — drag to draw an area that groups shapes" IsChecked="{Binding Tool, Converter={StaticResource Equals}, ConverterParameter=Frame}">
-                        <ui:SymbolIcon Symbol="GroupList24" FontSize="18" />
+                        <Canvas Width="18" Height="17">
+                            <Rectangle Width="8" Height="4" RadiusX="1.2" RadiusY="1.2" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                            <Rectangle Width="18" Height="11" Canvas.Top="6" RadiusX="2.5" RadiusY="2.5" StrokeThickness="1.6" StrokeDashArray="2.2 1.4" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                        </Canvas>
                     </RadioButton>
                     <Border Height="1" Background="{DynamicResource Fb.DividerBrush}" Margin="4,4" />
                     <Button Style="{StaticResource BarButton}" Width="38" Height="38" Command="{Binding AddImageCommand}" ToolTip="Add an image (I) — or paste / drop one">
@@ -818,8 +829,9 @@
                         CornerRadius="{DynamicResource Fb.Radius}" Padding="5" Effect="{StaticResource Fb.PopupShadow}" Opacity="0.94">
                     <Grid>
                         <Canvas x:Name="MiniMap" Width="200" Height="130" Background="Transparent" ClipToBounds="True" Cursor="Hand"
-                                MouseLeftButtonDown="OnMiniDown" MouseMove="OnMiniMove" MouseLeftButtonUp="OnMiniUp">
-                            <Rectangle x:Name="MiniPreview" IsHitTestVisible="False" />
+                                MouseLeftButtonDown="OnMiniDown" MouseMove="OnMiniMove" MouseLeftButtonUp="OnMiniUp" MouseWheel="OnMiniWheel"
+                                ToolTip="Drag the box to look around · click to jump · wheel to zoom">
+                            <Image x:Name="MiniImage" Width="200" Height="130" Stretch="None" IsHitTestVisible="False" />
                             <Border x:Name="MiniViewport" BorderBrush="{DynamicResource Fb.AccentBrush}" BorderThickness="1.5" CornerRadius="3"
                                     Background="{DynamicResource Fb.AccentSoftBrush}" IsHitTestVisible="False" />
                         </Canvas>

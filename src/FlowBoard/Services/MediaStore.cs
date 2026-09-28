@@ -120,29 +120,40 @@ public static class MediaStore
     /// </summary>
     public static BitmapSource Render(FrameworkElement element, double scale = 2, Brush? background = null, Rect? area = null)
     {
+        // The element is rendered directly at the target resolution (text and shapes stay vector-sharp).
+        // A VisualBrush would go through an intermediate bitmap of limited size, which blurs large captures.
         var rect = area ?? new Rect(0, 0, Math.Max(1, element.ActualWidth), Math.Max(1, element.ActualHeight));
-        var w = (int)Math.Ceiling(rect.Width * scale);
-        var h = (int)Math.Ceiling(rect.Height * scale);
-        var dv = new DrawingVisual();
-        using (var dc = dv.RenderOpen())
+        var w = Math.Max(1, (int)Math.Ceiling(rect.Width * scale));
+        var h = Math.Max(1, (int)Math.Ceiling(rect.Height * scale));
+        var dpi = 96 * scale;
+        var rtb = new RenderTargetBitmap(w, h, dpi, dpi, PixelFormats.Pbgra32);
+
+        if (background != null)
         {
-            var target = new Rect(0, 0, rect.Width * scale, rect.Height * scale);
-            if (background != null) dc.DrawRectangle(background, null, target);
-            var brush = new VisualBrush(element)
-            {
-                Stretch = Stretch.None,
-                AlignmentX = AlignmentX.Left,
-                AlignmentY = AlignmentY.Top,
-                ViewboxUnits = BrushMappingMode.Absolute,
-                Viewbox = rect,
-            };
-            dc.PushTransform(new ScaleTransform(scale, scale));
-            dc.DrawRectangle(brush, null, new Rect(0, 0, rect.Width, rect.Height));
-            dc.Pop();
+            var bg = new DrawingVisual();
+            using (var dc = bg.RenderOpen()) dc.DrawRectangle(background, null, new Rect(0, 0, rect.Width, rect.Height));
+            rtb.Render(bg);
         }
 
-        var rtb = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32);
-        rtb.Render(dv);
+        // RenderTargetBitmap draws the element at its offset in the parent (scroll position, margins...):
+        // shift it so the requested area lands at the top-left, then put everything back.
+        var offset = VisualTreeHelper.GetOffset(element);
+        var local = element.ReadLocalValue(UIElement.RenderTransformProperty);
+        var original = element.RenderTransform;
+        var shift = new TranslateTransform(-rect.X - offset.X, -rect.Y - offset.Y);
+        element.RenderTransform = original == null || original.Value.IsIdentity
+            ? shift
+            : new TransformGroup { Children = { original, shift } };
+        try
+        {
+            rtb.Render(element);
+        }
+        finally
+        {
+            if (local == DependencyProperty.UnsetValue) element.ClearValue(UIElement.RenderTransformProperty);
+            else element.SetValue(UIElement.RenderTransformProperty, local);
+        }
+
         rtb.Freeze();
         return rtb;
     }

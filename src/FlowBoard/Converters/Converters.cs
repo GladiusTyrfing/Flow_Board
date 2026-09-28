@@ -223,6 +223,20 @@ public static class ImageLoader
 {
     private static readonly Dictionary<(string, int), WeakReference<BitmapImage>> Cache = new();
 
+    private static int SourceWidth(string path)
+    {
+        try
+        {
+            using var fs = File.OpenRead(path);
+            var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.DelayCreation | BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+            return decoder.Frames[0].PixelWidth;
+        }
+        catch
+        {
+            return int.MaxValue;
+        }
+    }
+
     public static BitmapImage? Load(string? path, int decodeWidth)
     {
         if (string.IsNullOrEmpty(path) || !File.Exists(path)) return null;
@@ -235,7 +249,8 @@ public static class ImageLoader
             bmp.CacheOption = BitmapCacheOption.OnLoad;
             bmp.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
             bmp.UriSource = new Uri(path, UriKind.Absolute);
-            if (decodeWidth > 0) bmp.DecodePixelWidth = decodeWidth;
+            // Never decode larger than the file itself (that only wastes memory).
+            if (decodeWidth > 0 && decodeWidth < SourceWidth(path)) bmp.DecodePixelWidth = decodeWidth;
             bmp.EndInit();
             bmp.Freeze();
             Cache[key] = new WeakReference<BitmapImage>(bmp);

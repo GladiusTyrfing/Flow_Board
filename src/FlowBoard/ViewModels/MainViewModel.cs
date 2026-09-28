@@ -58,9 +58,8 @@ public sealed partial class MainViewModel : ObservableObject
         Settings.PropertyChanged += OnSettingsChanged;
         Undo.PropertyChanged += (_, _) => RaiseUndoState();
 
-        var last = Workspace.Boards.FirstOrDefault(b => b.Id == Settings.LastBoardId)
-                   ?? Workspace.Boards.OrderByDescending(b => b.LastOpened).FirstOrDefault();
-        SelectBoard(last);
+        // The app always starts with no project open, on the home screen.
+        OpenDashboard();
     }
 
     public DataStore Store => _store;
@@ -213,6 +212,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void NewBoard()
     {
+        if (!EnsureProject()) return;
         var templates = TemplateService.BuiltIn.Concat(Workspace.UserTemplates);
         ShowDialog(new NewBoardViewModel(templates));
     }

@@ -13,6 +13,7 @@ public readonly record struct Box(double X, double Y, double W, double H)
 
     public bool Contains(double x, double y) => x >= X && x <= Right && y >= Y && y <= Bottom;
     public bool Intersects(Box o) => X < o.Right && o.X < Right && Y < o.Bottom && o.Y < Bottom;
+    public bool Contains(Box o) => o.X >= X && o.Right <= Right && o.Y >= Y && o.Bottom <= Bottom;
 }
 
 /// <summary>Path (WPF path mini-language), arrow head and label position for a connector.</summary>

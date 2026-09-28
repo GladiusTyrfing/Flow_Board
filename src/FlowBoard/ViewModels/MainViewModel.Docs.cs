@@ -147,6 +147,7 @@ public sealed partial class MainViewModel
     [RelayCommand]
     private void NewStoryboard()
     {
+        if (!EnsureProject()) return;
         var sb = new Storyboard { Name = $"Storyboard {Workspace.Storyboards.Count + 1}" };
         for (int i = 0; i < 3; i++) sb.Shots.Add(new Shot { Title = $"Shot {i + 1}" });
         Workspace.Storyboards.Add(sb);
@@ -157,6 +158,7 @@ public sealed partial class MainViewModel
     [RelayCommand]
     private void NewCanvas()
     {
+        if (!EnsureProject()) return;
         var c = new CanvasDoc { Name = $"Canvas {Workspace.Canvases.Count + 1}" };
         var start = new CanvasNode { Shape = NodeShape.Ellipse, Text = "Start", X = 0, Y = 0, Width = 140, Height = 60, Fill = "#10B981" };
         var step = new CanvasNode { Shape = NodeShape.Rounded, Text = "Do something", X = 220, Y = 0, Width = 170, Height = 60, Fill = "#8B5CF6" };
@@ -171,6 +173,7 @@ public sealed partial class MainViewModel
     [RelayCommand]
     private void NewNote()
     {
+        if (!EnsureProject()) return;
         var n = new NotePage { Title = $"Untitled page {Workspace.Notes.Count + 1}" };
         n.Blocks.Add(new NoteBlock { Type = BlockType.Paragraph });
         Workspace.Notes.Add(n);

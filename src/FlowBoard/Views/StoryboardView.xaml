@@ -307,7 +307,7 @@
                                                           h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusValue}">
                                                         <Border Background="{DynamicResource Fb.SubtleBrush}" BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="1"
                                                                 CornerRadius="{DynamicResource Fb.Radius}" />
-                                                        <Image x:Name="FrameImage" Source="{Binding ImageFullPath, Converter={StaticResource ImagePath}, ConverterParameter=640}" Stretch="UniformToFill"
+                                                        <Image x:Name="FrameImage" Source="{Binding ImageFullPath, Converter={StaticResource ImagePath}, ConverterParameter=1024}" Stretch="UniformToFill"
                                                                RenderOptions.BitmapScalingMode="HighQuality" />
                                                         <!-- Empty frame -->
                                                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"

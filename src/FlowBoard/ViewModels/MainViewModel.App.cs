@@ -236,10 +236,11 @@ public sealed partial class MainViewModel
     [RelayCommand]
     private void BackupNow()
     {
+        if (!EnsureProject()) return;
         var dlg = new SaveFileDialog
         {
-            Title = "Back up FlowBoard",
-            FileName = $"FlowBoard backup {DateTime.Now:yyyy-MM-dd}.zip",
+            Title = "Back up project",
+            FileName = $"{AppPaths.SafeName(ProjectName)} backup {DateTime.Now:yyyy-MM-dd}.zip",
             Filter = "Zip archive|*.zip",
         };
         if (dlg.ShowDialog() != true) return;
@@ -254,25 +255,25 @@ public sealed partial class MainViewModel
         }
     }
 
+    /// <summary>Unpacks a backup zip as a new project (nothing is overwritten) and opens it.</summary>
     [RelayCommand]
-    private async Task RestoreBackup()
+    private void RestoreBackup()
     {
-        var dlg = new OpenFileDialog { Title = "Restore FlowBoard backup", Filter = "Zip archive|*.zip" };
+        var dlg = new OpenFileDialog { Title = "Restore a FlowBoard backup as a project", Filter = "Zip archive|*.zip" };
         if (dlg.ShowDialog() != true) return;
-        var ok = await ConfirmAsync(
-            "Restore backup?",
-            "Your current boards will be replaced by the backup. A safety copy of the current data is saved to the backups folder first. FlowBoard will restart.",
-            "Restore and restart", danger: true);
-        if (!ok) return;
+        string file;
         try
         {
-            _store.ImportZip(dlg.FileName);
-            App.Restart();
+            file = _store.ImportZip(dlg.FileName);
         }
         catch (Exception ex)
         {
             ShowToast($"Restore failed: {ex.Message}", isError: true);
+            return;
         }
+
+        OpenProjectFile(file);
+        if (HasProject) ShowToast($"Backup restored as \"{ProjectName}\"");
     }
 
     [RelayCommand]
@@ -300,6 +301,7 @@ public sealed partial class MainViewModel
     [RelayCommand]
     private void ImportBoard()
     {
+        if (!EnsureProject()) return;
         var dlg = new OpenFileDialog { Title = "Import board", Filter = "FlowBoard board|*.json|All files|*.*" };
         if (dlg.ShowDialog() != true) return;
         try
@@ -348,10 +350,17 @@ public sealed partial class MainViewModel
     }
 
     [RelayCommand]
+    private void ToggleMinimap()
+    {
+        Settings.ShowMinimap = !Settings.ShowMinimap;
+        ShowToast(Settings.ShowMinimap ? "Minimap shown (Ctrl+M)" : "Minimap hidden (Ctrl+M)");
+    }
+
+    [RelayCommand]
     private void SaveNow()
     {
         _store.SaveIfChanged();
-        ShowToast("All changes saved");
+        ShowToast(HasProject ? $"\"{ProjectName}\" saved" : "Nothing to save — no project is open");
     }
 
     public event EventHandler? HideWindowRequested;
@@ -361,6 +370,7 @@ public sealed partial class MainViewModel
     /// <summary>Opens the quick-add box (used by the global hotkey and the tray menu).</summary>
     public void ShowQuickAdd(bool hideAfter)
     {
+        if (!EnsureProject()) return;
         if (Workspace.Boards.Count == 0)
         {
             NewBoard();

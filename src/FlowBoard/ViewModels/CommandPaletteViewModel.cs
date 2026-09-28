@@ -194,7 +194,12 @@ public sealed partial class CommandPaletteViewModel : DialogViewModel
         new() { Title = "Table view", Group = "Commands", Icon = SymbolRegular.Table24, Shortcut = "Ctrl+2", Execute = () => _main.SetViewModeCommand.Execute(BoardViewMode.Table) },
         new() { Title = "Calendar view", Group = "Commands", Icon = SymbolRegular.CalendarLtr24, Shortcut = "Ctrl+3", Execute = () => _main.SetViewModeCommand.Execute(BoardViewMode.Calendar) },
         new() { Title = "Timeline view", Group = "Commands", Icon = SymbolRegular.TextBulletListSquare24, Shortcut = "Ctrl+4", Execute = () => _main.SetViewModeCommand.Execute(BoardViewMode.Timeline) },
-        new() { Title = "Dashboard", Group = "Commands", Icon = SymbolRegular.DataPie24, Execute = () => _main.OpenDashboardCommand.Execute(null) },
+        new() { Title = "Home", Group = "Commands", Icon = SymbolRegular.Home24, Shortcut = "Ctrl+H", Execute = () => _main.OpenDashboardCommand.Execute(null) },
+        new() { Title = "New project…", Group = "Project", Icon = SymbolRegular.FolderAdd24, Execute = () => _main.NewProjectCommand.Execute(null) },
+        new() { Title = "Open project…", Group = "Project", Icon = SymbolRegular.FolderOpen24, Shortcut = "Ctrl+O", Execute = () => _main.OpenProjectCommand.Execute(null) },
+        new() { Title = "Save a copy of the project as…", Group = "Project", Icon = SymbolRegular.DocumentCopy24, Execute = () => _main.SaveProjectCopyCommand.Execute(null) },
+        new() { Title = "Close project", Group = "Project", Icon = SymbolRegular.Dismiss20, Execute = () => _main.CloseProjectCommand.Execute(null) },
+        new() { Title = "Show / hide minimap", Group = "Commands", Icon = SymbolRegular.Map24, Shortcut = "Ctrl+M", Execute = () => _main.ToggleMinimapCommand.Execute(null) },
         new() { Title = "New storyboard", Group = "Commands", Icon = SymbolRegular.VideoClip24, Execute = () => _main.NewStoryboardCommand.Execute(null) },
         new() { Title = "New canvas / flowchart", Group = "Commands", Icon = SymbolRegular.Flowchart24, Execute = () => _main.NewCanvasCommand.Execute(null) },
         new() { Title = "New note page", Group = "Commands", Icon = SymbolRegular.DocumentText24, Execute = () => _main.NewNoteCommand.Execute(null) },
@@ -210,7 +215,7 @@ public sealed partial class CommandPaletteViewModel : DialogViewModel
         new() { Title = "Redo", Group = "Commands", Icon = SymbolRegular.ArrowRedo24, Shortcut = "Ctrl+Y", Execute = () => _main.RedoCommand.Execute(null) },
         new() { Title = "Settings", Group = "Commands", Icon = SymbolRegular.Settings24, Shortcut = "Ctrl+,", Execute = () => _main.OpenSettingsCommand.Execute(null) },
         new() { Title = "Keyboard shortcuts", Group = "Commands", Icon = SymbolRegular.Keyboard24, Shortcut = "F1", Execute = () => _main.OpenShortcutsCommand.Execute(null) },
-        new() { Title = "Back up everything to a zip…", Group = "Commands", Icon = SymbolRegular.ArrowExport24, Execute = () => _main.BackupNowCommand.Execute(null) },
-        new() { Title = "Open data folder", Group = "Commands", Icon = SymbolRegular.FolderOpen24, Execute = () => _main.OpenDataFolderCommand.Execute(null) },
+        new() { Title = "Back up project to a zip…", Group = "Commands", Icon = SymbolRegular.ArrowExport24, Execute = () => _main.BackupNowCommand.Execute(null) },
+        new() { Title = "Show project folder", Group = "Project", Icon = SymbolRegular.FolderArrowRight24, Execute = () => _main.ShowProjectInExplorerCommand.Execute(null) },
     ];
 }

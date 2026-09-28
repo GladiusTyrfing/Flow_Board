@@ -121,17 +121,23 @@ public partial class ScrollMinimap : UserControl
         sv.ScrollToVerticalOffset(p.Y / _scale - sv.ViewportHeight / 2);
     }
 
+    private Vector _grab;
+
     private void OnDown(object sender, MouseButtonEventArgs e)
     {
+        var p = e.GetPosition(Map);
+        var box = new Rect(Canvas.GetLeft(ViewportBox), Canvas.GetTop(ViewportBox), ViewportBox.Width, ViewportBox.Height);
+        // Grabbing the box drags it from where it was grabbed; clicking elsewhere jumps there first.
+        _grab = box.Contains(p) ? p - new Point(box.X + box.Width / 2, box.Y + box.Height / 2) : new Vector();
         _dragging = true;
         Map.CaptureMouse();
-        Jump(e.GetPosition(Map));
+        if (!box.Contains(p)) Jump(p);
         e.Handled = true;
     }
 
     private void OnMove(object sender, MouseEventArgs e)
     {
-        if (_dragging) Jump(e.GetPosition(Map));
+        if (_dragging) Jump(e.GetPosition(Map) - _grab);
     }
 
     private void OnUp(object sender, MouseButtonEventArgs e)

@@ -65,6 +65,11 @@ public sealed partial class CanvasViewModel : DocumentViewModel
     public string ZoomText => $"{Math.Round(Doc.Zoom * 100)}%";
     public bool IsEmpty => Doc.Nodes.Count == 0 && Doc.Edges.Count == 0;
 
+    /// <summary>Raised when anything the minimap draws changes (shapes, sizes, colors, lines).</summary>
+    public event EventHandler? ContentChanged;
+
+    private void RaiseContentChanged() => ContentChanged?.Invoke(this, EventArgs.Empty);
+
     // ================= wiring =================
 
     private void Hook()
@@ -102,6 +107,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
         if (e.OldItems != null) foreach (CanvasNode n in e.OldItems) n.PropertyChanged -= OnNodeChanged;
         OnPropertyChanged(nameof(IsEmpty));
         RaiseSelection();
+        RaiseContentChanged();
     }
 
     private void OnEdgesChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -109,6 +115,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
         if (e.NewItems != null) foreach (CanvasEdge edge in e.NewItems) UpdateEdge(edge);
         OnPropertyChanged(nameof(IsEmpty));
         RaiseSelection();
+        RaiseContentChanged();
     }
 
     private void OnNodeChanged(object? sender, PropertyChangedEventArgs e)
@@ -122,6 +129,11 @@ public sealed partial class CanvasViewModel : DocumentViewModel
             case nameof(CanvasNode.Height):
                 foreach (var edge in Doc.Edges)
                     if (edge.FromId == n.Id || edge.ToId == n.Id) UpdateEdge(edge);
+                RaiseContentChanged();
+                break;
+            case nameof(CanvasNode.Fill):
+            case nameof(CanvasNode.Shape):
+                RaiseContentChanged();
                 break;
             case nameof(CanvasNode.IsSelected):
                 RaiseSelection();
@@ -166,6 +178,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
         edge.StartY = shape.Y1;
         edge.EndX = shape.X2;
         edge.EndY = shape.Y2;
+        RaiseContentChanged();
     }
 
     public void UpdateAllEdges()
@@ -680,7 +693,8 @@ public sealed partial class CanvasViewModel : DocumentViewModel
     {
         foreach (var n in Doc.Nodes)
         {
-            var hit = r.Intersects(n.Bounds);
+            // Sections are only picked when the box covers them completely (so a box inside one selects its shapes).
+            var hit = n.Shape == NodeShape.Frame ? r.Contains(n.Bounds) : r.Intersects(n.Bounds);
             if (add) n.IsSelected |= hit;
             else n.IsSelected = hit;
         }
@@ -707,11 +721,11 @@ public sealed partial class CanvasViewModel : DocumentViewModel
 
     public void MoveSelection(double dx, double dy)
     {
-        foreach (var n in SelectedNodes.ToList())
-        {
-            n.X += dx;
-            n.Y += dy;
-        }
+        // Sections carry their contents; a shape selected together with its section only moves once.
+        var nodes = SelectedNodes.Where(n => !n.Locked).ToList();
+        var carried = nodes.Where(n => n.Shape == NodeShape.Frame).SelectMany(Members).ToHashSet();
+        foreach (var n in nodes.Where(n => !carried.Contains(n))) ShiftWithMembers(n, dx, dy);
+        UpdateAllEdges();
     }
 
     [RelayCommand]
@@ -970,25 +984,134 @@ public sealed partial class CanvasViewModel : DocumentViewModel
         if (parent != null) Connect(parent, sib, checkpoint: false);
     }
 
+    /// <summary>
+    /// Tidy up: lays out the whole canvas (or the selection, or the inside of one selected section).
+    /// Sections are laid out inside first and shrink or grow to fit; then each section moves as one block
+    /// with everything in it, and connectors between shapes in different sections count for the section.
+    /// </summary>
     [RelayCommand]
     private void AutoLayout()
     {
         if (Doc.Nodes.Count == 0) return;
         Checkpoint();
-        var targets = HasNodeSelection && SelectedNodes.Count() > 1 ? SelectedNodes.ToList() : Doc.Nodes.ToList();
-        var ids = targets.Select(n => n.Id).ToHashSet();
-        var left = targets.Min(n => n.X);
-        var top = targets.Min(n => n.Y);
+        var selected = SelectedNodes.ToList();
+        if (selected.Count == 1 && selected[0].Shape == NodeShape.Frame)
+        {
+            LayoutInside(selected[0]);
+            UpdateAllEdges();
+            return;
+        }
+
+        var scope = (selected.Count > 1 ? selected : Doc.Nodes.ToList()).ToHashSet();
+        foreach (var f in scope.Where(n => n.Shape == NodeShape.Frame).ToList())
+            foreach (var m in Members(f)) scope.Add(m);
+
+        // Units: shapes and sections whose parent section isn't part of the tidy-up.
+        var units = scope.Where(n => n.FrameId is not { } fid || FindNode(fid) is not { } parent || !scope.Contains(parent)).ToList();
+        foreach (var f in units.Where(n => n.Shape == NodeShape.Frame)) LayoutInside(f);
+
+        var unitIds = units.Select(n => n.Id).ToHashSet();
+        Guid? UnitOf(Guid id)
+        {
+            var n = FindNode(id);
+            while (n != null && !unitIds.Contains(n.Id))
+                n = n.FrameId is { } fid && scope.Contains(n) ? FindNode(fid) : null;
+            return n?.Id;
+        }
+
+        var left = units.Min(n => n.X);
+        var top = units.Min(n => n.Y);
         var pos = CanvasLayout.Layered(
-            targets.Select(n => (n.Id, n.Width, n.Height)).ToList(),
-            Doc.Edges.Where(e => ids.Contains(e.FromId) && ids.Contains(e.ToId)).Select(e => (e.FromId, e.ToId)).ToList());
+            units.Select(n => (n.Id, n.Width, n.Height)).ToList(),
+            MapEdges(UnitOf),
+            gapX: units.Any(n => n.Shape == NodeShape.Frame) ? 110 : 90,
+            gapY: units.Any(n => n.Shape == NodeShape.Frame) ? 70 : 36);
         var minY = pos.Values.Min(p => p.Y);
-        foreach (var n in targets)
+        foreach (var n in units)
         {
             var p = pos[n.Id];
-            n.X = SnapValue(left + p.X);
-            n.Y = SnapValue(top + p.Y - minY);
+            ShiftWithMembers(n, SnapValue(left + p.X) - n.X, SnapValue(top + p.Y - minY) - n.Y);
         }
+
+        UpdateAllEdges();
+    }
+
+    private const double FramePad = 30;
+
+    /// <summary>Lays out a section's own shapes (sections inside it first) and fits the section around them.</summary>
+    private void LayoutInside(CanvasNode frame, int depth = 0)
+    {
+        if (depth > 20) return; // guards against a broken (cyclic) section chain
+        var children = Doc.Nodes.Where(n => n.FrameId == frame.Id && n != frame).ToList();
+        if (children.Count == 0) return;
+        foreach (var c in children.Where(c => c.Shape == NodeShape.Frame)) LayoutInside(c, depth + 1);
+
+        var childIds = children.Select(c => c.Id).ToHashSet();
+        Guid? ChildOf(Guid id)
+        {
+            var n = FindNode(id);
+            for (int i = 0; n != null && i < 50; i++)
+            {
+                if (childIds.Contains(n.Id)) return n.Id;
+                n = n.FrameId is { } fid ? FindNode(fid) : null;
+            }
+
+            return null;
+        }
+
+        var pos = CanvasLayout.Layered(children.Select(n => (n.Id, n.Width, n.Height)).ToList(), MapEdges(ChildOf));
+        var minY = pos.Values.Min(p => p.Y);
+        var x0 = frame.X + FramePad;
+        var y0 = frame.Y + FramePad;
+        foreach (var c in children)
+        {
+            var p = pos[c.Id];
+            ShiftWithMembers(c, SnapValue(x0 + p.X) - c.X, SnapValue(y0 + p.Y - minY) - c.Y);
+        }
+
+        frame.Width = Math.Max(160, SnapValue(children.Max(c => c.X + c.Width) - frame.X + FramePad));
+        frame.Height = Math.Max(100, SnapValue(children.Max(c => c.Y + c.Height) - frame.Y + FramePad));
+    }
+
+    /// <summary>Connectors between shapes, re-pointed at the layout unit each end belongs to.</summary>
+    private List<(Guid From, Guid To)> MapEdges(Func<Guid, Guid?> unitOf) =>
+        Doc.Edges.Where(e => !e.IsFreeFrom && !e.IsFreeTo)
+            .Select(e => (From: unitOf(e.FromId), To: unitOf(e.ToId)))
+            .Where(t => t.From is { } f && t.To is { } to && f != to)
+            .Select(t => (t.From!.Value, t.To!.Value))
+            .Distinct()
+            .ToList();
+
+    /// <summary>Moves a shape; a section takes everything inside it (and loose lines drawn inside it) along.</summary>
+    public void ShiftWithMembers(CanvasNode node, double dx, double dy)
+    {
+        if (dx == 0 && dy == 0) return;
+        if (node.Shape == NodeShape.Frame)
+        {
+            foreach (var e in FreeEdgesWithin(node.Bounds).ToList())
+            {
+                if (e.IsFreeFrom) { e.FromX += dx; e.FromY += dy; }
+                if (e.IsFreeTo) { e.ToX += dx; e.ToY += dy; }
+            }
+
+            foreach (var m in Members(node))
+            {
+                m.X += dx;
+                m.Y += dy;
+            }
+        }
+
+        node.X += dx;
+        node.Y += dy;
+    }
+
+    /// <summary>The outermost section a shape sits in (the shape itself when it is loose).</summary>
+    public CanvasNode OuterFrame(CanvasNode node)
+    {
+        var current = node;
+        var seen = new HashSet<Guid> { node.Id };
+        while (current.FrameId is { } fid && FindNode(fid) is { } parent && seen.Add(parent.Id)) current = parent;
+        return current;
     }
 
     // ================= view =================

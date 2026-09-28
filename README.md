@@ -5,6 +5,11 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 
 ## Features
 
+**Projects**
+- Work in separate **project files** (`.flowboard`): each project has its own boards, storyboards, canvases and pages, with its images and recordings in the project folder
+- FlowBoard always starts on **Home** with nothing open: create a new project (empty or a sample), open one (Ctrl+O), pick a recent one, or restore a backup zip as a new project
+- Switch projects any time from the project name at the top of the sidebar; save a copy under a new name, back up a project to a zip, show it in Explorer, or open a `.flowboard` file from Explorer with "Open with → FlowBoard"
+
 **Boards, lists & cards**
 - Unlimited boards, created from templates (Basic Kanban, Project, Bug tracker, Weekly planner, Content pipeline, Personal, Blank) or from your own saved templates
 - Add as many lists as you like (not just To Do / Doing / Done) — rename, reorder by drag & drop, collapse, color, sort, copy, archive
@@ -40,7 +45,8 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 - Infinite canvas with pan/zoom and a dot grid; boxes, rounded boxes, ellipses, decision diamonds, sticky notes, text, images and **live cards** from your boards
 - Drag from a shape's dot to connect (drop on empty space to create the next shape); curved, straight or elbow connectors with arrows, labels, colors, dashes
 - Mind-map keys (Tab = child, Enter = sibling), snap to grid, marquee select, copy/paste/duplicate, paste or drop images, **one-click tidy-up layout**, export PNG / print
-- Draw **free lines and arrows** anywhere (ends stick to shapes) and **curve** them with a drag, **freehand pen**, circles, **sections** that keep their shapes until you remove them, align & distribute, lock, Alt+drag copies, line thickness and double-headed arrows, crop images, right-click menu
+- **Sections (frames)** hold their shapes: dragging anything inside a section moves the whole section; **Ctrl+drag** moves a single shape (a click still selects it); Ctrl+drag on a section's empty area box-selects inside it; double-click inside adds a shape. **Tidy up** lays out each section's inside, resizes the section to fit and arranges sections as blocks
+- Draw **free lines and arrows** anywhere (ends stick to shapes) and **curve** them with a drag, **freehand pen**, circles, align & distribute, lock, Alt+drag copies, line thickness and double-headed arrows, crop images, right-click menu
 - **Link nodes**: drop a live preview of any board, storyboard, single shot, canvas, page or card onto the canvas (double-click opens it)
 
 **Notes / docs pages**
@@ -50,8 +56,9 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 - Type `@` anywhere in a line to link **inline** to a card, board, storyboard, a specific **shot**, canvas or page (click to open); the Link button embeds a **preview card**
 - Page icons and **cover images**, full-width or reading-width pages, an **outline** of headings, page templates (meeting notes, brief, script, shot list, to-dos, journal), word count and reading time, export/copy as Markdown, turn open to-dos into cards
 
-**Dashboard**
-- Open / done-this-week / overdue / due-soon / focus time / streak tiles, a 14-day "completed per day" chart, open cards by priority, time per board, an "up next" agenda and "jump back in"
+**Home & stats** (Ctrl+H)
+- With no project open: new / open / recent projects
+- With a project open: numbers for **every section** — boards (lists, cards, % done), storyboards (shots, runtime, shots done, pictures, voice clips), canvases (shapes, sections, connections), pages (words, to-dos checked, edited this week) — plus open / done-this-week / overdue / due-soon / focus time / streak tiles, a 14-day "completed per day" chart, open cards by priority, time per board, an "up next" agenda, "jump back in" and a project switcher
 
 **Quality of life**
 - Command palette / global search (Ctrl+K) across every board, card, storyboard, canvas and note (including text inside pages)
@@ -63,9 +70,9 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 - Dark / light / follow-Windows theme, accent colors, Mica / Acrylic backdrops, smooth animations
 - A full **color picker** (any color, hex, recent colors) next to every palette: labels, lists, covers, board backgrounds, canvas, sketches, note text
 - **Themes and wallpapers for storyboards, canvases and pages** too (Style button): theme presets, photos, gradients, colors, dim, blur, panel transparency
-- **Minimap** in the corner of boards, storyboards, canvases, timelines, pages and the dashboard — click or drag to jump
-- **High-res screenshots** (Ctrl+Shift+S or the camera button): the whole board, canvas, storyboard, timeline or page at up to 3× resolution, saved as PNG or copied
-- Autosave every 2 seconds, rolling automatic backups, full zip backup & restore, portable mode
+- **Minimap** in the corner of boards, storyboards, canvases, timelines and pages — drag the box to look around, click to jump (and wheel to zoom on the canvas); hide it with its × button, **Ctrl+M** or in Settings
+- **High-res screenshots** (Ctrl+Shift+S or the camera button): the whole board, canvas, storyboard, timeline or page rendered sharply at up to 3× resolution, saved as PNG or copied
+- Autosave every 2 seconds, rolling automatic backups per project, zip backup of a project and restore as a new project, portable mode
 
 ## Hotkeys
 
@@ -79,6 +86,7 @@ Press **F1** in the app for the full cheat sheet. Highlights:
 | App | Ctrl+F | Filter |
 | App | Ctrl+N or N | New card · Ctrl+Shift+N new board · Ctrl+Shift+L new list |
 | App | Ctrl+Z / Ctrl+Y | Undo / redo |
+| App | Ctrl+O · Ctrl+H · Ctrl+M | Open project · Home · show/hide minimap |
 | App | Ctrl+Tab · Alt+1…9 | Next board · jump to board |
 | App | Ctrl+1 / 2 / 3 / 4 | Board / Table / Calendar / Timeline |
 | App | Ctrl+B or [ · Ctrl+T · Ctrl+P | Sidebar · theme · focus timer |
@@ -90,6 +98,7 @@ Press **F1** in the app for the full cheat sheet. Highlights:
 
 | Canvas | Double-click · drag a dot · Tab / Enter | Add shape · connect · child / sibling |
 | Canvas | V R B O D S T C I · Space+drag · Ctrl+wheel | Tools · pan · zoom |
+| Canvas | Ctrl+drag | Move one shape inside a section |
 | Notes | / · # - 1. [] > | Block menu · Markdown shortcuts |
 | Animatic | Space · ← → · Esc | Play/pause · step · close |
 
@@ -110,8 +119,10 @@ Global hotkeys can be changed (or turned off) in **Settings → Hotkeys**.
 
 ## Where is my data?
 
-`%AppData%\FlowBoard` — `data.json` (boards, storyboards, canvases, notes), `settings.json`, `attachments\` (card files; storyboard/canvas/note images and sketches under `attachments\docs\`), `backgrounds\`, `backups\`.
-Create an empty `portable.txt` next to `FlowBoard.exe` to keep everything in a `Data` folder beside the exe instead (e.g. on a USB stick or a synced folder).
+- **Projects:** each project is a folder (by default in `Documents\FlowBoard Projects\<name>`) holding `<name>.flowboard` (boards, storyboards, canvases, pages as JSON), `attachments\` (card files; storyboard/canvas/page images, sketches and recordings under `attachments\docs\`), `backgrounds\` and `backups\` (rolling automatic copies). Copy or move the folder as a whole.
+- **App settings** (theme, hotkeys, recent projects) live in `%AppData%\FlowBoard\settings.json`.
+- Data from older versions (`%AppData%\FlowBoard\data.json`) shows up in the recent list as **My workspace** and opens like any other project.
+- Create an empty `portable.txt` next to `FlowBoard.exe` to keep settings and new projects in a `Data` folder beside the exe instead (e.g. on a USB stick or a synced folder).
 
 ## Project layout
 
@@ -119,17 +130,17 @@ Create an empty `portable.txt` next to `FlowBoard.exe` to keep everything in a `
 src/FlowBoard/
   Models/        Board, BoardList, Card, Label, Checklist, Attachment, Comment/TimeEntry, settings,
                  Documents (storyboards & shots, canvas nodes & edges, note pages & blocks)
-  Services/      JSON storage & backups, undo, templates, audio record/playback, reminders,
+  Services/      Project files, JSON storage & backups, undo, templates, audio record/playback, reminders,
                  Pomodoro, time tracking, tray, theme, global hotkeys, start-with-Windows,
                  smart quick-add parser, connector routing & auto-layout, Markdown, dashboard stats
-  ViewModels/    MainViewModel (+ Cards, App, Hotkeys partials), card details, calendar, table,
+  ViewModels/    MainViewModel (+ Cards, App, Hotkeys, Projects partials), card details, calendar, table,
                  timeline, command palette, quick add, settings, drag & drop handlers,
-                 storyboard (+ sketch pad, animatic), canvas, notes, dashboard, link picker
+                 storyboard (+ sketch pad, animatic), canvas, notes, home/dashboard, link picker
   Views/         Board (Kanban), Table, Calendar, Timeline, card details, storyboard, canvas,
                  notes, dashboard, dialogs
   Themes/        Dark/light palettes and shared styles
 tests/FlowBoard.Tests/   Tests for models, storage, undo, templates, filters, quick-add parsing, connector
-                         routing, layout, Markdown and dashboard stats (run anywhere with `dotnet test`)
+                         routing, layout, Markdown, dashboard and project stats (run anywhere with `dotnet test`)
 ```
 
 Built with [WPF-UI](https://github.com/lepoco/wpfui) (Fluent design), [CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet), [gong-wpf-dragdrop](https://github.com/punker76/gong-wpf-dragdrop) and [NAudio](https://github.com/naudio/NAudio).

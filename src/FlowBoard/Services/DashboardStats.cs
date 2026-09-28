@@ -82,3 +82,56 @@ public sealed record DashboardStats(
             perBoard.OrderByDescending(p => p.Minutes).ToList(), agenda, byPriority);
     }
 }
+
+/// <summary>Size and progress of every section of a project (pure, so it can be tested).</summary>
+public sealed record ProjectStats(
+    int Boards, int Lists, int Cards, int CardsDone,
+    int Storyboards, int Shots, int ShotsDone, int ShotsWithPicture, int VoiceClips, double RuntimeSeconds,
+    int Canvases, int Shapes, int Frames, int Connections,
+    int Pages, int Words, int Todos, int TodosDone, int PagesEditedThisWeek)
+{
+    public static readonly string[] DoneShotStatuses = ["Done", "Approved"];
+
+    public static ProjectStats Compute(Workspace ws, DateTime now)
+    {
+        var cards = ws.Boards.SelectMany(b => b.Lists).SelectMany(l => l.Cards).ToList();
+        var shots = ws.Storyboards.SelectMany(s => s.Shots).ToList();
+        var nodes = ws.Canvases.SelectMany(c => c.Nodes).ToList();
+        var blocks = ws.Notes.SelectMany(n => n.Blocks).ToList();
+        var todos = blocks.Where(b => b.Type == BlockType.Todo).ToList();
+
+        return new ProjectStats(
+            ws.Boards.Count,
+            ws.Boards.Sum(b => b.Lists.Count),
+            cards.Count,
+            cards.Count(c => c.IsCompleted),
+            ws.Storyboards.Count,
+            shots.Count,
+            shots.Count(s => DoneShotStatuses.Contains(s.Status)),
+            shots.Count(s => s.ImagePath != null),
+            shots.Count(s => s.HasVoice),
+            shots.Sum(s => s.DurationSeconds),
+            ws.Canvases.Count,
+            nodes.Count(n => n.Shape != NodeShape.Frame),
+            nodes.Count(n => n.Shape == NodeShape.Frame),
+            ws.Canvases.Sum(c => c.Edges.Count),
+            ws.Notes.Count,
+            blocks.Sum(b => CountWords(b.Text)),
+            todos.Count,
+            todos.Count(t => t.IsChecked),
+            ws.Notes.Count(n => n.UpdatedAt >= now.Date.AddDays(-6)));
+    }
+
+    public static int CountWords(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return 0;
+        return text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+    }
+
+    /// <summary>"1:05" style runtime, with hours when needed.</summary>
+    public static string FormatRuntime(double seconds)
+    {
+        var t = TimeSpan.FromSeconds(Math.Round(seconds));
+        return t.TotalHours >= 1 ? $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}" : $"{t.Minutes}:{t.Seconds:00}";
+    }
+}

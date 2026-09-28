@@ -10,7 +10,7 @@
                  xmlns:h="clr-namespace:FlowBoard.Helpers"
                  mc:Ignorable="d"
                  d:DataContext="{d:DesignInstance vm:MainViewModel}"
-                 Title="FlowBoard"
+                 Title="{Binding WindowTitle}"
                  Width="1400" Height="860" MinWidth="880" MinHeight="560"
                  WindowStartupLocation="CenterScreen"
                  ExtendsContentIntoTitleBar="True"
@@ -40,6 +40,9 @@
         <KeyBinding Key="OemComma" Modifiers="Control" Command="{Binding OpenSettingsCommand}" />
         <KeyBinding Key="F1" Command="{Binding OpenShortcutsCommand}" />
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveNowCommand}" />
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenProjectCommand}" />
+        <KeyBinding Key="H" Modifiers="Control" Command="{Binding OpenDashboardCommand}" />
+        <KeyBinding Key="M" Modifiers="Control" Command="{Binding ToggleMinimapCommand}" />
         <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding ScreenshotCommand}" CommandParameter="save" />
         <KeyBinding Key="A" Modifiers="Control+Shift" Command="{Binding OpenArchiveCommand}" />
         <KeyBinding Key="Space" Modifiers="Control+Shift" Command="{Binding OpenQuickAddCommand}" />
@@ -459,12 +462,62 @@
             <Border x:Name="Sidebar" Width="264" Margin="0,0,10,0" Style="{StaticResource Fb.Glass}"
                     Visibility="{Binding IsSidebarShown, Converter={StaticResource BoolToVis}}">
                 <DockPanel Margin="12,14,12,12">
-                    <Grid DockPanel.Dock="Top" Margin="4,0,0,8">
-                        <TextBlock Text="Boards" FontSize="20" Style="{StaticResource Fb.GradientTitle}" VerticalAlignment="Center" />
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Style="{StaticResource Fb.IconButton}" Command="{Binding NewBoardCommand}" ToolTip="New board (Ctrl+Shift+N)">
-                                <ui:SymbolIcon Symbol="Add24" FontSize="16" />
-                            </Button>
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <!-- Project switcher -->
+                        <Button Style="{StaticResource Fb.GhostButton}" Padding="4,2" HorizontalContentAlignment="Stretch" h:Behaviors.ClickOpensContextMenu="True"
+                                ToolTip="{Binding ProjectPath, TargetNullValue='No project open'}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="PROJECT" Style="{StaticResource Fb.Caption}" FontSize="10" />
+                                    <TextBlock Text="{Binding ProjectName}" FontSize="18" Style="{StaticResource Fb.GradientTitle}" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                <ui:SymbolIcon Grid.Column="1" Symbol="ChevronDown16" FontSize="12" Margin="6,12,0,0" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                            </Grid>
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="New project…" Command="{Binding NewProjectCommand}">
+                                        <MenuItem.Icon><ui:SymbolIcon Symbol="FolderAdd24" /></MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="New project in folder…" Command="{Binding NewProjectInCommand}">
+                                        <MenuItem.Icon><ui:SymbolIcon Symbol="Folder24" /></MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="Open project…" InputGestureText="Ctrl+O" Command="{Binding OpenProjectCommand}">
+                                        <MenuItem.Icon><ui:SymbolIcon Symbol="FolderOpen24" /></MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="Open recent" ItemsSource="{Binding RecentProjects}" IsEnabled="{Binding HasRecentProjects}">
+                                        <MenuItem.Icon><ui:SymbolIcon Symbol="History24" /></MenuItem.Icon>
+                                        <MenuItem.ItemContainerStyle>
+                                            <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                                <Setter Property="Header" Value="{Binding Name}" />
+                                                <Setter Property="ToolTip" Value="{Binding Path}" />
+                                                <Setter Property="IsChecked" Value="{Binding IsOpen, Mode=OneWay}" />
+                                                <Setter Property="Command" Value="{Binding OpenRecentProjectCommand, Source={x:Static vm:MainViewModel.Instance}}" />
+                                                <Setter Property="CommandParameter" Value="{Binding}" />
+                                            </Style>
+                                        </MenuItem.ItemContainerStyle>
+                                    </MenuItem>
+                                    <Separator />
+                                    <MenuItem Header="Save a copy as…" Command="{Binding SaveProjectCopyCommand}" IsEnabled="{Binding HasProject}">
+                                        <MenuItem.Icon><ui:SymbolIcon Symbol="DocumentCopy24" /></MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="Show in Explorer" Command="{Binding ShowProjectInExplorerCommand}" IsEnabled="{Binding HasProject}">
+                                        <MenuItem.Icon><ui:SymbolIcon Symbol="FolderArrowRight24" /></MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="Close project" Command="{Binding CloseProjectCommand}" IsEnabled="{Binding HasProject}">
+                                        <MenuItem.Icon><ui:SymbolIcon Symbol="Dismiss20" /></MenuItem.Icon>
+                                    </MenuItem>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Style="{StaticResource Fb.IconButton}" Command="{Binding ToggleSidebarCommand}" ToolTip="Hide sidebar (Ctrl+B)">
                                 <ui:SymbolIcon Symbol="PanelLeft24" FontSize="16" />
                             </Button>
@@ -472,6 +525,7 @@
                     </Grid>
 
                     <ui:TextBox DockPanel.Dock="Top" PlaceholderText="Find boards, pages…" Margin="0,0,0,10" ClearButtonEnabled="True"
+                                Visibility="{Binding HasProject, Converter={StaticResource BoolToVis}}"
                                 Text="{Binding SidebarQuery, UpdateSourceTrigger=PropertyChanged}">
                         <ui:TextBox.Icon>
                             <ui:SymbolIcon Symbol="Search24" />
@@ -480,16 +534,18 @@
 
                     <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
                         <Separator Margin="0,0,0,6" Background="{DynamicResource Fb.DividerBrush}" />
-                        <Button Style="{StaticResource Fb.GhostButton}" Command="{Binding ImportBoardCommand}">
+                        <Button Style="{StaticResource Fb.GhostButton}" Command="{Binding ImportBoardCommand}"
+                                Visibility="{Binding HasProject, Converter={StaticResource BoolToVis}}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="ArrowImport24" FontSize="16" Foreground="{DynamicResource Fb.MutedTextBrush}" />
                                 <TextBlock Margin="10,0,0,0" Text="Import board" FontSize="13" />
                             </StackPanel>
                         </Button>
-                        <Button Style="{StaticResource Fb.GhostButton}" Command="{Binding BackupNowCommand}">
+                        <Button Style="{StaticResource Fb.GhostButton}" Command="{Binding BackupNowCommand}"
+                                Visibility="{Binding HasProject, Converter={StaticResource BoolToVis}}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="SaveCopy24" FontSize="16" Foreground="{DynamicResource Fb.MutedTextBrush}" />
-                                <TextBlock Margin="10,0,0,0" Text="Back up everything" FontSize="13" />
+                                <TextBlock Margin="10,0,0,0" Text="Back up project" FontSize="13" />
                             </StackPanel>
                         </Button>
                         <Grid Margin="6,8,0,0">
@@ -511,18 +567,51 @@
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel>
                             <Button x:Name="DashboardButton" Style="{StaticResource Fb.GhostButton}" Padding="8,6" Margin="0,0,0,6" HorizontalContentAlignment="Stretch"
-                                    Command="{Binding OpenDashboardCommand}" ToolTip="Overview: due soon, completed, time tracked">
+                                    Command="{Binding OpenDashboardCommand}" ToolTip="Home: projects and stats for every section (Ctrl+H)">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="36" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <Border Width="28" Height="22" CornerRadius="{DynamicResource Fb.RadiusSmall}" HorizontalAlignment="Left" Background="{DynamicResource Fb.AccentGradientBrush}">
-                                        <ui:SymbolIcon Symbol="DataPie24" FontSize="14" Foreground="White" />
+                                        <ui:SymbolIcon Symbol="Home24" FontSize="14" Foreground="White" />
                                     </Border>
-                                    <TextBlock Grid.Column="1" Text="Dashboard" VerticalAlignment="Center" FontSize="14" Foreground="{DynamicResource Fb.TextBrush}" />
+                                    <TextBlock Grid.Column="1" Text="Home" VerticalAlignment="Center" FontSize="14" Foreground="{DynamicResource Fb.TextBrush}" />
                                 </Grid>
                             </Button>
+                            <!-- No project: quick way in -->
+                            <StackPanel Visibility="{Binding HasProject, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" Margin="0,4,0,0">
+                                <TextBlock Text="No project is open. Boards, storyboards, canvases and pages live inside a project." Style="{StaticResource Fb.Muted}"
+                                           FontSize="12.5" TextWrapping="Wrap" Margin="6,0,6,10" />
+                                <Button Style="{StaticResource Fb.AccentButton}" Command="{Binding NewProjectCommand}" Margin="0,0,0,6" HorizontalAlignment="Stretch">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Add24" FontSize="15" Margin="0,0,8,0" Foreground="White" />
+                                        <TextBlock Text="New project" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource Fb.SubtleButton}" Command="{Binding OpenProjectCommand}" HorizontalContentAlignment="Center" Margin="0,0,0,12">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="FolderOpen24" FontSize="15" Margin="0,0,8,0" />
+                                        <TextBlock Text="Open…" />
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Text="RECENT" Style="{StaticResource Fb.Caption}" Margin="6,4,0,4" Visibility="{Binding HasRecentProjects, Converter={StaticResource BoolToVis}}" />
+                                <ItemsControl ItemsSource="{Binding RecentProjects}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:RecentProject}">
+                                            <Button Style="{StaticResource Fb.GhostButton}" Padding="8,6" Margin="0,1" ToolTip="{Binding Path}"
+                                                    Command="{Binding OpenRecentProjectCommand, Source={x:Static vm:MainViewModel.Instance}}" CommandParameter="{Binding}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <ui:SymbolIcon Symbol="Folder24" FontSize="15" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                                    <TextBlock Margin="10,0,0,0" Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis" MaxWidth="190" />
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding HasProject, Converter={StaticResource BoolToVis}}">
                             <StackPanel Visibility="{Binding StarredBoards, Converter={StaticResource HasValueToVis}}">
                                 <TextBlock Text="STARRED" Style="{StaticResource Fb.Caption}" Margin="6,4,0,4" />
                                 <ItemsControl ItemsSource="{Binding StarredBoards}" ItemTemplate="{StaticResource SidebarBoardTemplate}" />
@@ -561,6 +650,7 @@
                                 </Button>
                             </Grid>
                             <ItemsControl ItemsSource="{Binding SidebarNotes}" ItemTemplate="{StaticResource SidebarNoteTemplate}" />
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
                 </DockPanel>

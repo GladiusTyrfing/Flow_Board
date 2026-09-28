@@ -74,11 +74,6 @@ public partial class App : Application
         AppPaths.Initialize();
         _store = new DataStore();
         _store.Load();
-        if (_store.IsFirstRun && _store.Workspace.Boards.Count == 0)
-        {
-            var welcome = TemplateService.CreateWelcomeBoard(_store.Settings.DisplayName);
-            _store.Workspace.Boards.Add(welcome);
-        }
 
         ThemeService.Initialize(_store.Settings);
         Behaviors.AnimationsEnabled = _store.Settings.Animations;
@@ -104,7 +99,10 @@ public partial class App : Application
         }
 
         _store.StartAutoSave();
-        _store.CreateBackupIfDue();
+
+        // Double-clicking a .flowboard file in Explorer opens that project.
+        var file = e.Args.FirstOrDefault(a => a.EndsWith(AppPaths.ProjectExtension, StringComparison.OrdinalIgnoreCase) && File.Exists(a));
+        if (file != null) _vm.OpenProjectFile(file);
         _vm.ShowStartupWarning();
     }
 
@@ -322,10 +320,10 @@ public partial class App : Application
 
     private static string LogError(Exception ex)
     {
-        var path = Path.Combine(AppPaths.DataDir, "error.log");
+        var path = Path.Combine(AppPaths.AppDir, "error.log");
         try
         {
-            Directory.CreateDirectory(AppPaths.DataDir);
+            Directory.CreateDirectory(AppPaths.AppDir);
             File.AppendAllText(path, $"[{DateTime.Now:u}] {ex}\n\n");
         }
         catch

@@ -24,6 +24,7 @@ public partial class CanvasView : UserControl, Helpers.ICapturable
     private Point _last;             // last screen point
     private bool _moved;
     private CanvasNode? _target;     // node being moved / resized / connected from
+    private CanvasNode? _clickedMember; // shape pressed inside a section (the section is what moves)
     private Dictionary<CanvasNode, Point> _startPositions = new();
     private Size _startSize;
     private bool _spaceDown;
@@ -53,13 +54,17 @@ public partial class CanvasView : UserControl, Helpers.ICapturable
             {
                 _vm.Doc.PropertyChanged -= OnDocChanged;
                 _vm.RenderRequested -= OnRenderRequested;
+                _vm.ContentChanged -= OnContentChanged;
+                StopMinimap();
             }
 
             _vm = DataContext as CanvasViewModel;
             if (_vm == null) return;
             _vm.Doc.PropertyChanged += OnDocChanged;
             _vm.RenderRequested += OnRenderRequested;
+            _vm.ContentChanged += OnContentChanged;
             ApplyTransform();
+            if (IsLoaded) StartMinimap();
         };
         Loaded += (_, _) =>
         {
@@ -70,7 +75,7 @@ public partial class CanvasView : UserControl, Helpers.ICapturable
         Unloaded += (_, _) =>
         {
             ThemeService.ThemeApplied -= OnThemeApplied;
-            _miniTimer.Stop();
+            StopMinimap();
         };
         PreviewKeyDown += OnKey;
         KeyUp += (_, e) =>
@@ -82,22 +87,60 @@ public partial class CanvasView : UserControl, Helpers.ICapturable
     private void OnThemeApplied(object? sender, EventArgs e) => UpdateDotBrush();
 
     // ================= minimap =================
+    // A small vector drawing of the canvas (shapes as colored blocks, lines as strokes), redrawn only when
+    // something changes and at most ~30 times a second. The visible area is the accent rectangle.
 
-    private readonly System.Windows.Threading.DispatcherTimer _miniTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
+    private readonly System.Windows.Threading.DispatcherTimer _miniTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
     private Box _miniBounds;
     private double _miniScale = 1;
+    private double _miniOx, _miniOy;
     private bool _miniDragging;
+    private Vector _miniGrab;
 
     private void StartMinimap()
     {
         _miniTimer.Tick -= OnMiniTick;
         _miniTimer.Tick += OnMiniTick;
-        _miniTimer.Start();
+        if (_vm != null)
+        {
+            _vm.Main.Settings.PropertyChanged -= OnSettingsChanged;
+            _vm.Main.Settings.PropertyChanged += OnSettingsChanged;
+        }
+
+        InvalidateMinimap();
     }
 
-    private void OnMiniTick(object? sender, EventArgs e) => UpdateMinimap();
+    private void StopMinimap()
+    {
+        _miniTimer.Stop();
+        if (_vm != null) _vm.Main.Settings.PropertyChanged -= OnSettingsChanged;
+    }
 
-    /// <summary>Shows the whole drawing plus the visible area; kept fresh on a light timer.</summary>
+    private void OnSettingsChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(AppSettings.ShowMinimap)) InvalidateMinimap();
+    }
+
+    private void OnContentChanged(object? sender, EventArgs e) => InvalidateMinimap();
+
+    /// <summary>Schedules one redraw; many changes in a row (dragging) collapse into a single frame.</summary>
+    private void InvalidateMinimap()
+    {
+        if (!_miniTimer.IsEnabled) _miniTimer.Start();
+    }
+
+    private void OnMiniTick(object? sender, EventArgs e)
+    {
+        _miniTimer.Stop();
+        UpdateMinimap();
+    }
+
+    private Box ViewBox()
+    {
+        var d = _vm!.Doc;
+        return new Box(-d.OffsetX / d.Zoom, -d.OffsetY / d.Zoom, Surface.ActualWidth / d.Zoom, Surface.ActualHeight / d.Zoom);
+    }
+
     private void UpdateMinimap()
     {
         if (_vm == null) return;
@@ -106,66 +149,147 @@ public partial class CanvasView : UserControl, Helpers.ICapturable
         MiniShow.Visibility = !_vm.Main.Settings.ShowMinimap && !_vm.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
         if (!show) return;
 
-        var d = _vm.Doc;
-        var view = new Box(-d.OffsetX / d.Zoom, -d.OffsetY / d.Zoom, Surface.ActualWidth / d.Zoom, Surface.ActualHeight / d.Zoom);
-        var content = _vm.ContentBounds(60);
-        double l = Math.Min(content.X, view.X), t = Math.Min(content.Y, view.Y);
-        double r = Math.Max(content.Right, view.Right), b = Math.Max(content.Bottom, view.Bottom);
-        _miniBounds = new Box(l, t, Math.Max(1, r - l), Math.Max(1, b - t));
-        _miniScale = Math.Min(MiniMap.Width / _miniBounds.W, MiniMap.Height / _miniBounds.H);
-        MiniPreview.Width = _miniBounds.W * _miniScale;
-        MiniPreview.Height = _miniBounds.H * _miniScale;
-        var box = new Rect(_miniBounds.X, _miniBounds.Y, _miniBounds.W, _miniBounds.H);
-        if (MiniPreview.Fill is not VisualBrush vb)
-            MiniPreview.Fill = new VisualBrush(World) { Stretch = Stretch.Fill, ViewboxUnits = BrushMappingMode.Absolute, Viewbox = box };
-        else
-            vb.Viewbox = box;
-        Canvas.SetLeft(MiniViewport, (view.X - _miniBounds.X) * _miniScale);
-        Canvas.SetTop(MiniViewport, (view.Y - _miniBounds.Y) * _miniScale);
-        MiniViewport.Width = view.W * _miniScale;
-        MiniViewport.Height = view.H * _miniScale;
+        var view = ViewBox();
+        if (!_miniDragging)
+        {
+            // While the map is being dragged its scale stays put, so the map doesn't slide under the pointer.
+            var content = _vm.ContentBounds(40);
+            double l = Math.Min(content.X, view.X), t = Math.Min(content.Y, view.Y);
+            double r = Math.Max(content.Right, view.Right), b = Math.Max(content.Bottom, view.Bottom);
+            _miniBounds = new Box(l, t, Math.Max(1, r - l), Math.Max(1, b - t));
+            _miniScale = Math.Min(MiniMap.Width / _miniBounds.W, MiniMap.Height / _miniBounds.H);
+            _miniOx = (MiniMap.Width - _miniBounds.W * _miniScale) / 2;
+            _miniOy = (MiniMap.Height - _miniBounds.H * _miniScale) / 2;
+        }
+
+        MiniImage.Source = DrawMinimap();
+        var vx = _miniOx + (view.X - _miniBounds.X) * _miniScale;
+        var vy = _miniOy + (view.Y - _miniBounds.Y) * _miniScale;
+        Canvas.SetLeft(MiniViewport, vx);
+        Canvas.SetTop(MiniViewport, vy);
+        MiniViewport.Width = Math.Max(4, view.W * _miniScale);
+        MiniViewport.Height = Math.Max(4, view.H * _miniScale);
     }
 
-    private void MiniJump(Point p)
+    private Point MiniPoint(double x, double y) => new(_miniOx + (x - _miniBounds.X) * _miniScale, _miniOy + (y - _miniBounds.Y) * _miniScale);
+
+    private DrawingImage DrawMinimap()
+    {
+        var group = new DrawingGroup();
+        using (var dc = group.Open())
+        {
+            // Fixed-size backdrop so the drawing maps 1:1 onto the map.
+            dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, MiniMap.Width, MiniMap.Height));
+            var muted = TryFindResource("Fb.MutedTextBrush") as Brush ?? Brushes.Gray;
+            var s = _miniScale;
+
+            foreach (var n in _vm!.Doc.Nodes.OrderBy(n => n.Z))
+            {
+                var p = MiniPoint(n.X, n.Y);
+                var rect = new Rect(p.X, p.Y, Math.Max(1.5, n.Width * s), Math.Max(1.5, n.Height * s));
+                var color = ThemeService.TryParseColor(n.Fill, out var c) ? c : Colors.Gray;
+                var fill = new SolidColorBrush(color);
+                switch (n.Shape)
+                {
+                    case NodeShape.Frame:
+                        dc.DrawRoundedRectangle(new SolidColorBrush(Color.FromArgb(28, color.R, color.G, color.B)), new Pen(fill, 1) { DashStyle = DashStyles.Dash }, rect, 2, 2);
+                        break;
+                    case NodeShape.Ellipse or NodeShape.Circle:
+                        dc.DrawEllipse(fill, null, new Point(rect.X + rect.Width / 2, rect.Y + rect.Height / 2), rect.Width / 2, rect.Height / 2);
+                        break;
+                    case NodeShape.Diamond:
+                        var g = new StreamGeometry();
+                        using (var ctx = g.Open())
+                        {
+                            ctx.BeginFigure(new Point(rect.X + rect.Width / 2, rect.Y), true, true);
+                            ctx.LineTo(new Point(rect.Right, rect.Y + rect.Height / 2), false, false);
+                            ctx.LineTo(new Point(rect.X + rect.Width / 2, rect.Bottom), false, false);
+                            ctx.LineTo(new Point(rect.X, rect.Y + rect.Height / 2), false, false);
+                        }
+
+                        dc.DrawGeometry(fill, null, g);
+                        break;
+                    case NodeShape.Ink:
+                        dc.DrawRectangle(null, new Pen(fill, 1), rect);
+                        break;
+                    case NodeShape.Text:
+                        dc.DrawRectangle(muted, null, new Rect(rect.X, rect.Y + rect.Height / 2 - 1, rect.Width, 2));
+                        break;
+                    case NodeShape.Image or NodeShape.Card or NodeShape.Link:
+                        dc.DrawRoundedRectangle(muted, null, rect, 1.5, 1.5);
+                        break;
+                    default:
+                        dc.DrawRoundedRectangle(fill, null, rect, 1.5, 1.5);
+                        break;
+                }
+            }
+
+            foreach (var e in _vm.Doc.Edges)
+            {
+                if (string.IsNullOrEmpty(e.PathData)) continue;
+                var color = ThemeService.TryParseColor(e.Color, out var c) ? c : Colors.Gray;
+                dc.DrawLine(new Pen(new SolidColorBrush(color), 1), MiniPoint(e.StartX, e.StartY), MiniPoint(e.EndX, e.EndY));
+            }
+        }
+
+        group.Freeze();
+        var image = new DrawingImage(group);
+        image.Freeze();
+        return image;
+    }
+
+    private void MiniCenterOn(Point p)
     {
         if (_vm == null || _miniScale <= 0) return;
-        var wx = _miniBounds.X + p.X / _miniScale;
-        var wy = _miniBounds.Y + p.Y / _miniScale;
+        var wx = _miniBounds.X + (p.X - _miniOx) / _miniScale;
+        var wy = _miniBounds.Y + (p.Y - _miniOy) / _miniScale;
         _vm.Doc.OffsetX = Surface.ActualWidth / 2 - wx * _vm.Doc.Zoom;
         _vm.Doc.OffsetY = Surface.ActualHeight / 2 - wy * _vm.Doc.Zoom;
     }
 
     private void OnMiniDown(object sender, MouseButtonEventArgs e)
     {
+        var p = e.GetPosition(MiniMap);
+        var vr = new Rect(Canvas.GetLeft(MiniViewport), Canvas.GetTop(MiniViewport), MiniViewport.Width, MiniViewport.Height);
+        var center = new Point(vr.X + vr.Width / 2, vr.Y + vr.Height / 2);
+        // Grabbing the visible-area box drags it from where it was grabbed; clicking elsewhere jumps there.
+        _miniGrab = vr.Contains(p) ? p - center : new Vector();
         _miniDragging = true;
         MiniMap.CaptureMouse();
-        MiniJump(e.GetPosition(MiniMap));
+        if (!vr.Contains(p)) MiniCenterOn(p);
         e.Handled = true;
     }
 
     private void OnMiniMove(object sender, MouseEventArgs e)
     {
         if (!_miniDragging) return;
-        MiniJump(e.GetPosition(MiniMap));
-        UpdateMinimap();
+        MiniCenterOn(e.GetPosition(MiniMap) - _miniGrab);
     }
 
     private void OnMiniUp(object sender, MouseButtonEventArgs e)
     {
         _miniDragging = false;
         MiniMap.ReleaseMouseCapture();
+        InvalidateMinimap();
+    }
+
+    private void OnMiniWheel(object sender, MouseWheelEventArgs e)
+    {
+        // Zoom around the point under the pointer on the map.
+        if (_vm == null) return;
+        MiniCenterOn(e.GetPosition(MiniMap));
+        _vm.ZoomAt(e.Delta > 0 ? 1.15 : 1 / 1.15, Surface.ActualWidth / 2, Surface.ActualHeight / 2);
+        e.Handled = true;
     }
 
     private void OnMiniHide(object sender, RoutedEventArgs e)
     {
         if (_vm != null) _vm.Main.Settings.ShowMinimap = false;
-        UpdateMinimap();
     }
 
     private void OnMiniShow(object sender, RoutedEventArgs e)
     {
         if (_vm != null) _vm.Main.Settings.ShowMinimap = true;
-        UpdateMinimap();
     }
 
     private void UpdateDotBrush()
@@ -183,7 +307,11 @@ public partial class CanvasView : UserControl, Helpers.ICapturable
 
     private void OnDocChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(CanvasDoc.Zoom) or nameof(CanvasDoc.OffsetX) or nameof(CanvasDoc.OffsetY)) ApplyTransform();
+        if (e.PropertyName is nameof(CanvasDoc.Zoom) or nameof(CanvasDoc.OffsetX) or nameof(CanvasDoc.OffsetY))
+        {
+            ApplyTransform();
+            InvalidateMinimap();
+        }
     }
 
     private void ApplyTransform()
@@ -216,6 +344,7 @@ public partial class CanvasView : UserControl, Helpers.ICapturable
         var first = _vm.ViewportWidth == 1000 && _vm.ViewportHeight == 700;
         _vm.ViewportWidth = Surface.ActualWidth;
         _vm.ViewportHeight = Surface.ActualHeight;
+        InvalidateMinimap();
         // A brand-new canvas starts centered on its content.
         if (first && _vm.Doc.Nodes.Count > 0 && _vm.Doc.Zoom == 1 && _vm.Doc.OffsetX == 80 && _vm.Doc.OffsetY == 60) _vm.ZoomToFit();
     }
@@ -239,7 +368,8 @@ public partial class CanvasView : UserControl, Helpers.ICapturable
         CanvasNode? found = null;
         VisualTreeHelper.HitTest(Surface, null, r =>
         {
-            if (HitAt(r.VisualHit).Item is CanvasNode n && n != _target)
+            // A section's empty inside isn't a drop target for lines and connectors (only its title is).
+            if (HitAt(r.VisualHit).Item is CanvasNode n && n != _target && !(n.Shape == NodeShape.Frame && ToWorld(p).Y >= n.Y))
             {
                 found = n;
                 return HitTestResultBehavior.Stop;
@@ -281,6 +411,14 @@ public partial class CanvasView : UserControl, Helpers.ICapturable
         if (e.ChangedButton != MouseButton.Left) return;
         var world = ToWorld(p);
         var shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+
+        // For drawing and shape tools, a section's empty inside counts as empty canvas (shapes land in the section).
+        if (kind == "node" && item is CanvasNode { Shape: NodeShape.Frame } body && world.Y >= body.Y
+            && _vm.Tool is not (CanvasTool.Select or CanvasTool.Connector))
+        {
+            kind = null;
+            item = null;
+        }
 
         // Drawing tools work anywhere (also on top of shapes).
         switch (_vm.Tool)
@@ -355,28 +493,55 @@ public partial class CanvasView : UserControl, Helpers.ICapturable
                 break;
 
             case "node" when item is CanvasNode node:
+                var ctrl = Keyboard.Modifiers.HasFlag(ModifierKeys.Control);
+                var inFrameBody = node.Shape == NodeShape.Frame && world.Y >= node.Y;
                 if (e.ClickCount == 2)
                 {
-                    _vm.OpenNode(node);
+                    // Double-click inside a section adds a shape there; on its title (or any other shape) edits it.
+                    if (inFrameBody) _vm.AddNodeAt(NodeShape.Rounded, world.X, world.Y);
+                    else _vm.OpenNode(node);
                     break;
                 }
 
-                if (shift) node.IsSelected = !node.IsSelected;
-                else if (!node.IsSelected) _vm.SelectOnly(node);
+                if (inFrameBody && ctrl)
+                {
+                    // Ctrl + drag inside a section: select shapes in it with a box.
+                    if (!shift) _vm.ClearSelection();
+                    BeginDrag(Drag.Marquee);
+                    break;
+                }
+
                 foreach (var n in _vm.Doc.Nodes) if (n != node) n.IsEditing = false;
-                if (node.Locked) break; // locked shapes can be selected but not moved
-                if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
+
+                // A shape inside a section is carried by the section: dragging it moves the whole section.
+                // Ctrl + drag moves just that shape. A plain click (no drag) still selects the shape itself.
+                var grab = ctrl ? node : _vm.OuterFrame(node);
+                _clickedMember = grab != node ? node : null;
+                if (_clickedMember == null)
+                {
+                    if (shift) node.IsSelected = !node.IsSelected;
+                    else if (!node.IsSelected) _vm.SelectOnly(node);
+                }
+
+                if (grab.Locked)
+                {
+                    // Locked shapes (and shapes in a locked section) can be selected but not moved.
+                    if (_clickedMember != null) _vm.SelectOnly(_clickedMember);
+                    _clickedMember = null;
+                    break;
+                }
+                if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt) && _clickedMember == null)
                 {
                     // Alt + drag: drag out a copy (the originals stay put).
                     _vm.Copy();
                     _vm.Paste(offset: false);
-                    node = _vm.SelectedNodes.FirstOrDefault(n => n.X == node.X && n.Y == node.Y && n.Text == node.Text) ?? node;
+                    grab = _vm.SelectedNodes.FirstOrDefault(n => n.X == grab.X && n.Y == grab.Y && n.Text == grab.Text) ?? grab;
                 }
 
-                _target = node;
-                var moving = _vm.SelectedNodes.Where(n => !n.Locked).ToList();
+                _target = grab;
+                var moving = grab.IsSelected ? _vm.SelectedNodes.Where(n => !n.Locked).ToList() : [grab];
                 foreach (var f in moving.Where(n => n.Shape == NodeShape.Frame).ToList())
-                    moving.AddRange(_vm.Members(f).Where(c => !moving.Contains(c) && !c.Locked));
+                    moving.AddRange(_vm.Members(f).Where(c => !moving.Contains(c)));
                 _startPositions = moving.Distinct().ToDictionary(n => n, n => new Point(n.X, n.Y));
                 _movingEdges = moving.Where(n => n.Shape == NodeShape.Frame).SelectMany(f => _vm.FreeEdgesWithin(f.Bounds)).Distinct().ToList();
                 _edgeStarts = _movingEdges.ToDictionary(x => x, x => (x.FromX, x.FromY, x.ToX, x.ToY));
@@ -448,7 +613,12 @@ public partial class CanvasView : UserControl, Helpers.ICapturable
                 break;
 
             case Drag.Move when _target != null && _startPositions.TryGetValue(_target, out var anchor):
-                if (firstMove) _vm.Checkpoint();
+                if (firstMove)
+                {
+                    _vm.Checkpoint();
+                    if (_clickedMember != null && !_target.IsSelected) _vm.SelectOnly(_target);
+                }
+
                 // Snap the grabbed node; everything else keeps its offset to it.
                 var nx = _vm.SnapValue(anchor.X + total.X / z);
                 var ny = _vm.SnapValue(anchor.Y + total.Y / z);
@@ -617,6 +787,11 @@ public partial class CanvasView : UserControl, Helpers.ICapturable
                 // Shapes dropped inside a section join it (and stay in it until removed from the menu).
                 _vm.JoinFrames(_startPositions.Keys.Where(n => n.Shape != NodeShape.Frame || n.FrameId == null));
                 break;
+            case Drag.Move when _clickedMember != null:
+                // A click without dragging selects the shape inside the section.
+                if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) _clickedMember.IsSelected = !_clickedMember.IsSelected;
+                else _vm.SelectOnly(_clickedMember);
+                break;
             case Drag.EdgeEnd when _edge != null && _moved:
                 _vm.SetEdgeEnd(_edge, _edgeFrom, upWorld.X, upWorld.Y, NodeAtScreen(p));
                 break;
@@ -629,6 +804,7 @@ public partial class CanvasView : UserControl, Helpers.ICapturable
         Cursor = null;
         _drag = Drag.None;
         _target = null;
+        _clickedMember = null;
         _startPositions.Clear();
         Surface.ReleaseMouseCapture();
     }
