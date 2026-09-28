@@ -8,7 +8,7 @@
              xmlns:models="clr-namespace:FlowBoard.Models"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:MainViewModel}">
-    <Border Margin="14" CornerRadius="12" Background="{DynamicResource Fb.SurfaceBrush}" Padding="4" Effect="{StaticResource Fb.CardShadow}">
+    <Border Margin="14" CornerRadius="20" BorderThickness="1" BorderBrush="{DynamicResource Fb.ListBorderBrush}" Background="{DynamicResource Fb.SurfaceBrush}" Padding="4" Effect="{StaticResource Fb.CardShadow}">
         <DockPanel>
             <Grid DockPanel.Dock="Top" Margin="12,10,12,8">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">

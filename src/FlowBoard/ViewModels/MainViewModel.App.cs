@@ -293,7 +293,7 @@ public sealed partial class MainViewModel
             }
 
             if (fresh.Background.StartsWith("image:") && !File.Exists(AppPaths.ToFull(fresh.Background[6..])))
-                fresh.Background = Board.GradientPresets[0];
+                fresh.Background = Board.GradientPresets[1];
             Undo.CheckpointBoardCreated(fresh.Id, "Import board");
             Workspace.Boards.Add(fresh);
             SelectBoard(fresh);

@@ -115,6 +115,7 @@ public sealed partial class MainViewModel : ObservableObject
             case nameof(AppSettings.Theme):
             case nameof(AppSettings.AccentColor):
             case nameof(AppSettings.Backdrop):
+            case nameof(AppSettings.AccentPreset):
                 ThemeService.Apply();
                 break;
             case nameof(AppSettings.StartWithWindows):
@@ -254,7 +255,8 @@ public sealed partial class MainViewModel : ObservableObject
     private void OpenBoardSettings(string? tab)
     {
         if (CurrentBoard == null) return;
-        ShowDialog(new BoardSettingsViewModel(this, CurrentBoard, tab ?? "background"));
+        if (Dialogs.OfType<BoardSettingsViewModel>().FirstOrDefault() is { } open) CloseDialog(open);
+        ShowDialog(new BoardSettingsViewModel(this, CurrentBoard, tab ?? "style"));
     }
 
     [RelayCommand]

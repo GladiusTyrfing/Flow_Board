@@ -39,7 +39,7 @@
 
     <Border x:Name="Card" Style="{StaticResource Fb.Dialog}" MaxWidth="1100" Margin="32,20" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
             AllowDrop="True" DragOver="Card_DragOver" DragLeave="Card_DragLeave" Drop="Card_Drop">
-        <Grid>
+        <Grid h:Behaviors.ClipRadius="22">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -207,7 +207,7 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="{x:Type models:Label}">
-                                            <Border CornerRadius="4" MinWidth="44" Height="30" Padding="10,0" Margin="0,0,4,4"
+                                            <Border CornerRadius="999" MinWidth="44" Height="30" Padding="14,0" Margin="0,0,6,6"
                                                     Background="{Binding Color, Converter={StaticResource HexToBrush}}">
                                                 <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontWeight="SemiBold"
                                                            Foreground="{Binding Color, Converter={StaticResource ContrastBrush}}" />
@@ -283,10 +283,10 @@
 
                         <!-- Drop hint -->
                         <Border Margin="30,14,0,0" CornerRadius="10" Height="70" BorderThickness="2" Background="{DynamicResource Fb.SubtleBrush}"
-                                BorderBrush="{DynamicResource AccentFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource Fb.AccentBrush}"
                                 Visibility="{Binding IsDragOver, Converter={StaticResource BoolToVis}}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="20" Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
+                                <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="20" Foreground="{DynamicResource Fb.AccentBrush}" />
                                 <TextBlock Text="Drop files to attach them" Margin="10,0,0,0" FontWeight="SemiBold" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
@@ -442,15 +442,15 @@
                                                     <Button.Template>
                                                         <ControlTemplate TargetType="Button">
                                                             <Grid>
-                                                                <Ellipse Fill="{DynamicResource AccentFillColorDefaultBrush}" />
+                                                                <Ellipse Fill="{DynamicResource Fb.AccentBrush}" />
                                                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                             </Grid>
                                                         </ControlTemplate>
                                                     </Button.Template>
                                                     <Grid>
-                                                        <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="16" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}"
+                                                        <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="16" Foreground="{DynamicResource Fb.OnAccentBrush}"
                                                                        Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
-                                                        <ui:SymbolIcon Symbol="Pause24" Filled="True" FontSize="16" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}"
+                                                        <ui:SymbolIcon Symbol="Pause24" Filled="True" FontSize="16" Foreground="{DynamicResource Fb.OnAccentBrush}"
                                                                        Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVis}}" />
                                                     </Grid>
                                                 </Button>
@@ -627,7 +627,7 @@
                 </ScrollViewer>
 
                 <!-- ============ Comments & activity ============ -->
-                <Border Grid.Column="1" Background="{DynamicResource Fb.SurfaceAltBrush}" CornerRadius="0,0,14,0"
+                <Border Grid.Column="1" Background="{DynamicResource Fb.SurfaceAltBrush}" CornerRadius="0,0,22,0"
                         BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="1,0,0,0">
                     <DockPanel Margin="16,14,10,14">
                         <Grid DockPanel.Dock="Top" Margin="0,0,6,10">

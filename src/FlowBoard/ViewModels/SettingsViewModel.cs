@@ -6,6 +6,8 @@ namespace FlowBoard.ViewModels;
 
 public sealed partial class SettingsViewModel : DialogViewModel
 {
+    public override string EnterAnimation => "pop";
+
     public SettingsViewModel(MainViewModel main) => Main = main;
 
     public MainViewModel Main { get; }
@@ -13,6 +15,12 @@ public sealed partial class SettingsViewModel : DialogViewModel
     public IReadOnlyList<ThemeMode> Themes { get; } = Enum.GetValues<ThemeMode>();
     public IReadOnlyList<BackdropMode> Backdrops { get; } = Enum.GetValues<BackdropMode>();
     public string DataDir => AppPaths.DataDir;
+    public IReadOnlyList<AccentPreset> Accents => ThemeService.AccentPresets;
+
+    /// <summary>Which settings page is shown (appearance, general, hotkeys, reminders, focus, data).</summary>
+    [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty] private string _section = "appearance";
+
+    [RelayCommand] private void SetAccentPreset(string name) => Settings.AccentPreset = name;
     public bool SupportsBackdrop => ThemeService.SupportsBackdrop;
     public bool IsPortable => AppPaths.IsPortable;
     public string Version => typeof(App).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
@@ -45,6 +53,10 @@ public sealed partial class BoardSettingsViewModel : DialogViewModel
     private readonly string _snapshot;
     private readonly int _index;
 
+    // Drawer on the right without dimming, so style changes preview live on the board.
+    public override double BackdropOpacity => 0;
+    public override string EnterAnimation => "slide";
+
     public Board Board { get; }
     public IReadOnlyList<string> Gradients => Board.GradientPresets;
     public IReadOnlyList<string> Solids => Board.SolidPresets;
@@ -62,7 +74,24 @@ public sealed partial class BoardSettingsViewModel : DialogViewModel
                 .Select(f => "image:" + AppPaths.ToRelative(f))
             : [];
 
+    public IReadOnlyList<BoardThemePreset> Presets => BoardThemeService.Presets;
+
     [RelayCommand] private void SetTab(string tab) => Tab = tab;
+
+    [RelayCommand] private void SetTheme(string name) => Board.Theme = name;
+
+    /// <summary>One-click looks combining transparency and blur.</summary>
+    [RelayCommand]
+    private void ApplyLook(string look)
+    {
+        (Board.ListOpacity, Board.CardOpacity, Board.BackgroundBlur) = look switch
+        {
+            "glass" => (0.55, 0.82, 14.0),
+            "clear" => (0.0, 0.72, 0.0),
+            "solid" => (1.0, 1.0, 0.0),
+            _ => (0.82, 0.96, 0.0),
+        };
+    }
 
     [RelayCommand] private void SetBackground(string spec) => Board.Background = spec;
 

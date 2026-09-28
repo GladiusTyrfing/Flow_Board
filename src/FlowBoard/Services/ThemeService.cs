@@ -7,7 +7,20 @@ using Wpf.Ui.Controls;
 
 namespace FlowBoard.Services;
 
-/// <summary>Applies dark/light theme, accent color and window backdrop (Mica/Acrylic).</summary>
+public sealed record AccentPreset(string Name, Color Primary, Color Secondary)
+{
+    public Brush Preview
+    {
+        get
+        {
+            var b = new LinearGradientBrush(Primary, Secondary, 45);
+            b.Freeze();
+            return b;
+        }
+    }
+}
+
+/// <summary>Applies dark/light theme, the accent gradient, the background glow and the window backdrop.</summary>
 public static class ThemeService
 {
     private static AppSettings? _settings;
@@ -15,7 +28,25 @@ public static class ThemeService
 
     public static bool IsDark { get; private set; } = true;
 
+    /// <summary>Mica/Acrylic/Tabbed backdrops need Windows 11 (build 22000+). Windows 10 gets a solid window.</summary>
+    public static bool SupportsBackdrop { get; } = Environment.OSVersion.Version.Build >= 22000;
+
     public static event EventHandler? ThemeApplied;
+
+    public static IReadOnlyList<AccentPreset> AccentPresets { get; } =
+    [
+        new("Aurora", Hex("#8B5CF6"), Hex("#06B6D4")),
+        new("Sunset", Hex("#F97316"), Hex("#EC4899")),
+        new("Ocean", Hex("#2563EB"), Hex("#06B6D4")),
+        new("Emerald", Hex("#10B981"), Hex("#84CC16")),
+        new("Rose", Hex("#F43F5E"), Hex("#A855F7")),
+        new("Gold", Hex("#F59E0B"), Hex("#EF4444")),
+        new("Ice", Hex("#38BDF8"), Hex("#A5B4FC")),
+        new("Mono", Hex("#64748B"), Hex("#A1A1AA")),
+    ];
+
+    public static AccentPreset CurrentAccent =>
+        AccentPresets.FirstOrDefault(a => a.Name == _settings?.AccentPreset) ?? AccentPresets[0];
 
     public static void Initialize(AppSettings settings)
     {
@@ -48,9 +79,10 @@ public static class ThemeService
         var backdrop = ToBackdrop(s.Backdrop);
 
         SetPalette(IsDark);
-        ApplicationThemeManager.Apply(theme, backdrop, updateAccent: s.AccentColor == null);
-        if (TryParseColor(s.AccentColor, out var accent))
-            ApplicationAccentColorManager.Apply(accent, theme);
+        ApplicationThemeManager.Apply(theme, backdrop, updateAccent: false);
+        var accent = CurrentAccent;
+        ApplicationAccentColorManager.Apply(accent.Primary, theme);
+        SetAccentResources(accent);
 
         if (_window is FluentWindow fw)
         {
@@ -61,8 +93,39 @@ public static class ThemeService
         ThemeApplied?.Invoke(null, EventArgs.Empty);
     }
 
-    /// <summary>Mica/Acrylic/Tabbed backdrops need Windows 11 (build 22000+). Windows 10 gets a solid window.</summary>
-    public static bool SupportsBackdrop { get; } = Environment.OSVersion.Version.Build >= 22000;
+    private static void SetAccentResources(AccentPreset accent)
+    {
+        var res = Application.Current.Resources;
+        res["Fb.AccentColor"] = accent.Primary;
+        res["Fb.Accent2Color"] = accent.Secondary;
+        res["Fb.AccentBrush"] = Frozen(new SolidColorBrush(accent.Primary));
+        res["Fb.Accent2Brush"] = Frozen(new SolidColorBrush(accent.Secondary));
+        res["Fb.AccentGradientBrush"] = Frozen(new LinearGradientBrush(accent.Primary, accent.Secondary, new Point(0, 0), new Point(1, 1)));
+        res["Fb.AccentSoftBrush"] = Frozen(new SolidColorBrush(WithAlpha(accent.Primary, 0x38)));
+        res["Fb.AccentTextBrush"] = Frozen(new SolidColorBrush(IsDark ? Mix(accent.Primary, Colors.White, 0.35) : Mix(accent.Primary, Colors.Black, 0.1)));
+        res["Fb.OnAccentBrush"] = Frozen(new SolidColorBrush(Colors.White));
+
+        // Soft glow blobs behind the app (strength differs per theme).
+        byte a = IsDark ? (byte)0x55 : (byte)0x40;
+        res["Fb.Aurora1Brush"] = Glow(WithAlpha(accent.Primary, a));
+        res["Fb.Aurora2Brush"] = Glow(WithAlpha(accent.Secondary, a));
+        res["Fb.Aurora3Brush"] = Glow(WithAlpha(Mix(accent.Primary, Hex("#EC4899"), 0.6), (byte)(a * 0.7)));
+    }
+
+    private static Brush Glow(Color c)
+    {
+        var b = new RadialGradientBrush
+        {
+            GradientStops =
+            {
+                new GradientStop(c, 0),
+                new GradientStop(WithAlpha(c, (byte)(c.A * 0.45)), 0.45),
+                new GradientStop(WithAlpha(c, 0), 1),
+            },
+        };
+        b.Freeze();
+        return b;
+    }
 
     public static WindowBackdropType ToBackdrop(BackdropMode mode) => !SupportsBackdrop ? WindowBackdropType.None : mode switch
     {
@@ -85,6 +148,19 @@ public static class ThemeService
         {
             return false;
         }
+    }
+
+    public static Color Hex(string hex) => (Color)ColorConverter.ConvertFromString(hex);
+
+    public static Color WithAlpha(Color c, byte a) => Color.FromArgb(a, c.R, c.G, c.B);
+
+    public static Color Mix(Color a, Color b, double t) => Color.FromArgb(
+        (byte)(a.A + (b.A - a.A) * t), (byte)(a.R + (b.R - a.R) * t), (byte)(a.G + (b.G - a.G) * t), (byte)(a.B + (b.B - a.B) * t));
+
+    public static T Frozen<T>(T f) where T : Freezable
+    {
+        f.Freeze();
+        return f;
     }
 
     private static void SetPalette(bool dark)

@@ -5,246 +5,395 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:FlowBoard.ViewModels"
+             xmlns:services="clr-namespace:FlowBoard.Services"
              mc:Ignorable="d"
              x:Name="Root"
              d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
     <UserControl.Resources>
-        <Style x:Key="Row" TargetType="Grid">
-            <Setter Property="Margin" Value="0,0,0,12" />
+        <!-- One setting: control docked right, text fills the rest (never overlaps). -->
+        <Style x:Key="Row" TargetType="DockPanel">
+            <Setter Property="Margin" Value="0,0,0,16" />
+            <Setter Property="LastChildFill" Value="True" />
         </Style>
         <Style x:Key="RowTitle" TargetType="TextBlock" BasedOn="{StaticResource Fb.Text}">
-            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style x:Key="RowHint" TargetType="TextBlock" BasedOn="{StaticResource Fb.Muted}">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+        <Style x:Key="RowText" TargetType="StackPanel">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,20,0" />
+        </Style>
+        <Style x:Key="PageTitle" TargetType="TextBlock" BasedOn="{StaticResource Fb.Text}">
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontWeight" Value="ExtraBold" />
+            <Setter Property="Margin" Value="0,0,0,18" />
+        </Style>
+        <!-- Left navigation item -->
+        <Style x:Key="NavItem" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{DynamicResource Fb.TextBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="GroupName" Value="SettingsNav" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Grid Background="Transparent">
+                            <Border x:Name="Bg" CornerRadius="12" Background="Transparent" />
+                            <Border x:Name="Bar" Width="4" Height="18" CornerRadius="2" HorizontalAlignment="Left" Margin="2,0,0,0"
+                                    Background="{DynamicResource Fb.AccentGradientBrush}" Opacity="0" />
+                            <ContentPresenter Margin="16,10" TextElement.FontWeight="SemiBold" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource Fb.SubtleBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource Fb.AccentSoftBrush}" />
+                                <Setter TargetName="Bar" Property="Opacity" Value="1" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <!-- Click, then press a key combination -->
         <Style x:Key="HotkeyBox" TargetType="TextBox" BasedOn="{StaticResource Fb.Input}">
-            <Setter Property="Width" Value="200" />
+            <Setter Property="Width" Value="190" />
             <Setter Property="IsReadOnly" Value="True" />
             <Setter Property="IsReadOnlyCaretVisible" Value="False" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="TextAlignment" Value="Center" />
             <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="ToolTip" Value="Click, then press the new key combination. Backspace clears it." />
         </Style>
     </UserControl.Resources>
 
-    <Border Style="{StaticResource Fb.Dialog}" Width="720" Margin="0,24">
-        <DockPanel MaxHeight="760">
-            <Grid DockPanel.Dock="Top" Margin="24,20,20,10">
-                <StackPanel Orientation="Horizontal">
-                    <ui:SymbolIcon Symbol="Settings24" FontSize="22" Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
-                    <TextBlock Text="Settings" Style="{StaticResource Fb.DialogTitle}" Margin="10,0,0,0" />
-                </StackPanel>
-                <Button Style="{StaticResource Fb.IconButton}" HorizontalAlignment="Right" Command="{Binding CloseCommand}">
-                    <ui:SymbolIcon Symbol="Dismiss24" FontSize="16" />
-                </Button>
-            </Grid>
-            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,0,24,20">
-                <StackPanel>
+    <Border Style="{StaticResource Fb.Dialog}" Width="860" MaxHeight="660" VerticalAlignment="Stretch" Margin="0,20">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
+            <!-- ============ Navigation ============ -->
+            <Border CornerRadius="22,0,0,22" Background="{DynamicResource Fb.SurfaceAltBrush}" BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="0,0,1,0">
+                <DockPanel Margin="14,22,14,16">
+                    <TextBlock DockPanel.Dock="Top" Text="Settings" Style="{StaticResource Fb.GradientTitle}" FontSize="24" Margin="8,0,0,18" />
+                    <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Fb.Muted}" Margin="8,0,0,0">
+                        <Run Text="FlowBoard" FontWeight="Bold" /> <Run Text="{Binding Version, Mode=OneWay}" />
+                    </TextBlock>
+                    <StackPanel>
+                        <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=appearance}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="PaintBrush24" FontSize="16" />
+                                <TextBlock Text="Appearance" Margin="10,0,0,0" />
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=general}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Settings24" FontSize="16" />
+                                <TextBlock Text="General" Margin="10,0,0,0" />
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=hotkeys}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Keyboard24" FontSize="16" />
+                                <TextBlock Text="Hotkeys" Margin="10,0,0,0" />
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=reminders}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Alert24" FontSize="16" />
+                                <TextBlock Text="Reminders" Margin="10,0,0,0" />
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=focus}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Timer24" FontSize="16" />
+                                <TextBlock Text="Focus timer" Margin="10,0,0,0" />
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=data}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Database24" FontSize="16" />
+                                <TextBlock Text="Data &amp; backup" Margin="10,0,0,0" />
+                            </StackPanel>
+                        </RadioButton>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- ============ Pages ============ -->
+            <Button Grid.Column="1" Style="{StaticResource Fb.IconButton}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,14,14,0"
+                    Panel.ZIndex="2" Command="{Binding CloseCommand}" ToolTip="Close (Esc)">
+                <ui:SymbolIcon Symbol="Dismiss24" FontSize="16" />
+            </Button>
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="30,24,30,24">
+                <Grid>
                     <!-- Appearance -->
-                    <TextBlock Text="APPEARANCE" Style="{StaticResource Fb.Caption}" Margin="0,6,0,8" />
-                    <Border Style="{StaticResource Fb.Section}">
-                        <StackPanel>
-                            <Grid Style="{StaticResource Row}">
-                                <TextBlock Text="Theme" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=appearance}">
+                        <TextBlock Text="Appearance" Style="{StaticResource PageTitle}" />
+
+                        <DockPanel Style="{StaticResource Row}">
+                            <Border DockPanel.Dock="Right" Style="{StaticResource Fb.SegmentGroup}" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
                                     <RadioButton Style="{StaticResource Fb.Segment}" GroupName="Theme" Content="Dark"
                                                  IsChecked="{Binding Settings.Theme, Converter={StaticResource Equals}, ConverterParameter=Dark}" />
                                     <RadioButton Style="{StaticResource Fb.Segment}" GroupName="Theme" Content="Light"
                                                  IsChecked="{Binding Settings.Theme, Converter={StaticResource Equals}, ConverterParameter=Light}" />
-                                    <RadioButton Style="{StaticResource Fb.Segment}" GroupName="Theme" Content="Follow Windows"
+                                    <RadioButton Style="{StaticResource Fb.Segment}" GroupName="Theme" Content="Auto"
                                                  IsChecked="{Binding Settings.Theme, Converter={StaticResource Equals}, ConverterParameter=System}" />
                                 </StackPanel>
-                            </Grid>
-                            <Grid Style="{StaticResource Row}">
-                                <StackPanel>
-                                    <TextBlock Text="Window material" Style="{StaticResource RowTitle}" />
-                                    <TextBlock Text="Mica, Acrylic and Tabbed need Windows 11 — on Windows 10 a solid window is used." Style="{StaticResource Fb.Muted}" />
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" IsEnabled="{Binding SupportsBackdrop}">
+                            </Border>
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Theme" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Auto follows your Windows setting." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+
+                        <TextBlock Text="Accent" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="Colors buttons, highlights and the background glow." Style="{StaticResource RowHint}" Margin="0,2,0,10" />
+                        <ItemsControl ItemsSource="{Binding Accents}" Margin="0,0,0,12">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type services:AccentPreset}">
+                                    <StackPanel Margin="0,0,4,6">
+                                        <Button Style="{StaticResource Fb.SwatchButton}" Width="64" Height="40" Background="{Binding Preview}" ToolTip="{Binding Name}"
+                                                Command="{Binding DataContext.SetAccentPresetCommand, ElementName=Root}" CommandParameter="{Binding Name}">
+                                            <Button.Tag>
+                                                <MultiBinding Converter="{StaticResource SelectedTag}">
+                                                    <Binding Path="Name" />
+                                                    <Binding Path="DataContext.Settings.AccentPreset" ElementName="Root" />
+                                                </MultiBinding>
+                                            </Button.Tag>
+                                        </Button>
+                                        <TextBlock Text="{Binding Name}" FontSize="11" HorizontalAlignment="Center" Margin="0,-2,8,0" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.AuroraBackground}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Aurora glow" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Soft accent-colored light behind the app. Shows through transparent boards." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.Animations}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Animations" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Smooth fades, lifts and slides." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+
+                        <!-- Windows 11 only -->
+                        <DockPanel Style="{StaticResource Row}" Visibility="{Binding SupportsBackdrop, Converter={StaticResource BoolToVis}}">
+                            <Border DockPanel.Dock="Right" Style="{StaticResource Fb.SegmentGroup}" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
                                     <RadioButton Style="{StaticResource Fb.Segment}" GroupName="Backdrop" Content="Mica"
                                                  IsChecked="{Binding Settings.Backdrop, Converter={StaticResource Equals}, ConverterParameter=Mica}" />
                                     <RadioButton Style="{StaticResource Fb.Segment}" GroupName="Backdrop" Content="Acrylic"
                                                  IsChecked="{Binding Settings.Backdrop, Converter={StaticResource Equals}, ConverterParameter=Acrylic}" />
-                                    <RadioButton Style="{StaticResource Fb.Segment}" GroupName="Backdrop" Content="Tabbed"
-                                                 IsChecked="{Binding Settings.Backdrop, Converter={StaticResource Equals}, ConverterParameter=Tabbed}" />
                                     <RadioButton Style="{StaticResource Fb.Segment}" GroupName="Backdrop" Content="Solid"
                                                  IsChecked="{Binding Settings.Backdrop, Converter={StaticResource Equals}, ConverterParameter=None}" />
                                 </StackPanel>
-                            </Grid>
-                            <TextBlock Text="Accent color" Style="{StaticResource RowTitle}" Margin="0,0,0,8" />
-                            <WrapPanel>
-                                <Button Style="{StaticResource Fb.SubtleButton}" Content="Windows accent" Margin="0,0,8,6" Padding="10,5"
-                                        Command="{Binding SetAccentCommand}" CommandParameter="{x:Null}" />
-                                <ItemsControl ItemsSource="{Binding AccentColors}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Button Style="{StaticResource Fb.SwatchButton}" Width="30" Height="30" Background="{Binding Converter={StaticResource HexToBrush}}"
-                                                    Command="{Binding DataContext.SetAccentCommand, ElementName=Root}" CommandParameter="{Binding}" />
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </WrapPanel>
-                            <Grid Style="{StaticResource Row}" Margin="0,8,0,0">
-                                <TextBlock Text="Animations" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding Settings.Animations}" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
+                            </Border>
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Window material" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Windows 11 see-through window effects. Turn the aurora glow off to see them best." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+
+                        <Border Style="{StaticResource Fb.Section}">
+                            <DockPanel>
+                                <ui:SymbolIcon DockPanel.Dock="Left" Symbol="Sparkle24" FontSize="20" Foreground="{DynamicResource Fb.AccentTextBrush}" Margin="0,0,12,0" VerticalAlignment="Top" />
+                                <TextBlock Style="{StaticResource Fb.Text}" FontSize="13">
+                                    <Run Text="Each board has its own look." FontWeight="Bold" />
+                                    <Run Text="Open a board and press" />
+                                    <Run Text="Style" FontWeight="Bold" />
+                                    <Run Text="in its header to pick a theme, make lists and cards transparent, blur the wallpaper or use a photo." />
+                                </TextBlock>
+                            </DockPanel>
+                        </Border>
+                    </StackPanel>
 
                     <!-- General -->
-                    <TextBlock Text="GENERAL" Style="{StaticResource Fb.Caption}" Margin="0,6,0,8" />
-                    <Border Style="{StaticResource Fb.Section}">
-                        <StackPanel>
-                            <Grid Style="{StaticResource Row}">
-                                <StackPanel>
-                                    <TextBlock Text="Your name" Style="{StaticResource RowTitle}" />
-                                    <TextBlock Text="Shown on comments and activity." Style="{StaticResource Fb.Muted}" />
-                                </StackPanel>
-                                <ui:TextBox Width="220" HorizontalAlignment="Right" Text="{Binding Settings.DisplayName, UpdateSourceTrigger=PropertyChanged}" />
-                            </Grid>
-                            <Grid Style="{StaticResource Row}">
-                                <StackPanel>
-                                    <TextBlock Text="Keep running in the tray when closed" Style="{StaticResource RowTitle}" />
-                                    <TextBlock Text="Reminders, global hotkeys and the focus timer keep working." Style="{StaticResource Fb.Muted}" />
-                                </StackPanel>
-                                <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding Settings.MinimizeToTray}" />
-                            </Grid>
-                            <Grid Style="{StaticResource Row}">
-                                <TextBlock Text="Start with Windows" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding Settings.StartWithWindows}" />
-                            </Grid>
-                            <Grid Style="{StaticResource Row}">
-                                <TextBlock Text="Start minimized" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding Settings.StartMinimized}" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
+                    <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=general}">
+                        <TextBlock Text="General" Style="{StaticResource PageTitle}" />
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:TextBox DockPanel.Dock="Right" Width="220" VerticalAlignment="Center" Text="{Binding Settings.DisplayName, UpdateSourceTrigger=PropertyChanged}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Your name" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Shown on comments and activity." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.MinimizeToTray}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Keep running in the tray when closed" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Reminders, global hotkeys and the focus timer keep working." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.StartWithWindows}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Start with Windows" Style="{StaticResource RowTitle}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.StartMinimized}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Start minimized" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Start quietly in the tray." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </StackPanel>
 
                     <!-- Hotkeys -->
-                    <TextBlock Text="HOTKEYS" Style="{StaticResource Fb.Caption}" Margin="0,6,0,8" />
-                    <Border Style="{StaticResource Fb.Section}">
-                        <StackPanel>
-                            <Grid Style="{StaticResource Row}">
-                                <StackPanel>
-                                    <TextBlock Text="Global hotkeys" Style="{StaticResource RowTitle}" />
-                                    <TextBlock Text="Work from any app, even when FlowBoard is hidden in the tray." Style="{StaticResource Fb.Muted}" />
-                                </StackPanel>
-                                <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding Settings.GlobalHotkeysEnabled}" />
-                            </Grid>
-                            <Grid Style="{StaticResource Row}" IsEnabled="{Binding Settings.GlobalHotkeysEnabled}">
-                                <StackPanel>
-                                    <TextBlock Text="Quick add a card" Style="{StaticResource RowTitle}" />
-                                    <TextBlock Text="Pops up a capture box over whatever you're doing." Style="{StaticResource Fb.Muted}" />
-                                </StackPanel>
-                                <TextBox Style="{StaticResource HotkeyBox}" HorizontalAlignment="Right" Tag="QuickAdd"
-                                         Text="{Binding Settings.QuickAddHotkey, Mode=OneWay}" PreviewKeyDown="HotkeyBox_PreviewKeyDown" />
-                            </Grid>
-                            <Grid Style="{StaticResource Row}" IsEnabled="{Binding Settings.GlobalHotkeysEnabled}">
-                                <TextBlock Text="Show / hide FlowBoard" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <TextBox Style="{StaticResource HotkeyBox}" HorizontalAlignment="Right" Tag="ShowHide"
-                                         Text="{Binding Settings.ShowHideHotkey, Mode=OneWay}" PreviewKeyDown="HotkeyBox_PreviewKeyDown" />
-                            </Grid>
-                            <Grid Style="{StaticResource Row}">
-                                <StackPanel>
-                                    <TextBlock Text="Card hover hotkeys" Style="{StaticResource RowTitle}" />
-                                    <TextBlock Text="Hover a card and press X, C, P, T, 1–9, Alt+arrows… (see F1)" Style="{StaticResource Fb.Muted}" />
-                                </StackPanel>
-                                <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding Settings.CardHoverHotkeys}" />
-                            </Grid>
-                            <Button Style="{StaticResource Fb.SubtleButton}" HorizontalAlignment="Left" Command="{Binding Main.OpenShortcutsCommand}">
-                                <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Keyboard24" FontSize="14" />
-                                    <TextBlock Text="Show all shortcuts (F1)" Margin="6,0,0,0" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </Border>
+                    <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=hotkeys}">
+                        <TextBlock Text="Hotkeys" Style="{StaticResource PageTitle}" />
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.GlobalHotkeysEnabled}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Global hotkeys" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Work from any app, even when FlowBoard is hidden in the tray." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}" IsEnabled="{Binding Settings.GlobalHotkeysEnabled}">
+                            <TextBox DockPanel.Dock="Right" Style="{StaticResource HotkeyBox}" Tag="QuickAdd"
+                                     Text="{Binding Settings.QuickAddHotkey, Mode=OneWay}" PreviewKeyDown="HotkeyBox_PreviewKeyDown" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Quick add a card" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Pops up a capture box over whatever you're doing." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}" IsEnabled="{Binding Settings.GlobalHotkeysEnabled}">
+                            <TextBox DockPanel.Dock="Right" Style="{StaticResource HotkeyBox}" Tag="ShowHide"
+                                     Text="{Binding Settings.ShowHideHotkey, Mode=OneWay}" PreviewKeyDown="HotkeyBox_PreviewKeyDown" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Show / hide FlowBoard" Style="{StaticResource RowTitle}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.CardHoverHotkeys}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Card hover hotkeys" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Hover a card and press X, C, P, T, 1–9, Alt+arrows…" Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <Button Style="{StaticResource Fb.SubtleButton}" HorizontalAlignment="Left" Command="{Binding Main.OpenShortcutsCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Keyboard24" FontSize="14" />
+                                <TextBlock Text="Show all shortcuts (F1)" Margin="6,0,0,0" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
 
-                    <!-- Notifications -->
-                    <TextBlock Text="REMINDERS" Style="{StaticResource Fb.Caption}" Margin="0,6,0,8" />
-                    <Border Style="{StaticResource Fb.Section}">
-                        <StackPanel>
-                            <Grid Style="{StaticResource Row}">
-                                <TextBlock Text="Due date reminders" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding Settings.RemindersEnabled}" />
-                            </Grid>
-                            <Grid Style="{StaticResource Row}">
-                                <TextBlock Text="Play sounds" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding Settings.PlaySounds}" />
-                            </Grid>
-                            <Grid>
-                                <TextBlock Text="Default reminder for new due dates (minutes before, -1 = none)" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <ComboBox Width="120" HorizontalAlignment="Right" ItemsSource="{Binding ReminderDefaults}" SelectedItem="{Binding Settings.DefaultReminderMinutes}" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
+                    <!-- Reminders -->
+                    <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=reminders}">
+                        <TextBlock Text="Reminders" Style="{StaticResource PageTitle}" />
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.RemindersEnabled}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Due date reminders" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Shown as Windows notifications." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.PlaySounds}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Play sounds" Style="{StaticResource RowTitle}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <ComboBox DockPanel.Dock="Right" Width="120" VerticalAlignment="Center" ItemsSource="{Binding ReminderDefaults}" SelectedItem="{Binding Settings.DefaultReminderMinutes}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Default reminder" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Minutes before the due time for new due dates (-1 = none, 1440 = a day)." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </StackPanel>
 
-                    <!-- Pomodoro -->
-                    <TextBlock Text="FOCUS TIMER" Style="{StaticResource Fb.Caption}" Margin="0,6,0,8" />
-                    <Border Style="{StaticResource Fb.Section}">
-                        <StackPanel>
-                            <Grid Style="{StaticResource Row}">
-                                <TextBlock Text="Focus minutes" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <ui:NumberBox Width="140" HorizontalAlignment="Right" Minimum="1" Maximum="180" SmallChange="5" MaxDecimalPlaces="0"
-                                              Value="{Binding Settings.PomodoroFocusMinutes, Converter={StaticResource IntToDouble}}" />
-                            </Grid>
-                            <Grid Style="{StaticResource Row}">
-                                <TextBlock Text="Short break minutes" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <ui:NumberBox Width="140" HorizontalAlignment="Right" Minimum="1" Maximum="60" MaxDecimalPlaces="0"
-                                              Value="{Binding Settings.PomodoroShortBreakMinutes, Converter={StaticResource IntToDouble}}" />
-                            </Grid>
-                            <Grid Style="{StaticResource Row}">
-                                <TextBlock Text="Long break minutes" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <ui:NumberBox Width="140" HorizontalAlignment="Right" Minimum="1" Maximum="90" MaxDecimalPlaces="0"
-                                              Value="{Binding Settings.PomodoroLongBreakMinutes, Converter={StaticResource IntToDouble}}" />
-                            </Grid>
-                            <Grid Style="{StaticResource Row}">
-                                <TextBlock Text="Focus sessions before a long break" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <ui:NumberBox Width="140" HorizontalAlignment="Right" Minimum="1" Maximum="12" MaxDecimalPlaces="0"
-                                              Value="{Binding Settings.PomodoroSessionsBeforeLongBreak, Converter={StaticResource IntToDouble}}" />
-                            </Grid>
-                            <Grid Style="{StaticResource Row}">
-                                <TextBlock Text="Start breaks automatically" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding Settings.PomodoroAutoStartBreaks}" />
-                            </Grid>
-                            <Grid>
-                                <TextBlock Text="Start the next focus session automatically" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
-                                <ui:ToggleSwitch HorizontalAlignment="Right" IsChecked="{Binding Settings.PomodoroAutoStartFocus}" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
+                    <!-- Focus timer -->
+                    <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=focus}">
+                        <TextBlock Text="Focus timer" Style="{StaticResource PageTitle}" />
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:NumberBox DockPanel.Dock="Right" Width="140" VerticalAlignment="Center" Minimum="1" Maximum="180" SmallChange="5" MaxDecimalPlaces="0"
+                                          Value="{Binding Settings.PomodoroFocusMinutes, Converter={StaticResource IntToDouble}}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Focus minutes" Style="{StaticResource RowTitle}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:NumberBox DockPanel.Dock="Right" Width="140" VerticalAlignment="Center" Minimum="1" Maximum="60" MaxDecimalPlaces="0"
+                                          Value="{Binding Settings.PomodoroShortBreakMinutes, Converter={StaticResource IntToDouble}}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Short break minutes" Style="{StaticResource RowTitle}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:NumberBox DockPanel.Dock="Right" Width="140" VerticalAlignment="Center" Minimum="1" Maximum="90" MaxDecimalPlaces="0"
+                                          Value="{Binding Settings.PomodoroLongBreakMinutes, Converter={StaticResource IntToDouble}}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Long break minutes" Style="{StaticResource RowTitle}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:NumberBox DockPanel.Dock="Right" Width="140" VerticalAlignment="Center" Minimum="1" Maximum="12" MaxDecimalPlaces="0"
+                                          Value="{Binding Settings.PomodoroSessionsBeforeLongBreak, Converter={StaticResource IntToDouble}}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Sessions before a long break" Style="{StaticResource RowTitle}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.PomodoroAutoStartBreaks}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Start breaks automatically" Style="{StaticResource RowTitle}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.PomodoroAutoStartFocus}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Start the next focus session automatically" Style="{StaticResource RowTitle}" />
+                            </StackPanel>
+                        </DockPanel>
+                    </StackPanel>
 
                     <!-- Data -->
-                    <TextBlock Text="DATA" Style="{StaticResource Fb.Caption}" Margin="0,6,0,8" />
-                    <Border Style="{StaticResource Fb.Section}">
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource Fb.Muted}" FontSize="13" TextWrapping="Wrap">
+                    <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=data}">
+                        <TextBlock Text="Data &amp; backup" Style="{StaticResource PageTitle}" />
+                        <Border Style="{StaticResource Fb.Section}">
+                            <TextBlock Style="{StaticResource Fb.Text}" FontSize="13">
                                 <Run Text="Everything is stored locally in" />
-                                <Run Text="{Binding DataDir, Mode=OneWay}" FontFamily="Consolas" Foreground="{DynamicResource Fb.TextBrush}" />
-                                <Run Text=". FlowBoard saves automatically every couple of seconds and keeps rolling daily backups. Put a file named portable.txt next to FlowBoard.exe to keep data beside the app instead." />
+                                <Run Text="{Binding DataDir, Mode=OneWay}" FontFamily="Consolas" FontWeight="Bold" />
+                                <LineBreak />
+                                <Run Text="FlowBoard saves every couple of seconds and keeps rolling backups. Put an empty portable.txt next to FlowBoard.exe to keep data beside the app instead."
+                                     Foreground="{DynamicResource Fb.MutedTextBrush}" />
                             </TextBlock>
-                            <WrapPanel Margin="0,12,0,0">
-                                <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Open data folder" Command="{Binding Main.OpenDataFolderCommand}" />
-                                <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Back up to zip…" Command="{Binding Main.BackupNowCommand}" />
-                                <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Restore from zip…" Command="{Binding Main.RestoreBackupCommand}" />
-                                <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Export current board…" Command="{Binding Main.ExportBoardCommand}" />
-                                <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Import board…" Command="{Binding Main.ImportBoardCommand}" />
-                            </WrapPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <TextBlock HorizontalAlignment="Center" Style="{StaticResource Fb.Muted}" Margin="0,6,0,0">
-                        <Run Text="FlowBoard" FontWeight="SemiBold" /> <Run Text="{Binding Version, Mode=OneWay}" />
-                        <Run Text="· a local-first task board" />
-                    </TextBlock>
-                </StackPanel>
+                        </Border>
+                        <WrapPanel>
+                            <Button Style="{StaticResource Fb.AccentButton}" Margin="0,0,8,8" Content="Back up to zip…" Command="{Binding Main.BackupNowCommand}" />
+                            <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Restore from zip…" Command="{Binding Main.RestoreBackupCommand}" />
+                            <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Open data folder" Command="{Binding Main.OpenDataFolderCommand}" />
+                            <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Export current board…" Command="{Binding Main.ExportBoardCommand}" />
+                            <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,8,8" Content="Import board…" Command="{Binding Main.ImportBoardCommand}" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Grid>
             </ScrollViewer>
-        </DockPanel>
+        </Grid>
     </Border>
 </UserControl>

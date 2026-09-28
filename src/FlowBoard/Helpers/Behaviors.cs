@@ -11,6 +11,36 @@ namespace FlowBoard.Helpers;
 /// <summary>Small attached behaviors used across the XAML.</summary>
 public static class Behaviors
 {
+    // ---------- Corner radius for shared button templates ----------
+
+    public static readonly DependencyProperty CornerRadiusProperty = DependencyProperty.RegisterAttached(
+        "CornerRadius", typeof(CornerRadius), typeof(Behaviors), new PropertyMetadata(new CornerRadius(10)));
+
+    public static CornerRadius GetCornerRadius(DependencyObject d) => (CornerRadius)d.GetValue(CornerRadiusProperty);
+    public static void SetCornerRadius(DependencyObject d, CornerRadius v) => d.SetValue(CornerRadiusProperty, v);
+
+    // ---------- Rounded clipping (Border.CornerRadius does not clip its children) ----------
+
+    public static readonly DependencyProperty ClipRadiusProperty = DependencyProperty.RegisterAttached(
+        "ClipRadius", typeof(double), typeof(Behaviors), new PropertyMetadata(0.0, OnClipRadiusChanged));
+
+    public static double GetClipRadius(DependencyObject d) => (double)d.GetValue(ClipRadiusProperty);
+    public static void SetClipRadius(DependencyObject d, double v) => d.SetValue(ClipRadiusProperty, v);
+
+    private static void OnClipRadiusChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not FrameworkElement fe) return;
+        void Update()
+        {
+            var r = GetClipRadius(fe);
+            fe.Clip = r <= 0 ? null : new RectangleGeometry(new Rect(0, 0, fe.ActualWidth, fe.ActualHeight), r, r);
+        }
+
+        fe.SizeChanged -= (_, _) => Update();
+        fe.SizeChanged += (_, _) => Update();
+        Update();
+    }
+
     // ---------- Focus when a bound flag becomes true ----------
 
     public static readonly DependencyProperty FocusWhenProperty = DependencyProperty.RegisterAttached(

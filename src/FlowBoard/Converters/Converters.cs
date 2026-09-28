@@ -141,6 +141,7 @@ public sealed class BoardBackgroundConverter : IValueConverter
         if (string.IsNullOrEmpty(spec)) return Brushes.SlateGray;
         try
         {
+            if (spec == "none") return Brushes.Transparent;
             if (spec.StartsWith("gradient:"))
             {
                 var parts = spec[9..].Split(',');
@@ -186,7 +187,22 @@ public sealed class BoardBackgroundConverter : IValueConverter
 public sealed class BoardThumbnailConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-        BoardBackgroundConverter.ToBrush(value as string, 160);
+        value as string == "none" ? Checker : BoardBackgroundConverter.ToBrush(value as string, 160);
+
+    /// <summary>Checkerboard that signals "transparent".</summary>
+    private static readonly Brush Checker = CreateChecker();
+
+    private static Brush CreateChecker()
+    {
+        var g = new DrawingGroup();
+        g.Children.Add(new GeometryDrawing(new SolidColorBrush(Color.FromRgb(0x9A, 0x9A, 0xA8)), null, new RectangleGeometry(new Rect(0, 0, 8, 8))));
+        var dark = new SolidColorBrush(Color.FromRgb(0x5A, 0x5A, 0x68));
+        g.Children.Add(new GeometryDrawing(dark, null, new RectangleGeometry(new Rect(0, 0, 4, 4))));
+        g.Children.Add(new GeometryDrawing(dark, null, new RectangleGeometry(new Rect(4, 4, 4, 4))));
+        var b = new DrawingBrush(g) { TileMode = TileMode.Tile, Viewport = new Rect(0, 0, 8, 8), ViewportUnits = BrushMappingMode.Absolute };
+        b.Freeze();
+        return b;
+    }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
@@ -413,4 +429,22 @@ public sealed class IntToDoubleConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
         value is double d ? (int)Math.Round(d) : Binding.DoNothing;
+}
+
+/// <summary>Returns "selected" when both values are equal (drives the swatch ring via Tag).</summary>
+public sealed class SelectedTagMultiConverter : IMultiValueConverter
+{
+    public object? Convert(object[] values, Type targetType, object parameter, CultureInfo culture) =>
+        values.Length == 2 && Equals(values[0]?.ToString(), values[1]?.ToString()) ? "selected" : null;
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => [];
+}
+
+/// <summary>0.42 → "42%".</summary>
+public sealed class PercentConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is double d ? $"{Math.Round(d * 100)}%" : string.Empty;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }

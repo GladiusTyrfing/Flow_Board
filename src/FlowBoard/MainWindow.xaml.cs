@@ -30,6 +30,30 @@ public partial class MainWindow : FluentWindow
         UpdateThemeIcon();
         Closing += OnClosing;
         PreviewKeyDown += OnPreviewKeyDown;
+
+        // Board styles (preset + transparency) are applied to the board area only.
+        vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.CurrentBoard)) ApplyBoardTheme();
+        };
+        ThemeService.ThemeApplied += (_, _) => ApplyBoardTheme();
+        ApplyBoardTheme();
+    }
+
+    private Models.Board? _themedBoard;
+
+    private void ApplyBoardTheme()
+    {
+        if (_themedBoard != null) _themedBoard.PropertyChanged -= OnBoardPropertyChanged;
+        _themedBoard = _vm.CurrentBoard;
+        if (_themedBoard != null) _themedBoard.PropertyChanged += OnBoardPropertyChanged;
+        BoardThemeService.Apply(BoardArea, _themedBoard);
+    }
+
+    private void OnBoardPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(Models.Board.Theme) or nameof(Models.Board.ListOpacity) or nameof(Models.Board.CardOpacity))
+            BoardThemeService.Apply(BoardArea, _themedBoard);
     }
 
     /// <summary>Routes hotkeys that plain KeyBindings can't express (single letters, hover-card actions).</summary>

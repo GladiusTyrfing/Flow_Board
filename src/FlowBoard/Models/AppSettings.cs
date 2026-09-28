@@ -10,6 +10,10 @@ public partial class AppSettings : ObservableObject
     /// <summary>Hex accent color, or null to follow the Windows accent color.</summary>
     [ObservableProperty] private string? _accentColor;
     [ObservableProperty] private bool _animations = true;
+    /// <summary>Accent color pair used for buttons, highlights and the background glow.</summary>
+    [ObservableProperty] private string _accentPreset = "Aurora";
+    /// <summary>Soft colored glow behind the whole app.</summary>
+    [ObservableProperty] private bool _auroraBackground = true;
     [ObservableProperty] private string _displayName = Environment.UserName;
     [ObservableProperty] private bool _minimizeToTray = true;
     [ObservableProperty] private bool _startWithWindows;

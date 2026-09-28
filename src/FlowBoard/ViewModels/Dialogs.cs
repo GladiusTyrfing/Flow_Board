@@ -10,6 +10,12 @@ public abstract partial class DialogViewModel : ObservableObject
 {
     public virtual bool CloseOnBackdropClick => true;
 
+    /// <summary>How strongly the app is dimmed behind the dialog (0 = not at all, e.g. live-preview drawers).</summary>
+    public virtual double BackdropOpacity => 1;
+
+    /// <summary>Entrance animation: "pop" (scale + fade) or "slide" (from the right).</summary>
+    public virtual string EnterAnimation => "pop";
+
     /// <summary>Called after the dialog was removed from the stack.</summary>
     public virtual void OnClosed()
     {
@@ -179,7 +185,7 @@ public sealed partial class NewBoardViewModel : DialogViewModel
     {
         Templates = new ObservableCollection<BoardTemplate>(templates);
         _selectedTemplate = Templates.FirstOrDefault();
-        _background = _selectedTemplate?.Background ?? Board.GradientPresets[0];
+        _background = _selectedTemplate?.Background ?? Board.GradientPresets[1];
     }
 
     public ObservableCollection<BoardTemplate> Templates { get; }

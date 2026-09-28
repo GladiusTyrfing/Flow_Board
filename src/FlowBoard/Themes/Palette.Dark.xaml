@@ -1,36 +1,55 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- FlowBoard dark palette (inspired by Trello's dark theme). -->
+    <!-- FlowBoard "Aurora" dark palette. Board-area keys are overridden per board by BoardThemeService. -->
     <Color x:Key="Fb.ShadowColor">#000000</Color>
-    <SolidColorBrush x:Key="Fb.WindowBrush" Color="#1D2125" />
-    <SolidColorBrush x:Key="Fb.SidebarBrush" Color="#E6161A1D" />
-    <SolidColorBrush x:Key="Fb.SidebarItemHoverBrush" Color="#1AFFFFFF" />
-    <SolidColorBrush x:Key="Fb.SidebarItemSelectedBrush" Color="#2BFFFFFF" />
-    <SolidColorBrush x:Key="Fb.ListBrush" Color="#F2101204" />
-    <SolidColorBrush x:Key="Fb.ListHeaderTextBrush" Color="#DEE4EA" />
-    <SolidColorBrush x:Key="Fb.CardBrush" Color="#22272B" />
-    <SolidColorBrush x:Key="Fb.CardHoverBrush" Color="#2C333A" />
-    <SolidColorBrush x:Key="Fb.CardBorderBrush" Color="#10FFFFFF" />
-    <SolidColorBrush x:Key="Fb.TextBrush" Color="#DEE4EA" />
-    <SolidColorBrush x:Key="Fb.MutedTextBrush" Color="#9FADBC" />
-    <SolidColorBrush x:Key="Fb.FaintTextBrush" Color="#738496" />
-    <SolidColorBrush x:Key="Fb.SurfaceBrush" Color="#282E33" />
-    <SolidColorBrush x:Key="Fb.SurfaceAltBrush" Color="#22272B" />
-    <SolidColorBrush x:Key="Fb.SurfaceRaisedBrush" Color="#323940" />
-    <SolidColorBrush x:Key="Fb.InputBrush" Color="#22272B" />
-    <SolidColorBrush x:Key="Fb.InputBorderBrush" Color="#454F59" />
-    <SolidColorBrush x:Key="Fb.OverlayBrush" Color="#A6000000" />
-    <SolidColorBrush x:Key="Fb.SubtleBrush" Color="#1AA1BDD9" />
-    <SolidColorBrush x:Key="Fb.SubtleHoverBrush" Color="#33A6C5E2" />
-    <SolidColorBrush x:Key="Fb.SubtlePressedBrush" Color="#47A6C5E2" />
-    <SolidColorBrush x:Key="Fb.DividerBrush" Color="#1FFFFFFF" />
-    <SolidColorBrush x:Key="Fb.HeaderBarBrush" Color="#59000000" />
-    <SolidColorBrush x:Key="Fb.DangerBrush" Color="#F87168" />
-    <SolidColorBrush x:Key="Fb.DangerStrongBrush" Color="#C9372C" />
-    <SolidColorBrush x:Key="Fb.WarningBrush" Color="#F5CD47" />
-    <SolidColorBrush x:Key="Fb.SuccessBrush" Color="#4BCE97" />
-    <SolidColorBrush x:Key="Fb.OnStatusBrush" Color="#1D2125" />
-    <SolidColorBrush x:Key="Fb.CalendarCellBrush" Color="#D9161A1D" />
-    <SolidColorBrush x:Key="Fb.CalendarCellMutedBrush" Color="#A6101214" />
-    <SolidColorBrush x:Key="Fb.ToastBrush" Color="#F2323940" />
+    <SolidColorBrush x:Key="Fb.WindowBrush" Color="#0A0C12" />
+    <SolidColorBrush x:Key="Fb.PanelBrush" Color="#C4121622" />
+    <SolidColorBrush x:Key="Fb.PanelBorderBrush" Color="#1CFFFFFF" />
+    <SolidColorBrush x:Key="Fb.SidebarItemHoverBrush" Color="#12FFFFFF" />
+    <SolidColorBrush x:Key="Fb.SidebarItemSelectedBrush" Color="#22FFFFFF" />
+    <SolidColorBrush x:Key="Fb.ListBrush" Color="#D10E1118" />
+    <SolidColorBrush x:Key="Fb.ListBorderBrush" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="Fb.ListHeaderTextBrush" Color="#EEF1F6" />
+    <SolidColorBrush x:Key="Fb.CardBrush" Color="#F51A1E29" />
+    <SolidColorBrush x:Key="Fb.CardHoverBrush" Color="#FF232838" />
+    <SolidColorBrush x:Key="Fb.CardBorderBrush" Color="#14FFFFFF" />
+    <SolidColorBrush x:Key="Fb.TextBrush" Color="#EEF1F6" />
+    <SolidColorBrush x:Key="Fb.MutedTextBrush" Color="#98A2B3" />
+    <SolidColorBrush x:Key="Fb.FaintTextBrush" Color="#6B7488" />
+    <SolidColorBrush x:Key="Fb.SurfaceBrush" Color="#F7141822" />
+    <SolidColorBrush x:Key="Fb.SurfaceAltBrush" Color="#0BFFFFFF" />
+    <SolidColorBrush x:Key="Fb.SurfaceRaisedBrush" Color="#14FFFFFF" />
+    <SolidColorBrush x:Key="Fb.InputBrush" Color="#0DFFFFFF" />
+    <SolidColorBrush x:Key="Fb.InputBorderBrush" Color="#2BFFFFFF" />
+    <SolidColorBrush x:Key="Fb.OverlayBrush" Color="#A6040509" />
+    <SolidColorBrush x:Key="Fb.SubtleBrush" Color="#0FFFFFFF" />
+    <SolidColorBrush x:Key="Fb.SubtleHoverBrush" Color="#1CFFFFFF" />
+    <SolidColorBrush x:Key="Fb.SubtlePressedBrush" Color="#2AFFFFFF" />
+    <SolidColorBrush x:Key="Fb.DividerBrush" Color="#16FFFFFF" />
+    <SolidColorBrush x:Key="Fb.HeaderBarBrush" Color="#80101218" />
+    <SolidColorBrush x:Key="Fb.HeaderTextBrush" Color="#F3F5FA" />
+    <SolidColorBrush x:Key="Fb.DangerBrush" Color="#F87171" />
+    <SolidColorBrush x:Key="Fb.DangerStrongBrush" Color="#E5484D" />
+    <SolidColorBrush x:Key="Fb.WarningBrush" Color="#FBBF24" />
+    <SolidColorBrush x:Key="Fb.SuccessBrush" Color="#34D399" />
+    <SolidColorBrush x:Key="Fb.OnStatusBrush" Color="#0A0C12" />
+    <SolidColorBrush x:Key="Fb.CalendarCellBrush" Color="#1FFFFFFF" />
+    <SolidColorBrush x:Key="Fb.CalendarCellMutedBrush" Color="#0AFFFFFF" />
+    <SolidColorBrush x:Key="Fb.ToastBrush" Color="#F71C2130" />
+
+    <!-- Accent defaults (replaced at runtime by the chosen accent preset) -->
+    <Color x:Key="Fb.AccentColor">#8B5CF6</Color>
+    <Color x:Key="Fb.Accent2Color">#06B6D4</Color>
+    <SolidColorBrush x:Key="Fb.AccentBrush" Color="#8B5CF6" />
+    <SolidColorBrush x:Key="Fb.Accent2Brush" Color="#06B6D4" />
+    <LinearGradientBrush x:Key="Fb.AccentGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#8B5CF6" Offset="0" />
+        <GradientStop Color="#06B6D4" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Fb.AccentSoftBrush" Color="#388B5CF6" />
+    <SolidColorBrush x:Key="Fb.AccentTextBrush" Color="#B79CFA" />
+    <SolidColorBrush x:Key="Fb.OnAccentBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Fb.Aurora1Brush" Color="Transparent" />
+    <SolidColorBrush x:Key="Fb.Aurora2Brush" Color="Transparent" />
+    <SolidColorBrush x:Key="Fb.Aurora3Brush" Color="Transparent" />
 </ResourceDictionary>

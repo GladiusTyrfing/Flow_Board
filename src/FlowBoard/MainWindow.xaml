@@ -16,7 +16,10 @@
                  ExtendsContentIntoTitleBar="True"
                  WindowBackdropType="None"
                  WindowCornerPreference="Round"
-                 Icon="pack://application:,,,/Assets/app.ico">
+                 Icon="pack://application:,,,/Assets/app.ico"
+                 FontFamily="{StaticResource Fb.Font}"
+                 Foreground="{DynamicResource Fb.TextBrush}"
+                 Background="{DynamicResource Fb.WindowBrush}">
 
     <Window.InputBindings>
         <KeyBinding Key="K" Modifiers="Control" Command="{Binding OpenCommandPaletteCommand}" />
@@ -77,7 +80,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <Border Width="28" Height="20" CornerRadius="4" HorizontalAlignment="Left"
+                        <Border Width="28" Height="20" CornerRadius="6" HorizontalAlignment="Left" BorderThickness="1" BorderBrush="{DynamicResource Fb.PanelBorderBrush}"
                                 Background="{Binding Background, Converter={StaticResource BoardThumbnail}}" />
                         <TextBlock Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                    Foreground="{DynamicResource Fb.TextBrush}" FontSize="14" />
@@ -96,7 +99,8 @@
                                 <Binding Source="{x:Static vm:MainViewModel.Instance}" Path="CurrentBoard" />
                             </MultiBinding>
                         </DataTrigger.Binding>
-                        <Setter TargetName="Btn" Property="Background" Value="{DynamicResource Fb.SidebarItemSelectedBrush}" />
+                        <Setter TargetName="Btn" Property="Background" Value="{DynamicResource Fb.AccentSoftBrush}" />
+                        <Setter TargetName="Btn" Property="FontWeight" Value="Bold" />
                     </DataTrigger>
                     <Trigger SourceName="Btn" Property="IsMouseOver" Value="True">
                         <Setter TargetName="Star" Property="Visibility" Value="Visible" />
@@ -117,6 +121,15 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!-- ================= App background: ink + soft aurora glow ================= -->
+        <Border Grid.RowSpan="2" Background="{DynamicResource Fb.WindowBrush}" />
+        <Canvas Grid.RowSpan="2" ClipToBounds="True" IsHitTestVisible="False"
+                Visibility="{Binding Settings.AuroraBackground, Converter={StaticResource BoolToVis}}">
+            <Ellipse Width="900" Height="700" Canvas.Left="-260" Canvas.Top="-320" Fill="{DynamicResource Fb.Aurora1Brush}" />
+            <Ellipse Width="1000" Height="760" Canvas.Right="-360" Canvas.Top="-200" Fill="{DynamicResource Fb.Aurora2Brush}" />
+            <Ellipse Width="900" Height="700" Canvas.Left="320" Canvas.Bottom="-420" Fill="{DynamicResource Fb.Aurora3Brush}" />
+        </Canvas>
+
         <!-- ================= Title bar ================= -->
         <ui:TitleBar Grid.Row="0" Title="FlowBoard" Height="44">
             <ui:TitleBar.Icon>
@@ -127,15 +140,15 @@
                 <Button Width="440" Height="30" Cursor="IBeam" Command="{Binding OpenCommandPaletteCommand}" ToolTip="Search (Ctrl+K)">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border x:Name="Bd" CornerRadius="6" Background="{DynamicResource Fb.SubtleBrush}" BorderThickness="1"
-                                    BorderBrush="{DynamicResource Fb.DividerBrush}" Padding="10,0">
+                            <Border x:Name="Bd" CornerRadius="999" Background="{DynamicResource Fb.SubtleBrush}" BorderThickness="1"
+                                    BorderBrush="{DynamicResource Fb.PanelBorderBrush}" Padding="14,0,6,0">
                                 <Grid>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <ui:SymbolIcon Symbol="Search24" FontSize="15" Foreground="{DynamicResource Fb.MutedTextBrush}" />
                                         <TextBlock Margin="8,0,0,0" Text="Search cards, boards and commands" FontSize="13"
                                                    Foreground="{DynamicResource Fb.MutedTextBrush}" />
                                     </StackPanel>
-                                    <Border HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="4" Padding="6,1"
+                                    <Border HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="999" Padding="8,2"
                                             Background="{DynamicResource Fb.SubtleHoverBrush}">
                                         <TextBlock Text="Ctrl K" FontSize="11" Foreground="{DynamicResource Fb.MutedTextBrush}" />
                                     </Border>
@@ -274,19 +287,18 @@
         </ui:TitleBar>
 
         <!-- ================= Body ================= -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" Margin="10,2,10,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Sidebar -->
-            <Border x:Name="Sidebar" Width="260" Background="{DynamicResource Fb.SidebarBrush}"
-                    BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="0,1,1,0"
+            <!-- Sidebar: floating glass panel -->
+            <Border x:Name="Sidebar" Width="264" Margin="0,0,10,0" Style="{StaticResource Fb.Glass}"
                     Visibility="{Binding Settings.SidebarVisible, Converter={StaticResource BoolToVis}}">
-                <DockPanel Margin="12,10,12,10">
+                <DockPanel Margin="12,14,12,12">
                     <Grid DockPanel.Dock="Top" Margin="4,0,0,8">
-                        <TextBlock Text="Boards" Style="{StaticResource Fb.SectionTitle}" VerticalAlignment="Center" />
+                        <TextBlock Text="Boards" FontSize="20" Style="{StaticResource Fb.GradientTitle}" VerticalAlignment="Center" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button Style="{StaticResource Fb.IconButton}" Command="{Binding NewBoardCommand}" ToolTip="New board (Ctrl+Shift+N)">
                                 <ui:SymbolIcon Symbol="Add24" FontSize="16" />
@@ -356,9 +368,14 @@
             </Border>
 
             <!-- Board area -->
-            <Grid Grid.Column="1" ClipToBounds="True">
-                <Border x:Name="BoardBackground" Background="{Binding CurrentBoard.Background, Converter={StaticResource BoardBackground}}" />
+            <Grid x:Name="BoardArea" Grid.Column="1" h:Behaviors.ClipRadius="20">
+                <Border x:Name="BoardBackground" Margin="-48" Background="{Binding CurrentBoard.Background, Converter={StaticResource BoardBackground}}">
+                    <Border.Effect>
+                        <BlurEffect Radius="{Binding CurrentBoard.BackgroundBlur}" KernelType="Gaussian" RenderingBias="Performance" />
+                    </Border.Effect>
+                </Border>
                 <Border Background="Black" Opacity="{Binding CurrentBoard.BackgroundDim}" />
+                <Border CornerRadius="20" BorderThickness="1" BorderBrush="{DynamicResource Fb.PanelBorderBrush}" IsHitTestVisible="False" Panel.ZIndex="10" />
 
                 <!-- Empty state -->
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420"
@@ -377,7 +394,7 @@
 
                 <DockPanel Visibility="{Binding CurrentBoard, Converter={StaticResource HasValueToVis}}">
                     <!-- Board header -->
-                    <Border DockPanel.Dock="Top" Background="{DynamicResource Fb.HeaderBarBrush}" Padding="10,8" TextElement.Foreground="White">
+                    <Border DockPanel.Dock="Top" Padding="12,12,12,2" TextElement.Foreground="{DynamicResource Fb.HeaderTextBrush}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -385,6 +402,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
+                            <Border Style="{StaticResource Fb.HeaderPill}">
                             <StackPanel Orientation="Horizontal">
                                 <Button Style="{StaticResource Fb.HeaderButton}" Command="{Binding ToggleSidebarCommand}" ToolTip="Show sidebar (Ctrl+B)"
                                         Visibility="{Binding Settings.SidebarVisible, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
@@ -410,26 +428,26 @@
                                     <ui:SymbolIcon Symbol="Star24" FontSize="16" Filled="{Binding CurrentBoard.IsStarred}" />
                                 </Button>
 
-                                <Border Width="1" Height="20" Background="#40FFFFFF" Margin="8,0" />
+                                <Border Width="1" Height="20" Background="{DynamicResource Fb.DividerBrush}" Margin="6,0" />
 
                                 <!-- View switcher -->
-                                <Border CornerRadius="8" Background="#33000000" Padding="3">
+                                <Border Style="{StaticResource Fb.SegmentGroup}" Background="Transparent" BorderThickness="0">
                                     <StackPanel Orientation="Horizontal">
-                                        <RadioButton Style="{StaticResource Fb.Segment}" Foreground="White" GroupName="View" ToolTip="Board (Ctrl+1)"
+                                        <RadioButton Style="{StaticResource Fb.Segment}" Foreground="{DynamicResource Fb.HeaderTextBrush}" GroupName="View" ToolTip="Board (Ctrl+1)"
                                                      IsChecked="{Binding ViewMode, Converter={StaticResource Equals}, ConverterParameter=Board}">
                                             <StackPanel Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="Board24" FontSize="15" />
                                                 <TextBlock Text="Board" Margin="6,0,0,0" />
                                             </StackPanel>
                                         </RadioButton>
-                                        <RadioButton Style="{StaticResource Fb.Segment}" Foreground="White" GroupName="View" ToolTip="Table (Ctrl+2)"
+                                        <RadioButton Style="{StaticResource Fb.Segment}" Foreground="{DynamicResource Fb.HeaderTextBrush}" GroupName="View" ToolTip="Table (Ctrl+2)"
                                                      IsChecked="{Binding ViewMode, Converter={StaticResource Equals}, ConverterParameter=Table}">
                                             <StackPanel Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="Table24" FontSize="15" />
                                                 <TextBlock Text="Table" Margin="6,0,0,0" />
                                             </StackPanel>
                                         </RadioButton>
-                                        <RadioButton Style="{StaticResource Fb.Segment}" Foreground="White" GroupName="View" ToolTip="Calendar (Ctrl+3)"
+                                        <RadioButton Style="{StaticResource Fb.Segment}" Foreground="{DynamicResource Fb.HeaderTextBrush}" GroupName="View" ToolTip="Calendar (Ctrl+3)"
                                                      IsChecked="{Binding ViewMode, Converter={StaticResource Equals}, ConverterParameter=Calendar}">
                                             <StackPanel Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="CalendarLtr24" FontSize="15" />
@@ -439,17 +457,26 @@
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
+                            </Border>
 
-                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                            <Border Grid.Column="2" Style="{StaticResource Fb.HeaderPill}">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource Fb.HeaderButton}" Command="{Binding OpenBoardSettingsCommand}" CommandParameter="style"
+                                        ToolTip="Customize this board: style, transparency, background">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="PaintBrush24" FontSize="16" />
+                                        <TextBlock Text="Style" Margin="6,0,0,0" />
+                                    </StackPanel>
+                                </Button>
                                 <!-- Filter -->
                                 <ToggleButton x:Name="FilterToggle" Style="{StaticResource Fb.HeaderToggle}" IsChecked="{Binding IsFilterOpen}" ToolTip="Filter cards (Ctrl+F)">
                                     <StackPanel Orientation="Horizontal">
                                         <ui:SymbolIcon Symbol="Filter24" FontSize="16" />
                                         <TextBlock Text="Filter" Margin="6,0,0,0" />
-                                        <Border Margin="6,0,0,0" CornerRadius="8" MinWidth="18" Padding="5,0" Background="{DynamicResource AccentFillColorDefaultBrush}"
+                                        <Border Margin="6,0,0,0" CornerRadius="8" MinWidth="18" Padding="5,0" Background="{DynamicResource Fb.AccentBrush}"
                                                 Visibility="{Binding Filter.IsActive, Converter={StaticResource BoolToVis}}">
                                             <TextBlock Text="{Binding Filter.ActiveCount}" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"
-                                                       Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+                                                       Foreground="{DynamicResource Fb.OnAccentBrush}" />
                                         </Border>
                                     </StackPanel>
                                 </ToggleButton>
@@ -549,6 +576,7 @@
                                     </Button.ContextMenu>
                                 </Button>
                             </StackPanel>
+                            </Border>
                         </Grid>
                     </Border>
 
@@ -572,13 +600,15 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Grid>
-                            <Border Background="{DynamicResource Fb.OverlayBrush}" h:Behaviors.AnimateIn="fade">
+<Grid h:Behaviors.AnimateIn="fade">
+                                                        <Border Background="{DynamicResource Fb.OverlayBrush}" Opacity="{Binding BackdropOpacity}">
                                 <Border.InputBindings>
                                     <MouseBinding Gesture="LeftClick" CommandParameter="{Binding}"
                                                   Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=BackdropClickedCommand}" />
                                 </Border.InputBindings>
                             </Border>
-                            <ContentPresenter Content="{Binding}" h:Behaviors.AnimateIn="pop" />
+                            </Grid>
+                            <ContentPresenter Content="{Binding}" h:Behaviors.AnimateIn="{Binding EnterAnimation}" />
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -589,7 +619,7 @@
                           Margin="0,0,0,24" Focusable="False">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:ToastMessage}">
-                        <Border x:Name="Toast" Background="{DynamicResource Fb.ToastBrush}" CornerRadius="10" Padding="16,8,8,8" Margin="0,6,0,0"
+                        <Border x:Name="Toast" Background="{DynamicResource Fb.ToastBrush}" CornerRadius="16" Padding="16,8,8,8" BorderThickness="1" BorderBrush="{DynamicResource Fb.PanelBorderBrush}" Margin="0,6,0,0"
                                 MinWidth="280" MaxWidth="560" Effect="{StaticResource Fb.PopupShadow}" h:Behaviors.AnimateIn="rise">
                             <Grid>
                                 <Grid.ColumnDefinitions>

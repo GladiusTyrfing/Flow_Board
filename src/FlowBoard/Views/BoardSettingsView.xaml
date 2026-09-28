@@ -6,34 +6,159 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:FlowBoard.ViewModels"
              xmlns:models="clr-namespace:FlowBoard.Models"
+             xmlns:services="clr-namespace:FlowBoard.Services"
              mc:Ignorable="d"
              x:Name="Root"
              d:DataContext="{d:DesignInstance vm:BoardSettingsViewModel}">
-    <Border Style="{StaticResource Fb.Dialog}" Width="620" Margin="0,24" Padding="24">
-        <DockPanel MaxHeight="640">
-            <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
-                <TextBlock Text="{Binding Board.Name, StringFormat='{}{0} · board settings'}" Style="{StaticResource Fb.DialogTitle}" TextTrimming="CharacterEllipsis" Margin="0,0,40,0" />
-                <Button Style="{StaticResource Fb.IconButton}" HorizontalAlignment="Right" Command="{Binding CloseCommand}">
+    <UserControl.Resources>
+        <Style x:Key="SliderRow" TargetType="StackPanel">
+            <Setter Property="Margin" Value="0,0,0,14" />
+        </Style>
+    </UserControl.Resources>
+
+    <!-- Right-hand drawer: the board stays visible so every change previews live. -->
+    <Border Style="{StaticResource Fb.Dialog}" Width="400" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,8,8,8">
+        <DockPanel>
+            <Grid DockPanel.Dock="Top" Margin="22,20,16,12">
+                <StackPanel>
+                    <TextBlock Text="Customize board" Style="{StaticResource Fb.GradientTitle}" FontSize="22" />
+                    <TextBlock Text="{Binding Board.Name}" Style="{StaticResource Fb.Muted}" FontSize="13" TextTrimming="CharacterEllipsis" Margin="0,2,40,0" />
+                </StackPanel>
+                <Button Style="{StaticResource Fb.IconButton}" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding CloseCommand}" ToolTip="Close (Esc)">
                     <ui:SymbolIcon Symbol="Dismiss24" FontSize="16" />
                 </Button>
             </Grid>
-            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,14">
-                <RadioButton Style="{StaticResource Fb.Segment}" GroupName="BsTab" Content="Background"
-                             IsChecked="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=background}" />
-                <RadioButton Style="{StaticResource Fb.Segment}" GroupName="BsTab" Content="Labels"
-                             IsChecked="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=labels}" />
-            </StackPanel>
 
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <Border DockPanel.Dock="Top" Style="{StaticResource Fb.SegmentGroup}" Margin="22,0,22,14">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Style="{StaticResource Fb.Segment}" GroupName="BsTab" IsChecked="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=style}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="PaintBrush24" FontSize="14" />
+                            <TextBlock Text="Style" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Fb.Segment}" GroupName="BsTab" IsChecked="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=background}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Image24" FontSize="14" />
+                            <TextBlock Text="Background" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Fb.Segment}" GroupName="BsTab" IsChecked="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=labels}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Tag24" FontSize="14" />
+                            <TextBlock Text="Labels" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+            </Border>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="22,0,16,20">
                 <Grid>
-                    <!-- Background tab -->
+                    <!-- ============ Style ============ -->
+                    <StackPanel Visibility="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=style}">
+                        <TextBlock Text="QUICK LOOKS" Style="{StaticResource Fb.Caption}" Margin="0,0,0,8" />
+                        <UniformGrid Columns="4" Margin="0,0,0,16">
+                            <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,6,0" HorizontalContentAlignment="Center" Padding="4,8"
+                                    Command="{Binding ApplyLookCommand}" CommandParameter="default">
+                                <StackPanel>
+                                    <ui:SymbolIcon Symbol="Board24" FontSize="18" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Default" FontSize="11" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource Fb.SubtleButton}" Margin="3,0" HorizontalContentAlignment="Center" Padding="4,8"
+                                    Command="{Binding ApplyLookCommand}" CommandParameter="glass">
+                                <StackPanel>
+                                    <ui:SymbolIcon Symbol="Glasses24" FontSize="18" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Glass" FontSize="11" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource Fb.SubtleButton}" Margin="3,0" HorizontalContentAlignment="Center" Padding="4,8"
+                                    Command="{Binding ApplyLookCommand}" CommandParameter="clear">
+                                <StackPanel>
+                                    <ui:SymbolIcon Symbol="Eye24" FontSize="18" HorizontalAlignment="Center" />
+                                    <TextBlock Text="See-through" FontSize="11" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource Fb.SubtleButton}" Margin="6,0,0,0" HorizontalContentAlignment="Center" Padding="4,8"
+                                    Command="{Binding ApplyLookCommand}" CommandParameter="solid">
+                                <StackPanel>
+                                    <ui:SymbolIcon Symbol="Square24" Filled="True" FontSize="18" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Solid" FontSize="11" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </UniformGrid>
+
+                        <TextBlock Text="THEME" Style="{StaticResource Fb.Caption}" Margin="0,0,0,8" />
+                        <ItemsControl ItemsSource="{Binding Presets}" Margin="0,0,-8,10">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type services:BoardThemePreset}">
+                                    <StackPanel Margin="0,0,0,6">
+                                        <Button Style="{StaticResource Fb.SwatchButton}" Width="78" Height="54" Background="{Binding ListPreview}" ToolTip="{Binding Name}"
+                                                Command="{Binding DataContext.SetThemeCommand, ElementName=Root}" CommandParameter="{Binding Name}">
+                                            <Button.Tag>
+                                                <MultiBinding Converter="{StaticResource SelectedTag}">
+                                                    <Binding Path="Name" />
+                                                    <Binding Path="DataContext.Board.Theme" ElementName="Root" />
+                                                </MultiBinding>
+                                            </Button.Tag>
+                                            <Border Width="52" Height="28" CornerRadius="6" Background="{Binding CardPreview}">
+                                                <StackPanel VerticalAlignment="Center" Margin="7,0">
+                                                    <Border Height="3" Width="28" HorizontalAlignment="Left" CornerRadius="2" Background="{Binding TextPreview}" />
+                                                    <Border Height="3" Width="18" HorizontalAlignment="Left" CornerRadius="2" Margin="0,4,0,0" Background="{Binding TextPreview}" Opacity="0.5" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Button>
+                                        <TextBlock Text="{Binding Name}" FontSize="11" HorizontalAlignment="Center" Margin="0,-2,8,0" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="TRANSPARENCY" Style="{StaticResource Fb.Caption}" Margin="0,0,0,10" />
+                        <StackPanel Style="{StaticResource SliderRow}">
+                            <Grid>
+                                <TextBlock Text="Lists" FontWeight="SemiBold" />
+                                <TextBlock HorizontalAlignment="Right" Style="{StaticResource Fb.Muted}"
+                                           Text="{Binding Board.ListOpacity, Converter={StaticResource Percent}, StringFormat='{}{0} solid'}" />
+                            </Grid>
+                            <Slider Minimum="0" Maximum="1" Value="{Binding Board.ListOpacity}" SmallChange="0.05" LargeChange="0.1" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource SliderRow}">
+                            <Grid>
+                                <TextBlock Text="Cards" FontWeight="SemiBold" />
+                                <TextBlock HorizontalAlignment="Right" Style="{StaticResource Fb.Muted}"
+                                           Text="{Binding Board.CardOpacity, Converter={StaticResource Percent}, StringFormat='{}{0} solid'}" />
+                            </Grid>
+                            <Slider Minimum="0.1" Maximum="1" Value="{Binding Board.CardOpacity}" SmallChange="0.05" LargeChange="0.1" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource SliderRow}">
+                            <Grid>
+                                <TextBlock Text="Background blur" FontWeight="SemiBold" />
+                                <TextBlock HorizontalAlignment="Right" Style="{StaticResource Fb.Muted}" Text="{Binding Board.BackgroundBlur, StringFormat='{}{0:0}'}" />
+                            </Grid>
+                            <Slider Minimum="0" Maximum="40" Value="{Binding Board.BackgroundBlur}" SmallChange="1" LargeChange="5" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <StackPanel Style="{StaticResource SliderRow}">
+                            <Grid>
+                                <TextBlock Text="Background dim" FontWeight="SemiBold" />
+                                <TextBlock HorizontalAlignment="Right" Style="{StaticResource Fb.Muted}" Text="{Binding Board.BackgroundDim, Converter={StaticResource Percent}}" />
+                            </Grid>
+                            <Slider Minimum="0" Maximum="0.8" Value="{Binding Board.BackgroundDim}" SmallChange="0.05" LargeChange="0.1" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource Fb.Muted}" TextWrapping="Wrap"
+                                   Text="Tip: pick the Transparent background (Background tab) and lower the list slider to see the app's glow right through your board." />
+                    </StackPanel>
+
+                    <!-- ============ Background ============ -->
                     <StackPanel Visibility="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=background}">
-                        <Border Height="120" CornerRadius="10" Background="{Binding Board.Background, Converter={StaticResource BoardBackground}}" Margin="0,0,0,14">
-                            <Border CornerRadius="10" Background="Black" Opacity="{Binding Board.BackgroundDim}" />
-                        </Border>
-                        <TextBlock Text="Photos" Style="{StaticResource Fb.Caption}" Margin="0,0,0,6" />
+                        <TextBlock Text="PHOTOS" Style="{StaticResource Fb.Caption}" Margin="0,0,0,8" />
                         <WrapPanel>
-                            <Button Style="{StaticResource Fb.SubtleButton}" Width="104" Height="64" Margin="0,0,6,6" HorizontalContentAlignment="Center"
+                            <Button Style="{StaticResource Fb.SubtleButton}" Width="104" Height="64" Margin="0,0,8,8" HorizontalContentAlignment="Center"
                                     Command="{Binding ChooseImageCommand}">
                                 <StackPanel>
                                     <ui:SymbolIcon Symbol="ImageAdd24" FontSize="20" HorizontalAlignment="Center" />
@@ -49,12 +174,20 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Button Style="{StaticResource Fb.SwatchButton}" Width="104" Height="64" Background="{Binding Converter={StaticResource BoardThumbnail}}"
-                                                Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}" />
+                                                Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                            <Button.Tag>
+                                                <MultiBinding Converter="{StaticResource SelectedTag}">
+                                                    <Binding />
+                                                    <Binding Path="DataContext.Board.Background" ElementName="Root" />
+                                                </MultiBinding>
+                                            </Button.Tag>
+                                        </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </WrapPanel>
-                        <TextBlock Text="Gradients" Style="{StaticResource Fb.Caption}" Margin="0,10,0,6" />
+
+                        <TextBlock Text="GRADIENTS · the checkered one is transparent" Style="{StaticResource Fb.Caption}" Margin="0,10,0,8" />
                         <ItemsControl ItemsSource="{Binding Gradients}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -63,12 +196,20 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Style="{StaticResource Fb.SwatchButton}" Width="80" Height="50" Background="{Binding Converter={StaticResource BoardThumbnail}}"
-                                            Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}" />
+                                    <Button Style="{StaticResource Fb.SwatchButton}" Width="76" Height="50" Background="{Binding Converter={StaticResource BoardThumbnail}}"
+                                            Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                        <Button.Tag>
+                                            <MultiBinding Converter="{StaticResource SelectedTag}">
+                                                <Binding />
+                                                <Binding Path="DataContext.Board.Background" ElementName="Root" />
+                                            </MultiBinding>
+                                        </Button.Tag>
+                                    </Button>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock Text="Colors" Style="{StaticResource Fb.Caption}" Margin="0,10,0,6" />
+
+                        <TextBlock Text="COLORS" Style="{StaticResource Fb.Caption}" Margin="0,10,0,8" />
                         <ItemsControl ItemsSource="{Binding Solids}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -77,56 +218,59 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Style="{StaticResource Fb.SwatchButton}" Width="52" Height="36" Background="{Binding Converter={StaticResource BoardThumbnail}}"
-                                            Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}" />
+                                    <Button Style="{StaticResource Fb.SwatchButton}" Width="50" Height="36" Background="{Binding Converter={StaticResource BoardThumbnail}}"
+                                            Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                        <Button.Tag>
+                                            <MultiBinding Converter="{StaticResource SelectedTag}">
+                                                <Binding />
+                                                <Binding Path="DataContext.Board.Background" ElementName="Root" />
+                                            </MultiBinding>
+                                        </Button.Tag>
+                                    </Button>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock Text="Dim background (improves readability on busy photos)" Style="{StaticResource Fb.Caption}" Margin="0,12,0,4" />
-                        <Slider Minimum="0" Maximum="0.7" Value="{Binding Board.BackgroundDim}" TickFrequency="0.05" IsSnapToTickEnabled="True" />
                     </StackPanel>
 
-                    <!-- Labels tab -->
+                    <!-- ============ Labels ============ -->
                     <StackPanel Visibility="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=labels}">
-                        <TextBlock Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,0,10"
+                        <TextBlock Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,0,12" TextWrapping="Wrap"
                                    Text="Labels belong to this board. Renaming or recoloring a label updates every card that uses it. Hover a card and press 1–9 to toggle labels." />
                         <ItemsControl ItemsSource="{Binding Board.Labels}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:Label}">
-                                    <StackPanel Margin="0,0,0,6">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <Border CornerRadius="5" Height="34" Padding="10,0" Background="{Binding Color, Converter={StaticResource HexToBrush}}">
-                                                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalAlignment="Center"
-                                                         FontWeight="SemiBold" Foreground="{Binding Color, Converter={StaticResource ContrastBrush}}"
-                                                         CaretBrush="{Binding Color, Converter={StaticResource ContrastBrush}}">
-                                                    <TextBox.Template>
-                                                        <ControlTemplate TargetType="TextBox">
-                                                            <ScrollViewer x:Name="PART_ContentHost" />
-                                                        </ControlTemplate>
-                                                    </TextBox.Template>
-                                                </TextBox>
-                                            </Border>
-                                            <Button Grid.Column="1" Style="{StaticResource Fb.IconButton}" Margin="6,0,0,0" ToolTip="Change color"
-                                                    Command="{Binding DataContext.EditLabelCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                <ui:SymbolIcon Symbol="Color24" FontSize="15" />
-                                            </Button>
-                                            <Button Grid.Column="2" Style="{StaticResource Fb.IconButton}" ToolTip="Delete label"
-                                                    Command="{Binding DataContext.DeleteLabelCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                <ui:SymbolIcon Symbol="Delete24" FontSize="15" />
-                                            </Button>
-                                        </Grid>
-                                    </StackPanel>
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border CornerRadius="999" Height="34" Padding="14,0" Background="{Binding Color, Converter={StaticResource HexToBrush}}">
+                                            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalAlignment="Center"
+                                                     FontWeight="Bold" Foreground="{Binding Color, Converter={StaticResource ContrastBrush}}"
+                                                     CaretBrush="{Binding Color, Converter={StaticResource ContrastBrush}}">
+                                                <TextBox.Template>
+                                                    <ControlTemplate TargetType="TextBox">
+                                                        <ScrollViewer x:Name="PART_ContentHost" />
+                                                    </ControlTemplate>
+                                                </TextBox.Template>
+                                            </TextBox>
+                                        </Border>
+                                        <Button Grid.Column="1" Style="{StaticResource Fb.IconButton}" Margin="6,0,0,0" ToolTip="Change color"
+                                                Command="{Binding DataContext.EditLabelCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                            <ui:SymbolIcon Symbol="Color24" FontSize="15" />
+                                        </Button>
+                                        <Button Grid.Column="2" Style="{StaticResource Fb.IconButton}" ToolTip="Delete label"
+                                                Command="{Binding DataContext.DeleteLabelCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                            <ui:SymbolIcon Symbol="Delete24" FontSize="15" />
+                                        </Button>
+                                    </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                         <Border Style="{StaticResource Fb.Section}" Margin="0,6,0,0" Visibility="{Binding EditingLabel, Converter={StaticResource HasValueToVis}}">
                             <StackPanel>
-                                <TextBlock Text="{Binding EditingLabel.Name, StringFormat='Color for “{0}”'}" Style="{StaticResource Fb.Caption}" Margin="0,0,0,6" />
+                                <TextBlock Text="{Binding EditingLabel.Name, StringFormat='Color for “{0}”'}" Style="{StaticResource Fb.Caption}" Margin="0,0,0,8" />
                                 <ItemsControl ItemsSource="{Binding LabelPalette}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -135,14 +279,14 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Button Style="{StaticResource Fb.SwatchButton}" Background="{Binding Converter={StaticResource HexToBrush}}"
+                                            <Button Style="{StaticResource Fb.SwatchButton}" Width="36" Height="28" Background="{Binding Converter={StaticResource HexToBrush}}"
                                                     Command="{Binding DataContext.SetLabelColorCommand, ElementName=Root}" CommandParameter="{Binding}" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </StackPanel>
                         </Border>
-                        <Button Style="{StaticResource Fb.SubtleButton}" HorizontalAlignment="Left" Margin="0,8,0,0" Command="{Binding AddLabelCommand}">
+                        <Button Style="{StaticResource Fb.AccentButton}" HorizontalAlignment="Left" Margin="0,8,0,0" Command="{Binding AddLabelCommand}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Add24" FontSize="14" />
                                 <TextBlock Text="New label" Margin="6,0,0,0" />

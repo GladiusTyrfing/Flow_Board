@@ -13,6 +13,13 @@ public partial class Board : ObservableObject
     /// <summary>"gradient:#A,#B", "color:#A" or "image:relative/path.jpg".</summary>
     [ObservableProperty] private string _background = "gradient:#0C66E4,#9F6FEF";
     [ObservableProperty] private double _backgroundDim = 0.15;
+    /// <summary>Board style preset (see BoardThemeService): "Auto" follows the app theme.</summary>
+    [ObservableProperty] private string _theme = "Auto";
+    /// <summary>0 = fully transparent lists, 1 = solid.</summary>
+    [ObservableProperty] private double _listOpacity = 0.82;
+    [ObservableProperty] private double _cardOpacity = 0.96;
+    /// <summary>Blur radius applied to the board wallpaper (0 = sharp).</summary>
+    [ObservableProperty] private double _backgroundBlur;
     [ObservableProperty] private DateTime _createdAt = DateTime.Now;
     [ObservableProperty] private DateTime _lastOpened = DateTime.Now;
     [ObservableProperty] private BoardViewMode _viewMode = BoardViewMode.Board;
@@ -88,6 +95,7 @@ public partial class Board : ObservableObject
 
     public static readonly string[] GradientPresets =
     [
+        "none",
         "gradient:#0C66E4,#9F6FEF",
         "gradient:#0B3D91,#37B4C3",
         "gradient:#1F845A,#94C748",
