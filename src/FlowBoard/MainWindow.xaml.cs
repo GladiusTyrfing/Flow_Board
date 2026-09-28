@@ -87,7 +87,7 @@ public partial class MainWindow : FluentWindow
         // Sliders fire many changes per second: coalesce them into one restyle after rendering.
         if (_boardThemePending) return;
         _boardThemePending = true;
-        Dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
+        Dispatcher.BeginInvoke(DispatcherPriority.Render, () =>
         {
             _boardThemePending = false;
             BoardThemeService.Apply(BoardArea, _themedBoard);

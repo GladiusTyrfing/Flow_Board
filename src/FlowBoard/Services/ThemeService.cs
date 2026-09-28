@@ -63,13 +63,13 @@ public static class ThemeService
 
     /// <summary>
     /// Corner slider path: only the corner resources change (no palette/theme swap). Many slider ticks
-    /// are coalesced into one update that runs after input and rendering, so dragging stays smooth.
+    /// are coalesced into one update per rendered frame, so the change is live while dragging.
     /// </summary>
     public static void QueueRadiusUpdate()
     {
         if (_radiusPending) return;
         _radiusPending = true;
-        Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+        Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, () =>
         {
             _radiusPending = false;
             SetAppRadius(_settings?.CornerRadius ?? 8);
