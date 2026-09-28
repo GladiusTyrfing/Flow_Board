@@ -146,8 +146,11 @@ public sealed partial class CardDetailViewModel : DialogViewModel
     [RelayCommand]
     private void ToggleComplete()
     {
+        _main.Undo.Checkpoint(_main.Workspace, Board, Card.IsCompleted ? "Mark incomplete" : "Mark complete");
         Card.IsCompleted = !Card.IsCompleted;
         Card.AddActivity(Card.IsCompleted ? "marked this card as complete" : "marked this card as incomplete", Me);
+        _main.MoveForCompletion(Card);
+        OnPropertyChanged(nameof(CurrentList));
     }
 
     [RelayCommand] private void EditDescription() => IsEditingDescription = true;

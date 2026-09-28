@@ -18,6 +18,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private double _cornerRadius = 8;
     [ObservableProperty] private string _displayName = Environment.UserName;
     [ObservableProperty] private bool _minimizeToTray = true;
+    /// <summary>Completing a card moves it to the board's Done list; un-completing moves it back.</summary>
+    [ObservableProperty] private bool _moveCompletedToDone = true;
     [ObservableProperty] private bool _startWithWindows;
     [ObservableProperty] private bool _startMinimized;
     [ObservableProperty] private bool _remindersEnabled = true;

@@ -538,7 +538,7 @@
                                         <MenuItem Header="Set WIP limit…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=SetWipLimitCommand}" CommandParameter="{Binding}">
                                             <MenuItem.Icon><ui:SymbolIcon Symbol="Warning24" /></MenuItem.Icon>
                                         </MenuItem>
-                                        <MenuItem Header="Completes cards moved here" IsCheckable="True" IsChecked="{Binding IsDoneList, Mode=OneWay}"
+                                        <MenuItem Header="This is the Done list (completed cards go here)" IsCheckable="True" IsChecked="{Binding IsDoneList, Mode=OneWay}"
                                                   Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ToggleDoneListCommand}" CommandParameter="{Binding}" />
                                         <Separator />
                                         <MenuItem Header="Archive all cards in this list" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ArchiveAllCardsCommand}" CommandParameter="{Binding}">

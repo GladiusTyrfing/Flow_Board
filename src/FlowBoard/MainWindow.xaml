@@ -131,21 +131,21 @@
         </Canvas>
 
         <!-- ================= Title bar ================= -->
-        <ui:TitleBar Grid.Row="0" Title="FlowBoard" Height="44">
+        <ui:TitleBar Grid.Row="0" Title="" Height="44">
             <ui:TitleBar.Icon>
                 <ui:ImageIcon Source="pack://application:,,,/Assets/app.png" />
             </ui:TitleBar.Icon>
 
             <ui:TitleBar.CenterContent>
-                <Button Width="440" Height="30" Cursor="IBeam" Command="{Binding OpenCommandPaletteCommand}" ToolTip="Search (Ctrl+K)">
+                <Button x:Name="SearchButton" Width="440" Height="30" Margin="18,0,12,0" Cursor="IBeam" Command="{Binding OpenCommandPaletteCommand}" ToolTip="Search (Ctrl+K)">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border x:Name="Bd" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" BorderThickness="1"
+                            <Border x:Name="Bd" ClipToBounds="True" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" BorderThickness="1"
                                     BorderBrush="{DynamicResource Fb.PanelBorderBrush}" Padding="14,0,6,0">
                                 <Grid>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <ui:SymbolIcon Symbol="Search24" FontSize="15" Foreground="{DynamicResource Fb.MutedTextBrush}" />
-                                        <TextBlock Margin="8,0,0,0" Text="Search cards, boards and commands" FontSize="13"
+                                        <TextBlock Margin="8,0,0,0" Text="Search cards, boards and commands" FontSize="13" TextTrimming="CharacterEllipsis"
                                                    Foreground="{DynamicResource Fb.MutedTextBrush}" />
                                     </StackPanel>
                                     <Border HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="{DynamicResource Fb.RadiusSmall}" Padding="8,2"
@@ -413,7 +413,7 @@
                                 <Grid VerticalAlignment="Center" Margin="4,0">
                                     <Button Style="{StaticResource Fb.HeaderButton}" Command="{Binding StartRenameBoardCommand}" ToolTip="Rename board"
                                             Visibility="{Binding CurrentBoard.IsEditingName, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
-                                        <TextBlock Text="{Binding CurrentBoard.Name}" FontSize="18" FontWeight="Bold" MaxWidth="420" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding CurrentBoard.Name}" FontSize="18" FontWeight="Bold" MaxWidth="{Binding BoardNameMaxWidth}" TextTrimming="CharacterEllipsis" />
                                     </Button>
                                     <TextBox Style="{StaticResource Fb.Input}" FontSize="17" FontWeight="Bold" MinWidth="220" TextWrapping="NoWrap"
                                              Text="{Binding CurrentBoard.Name, UpdateSourceTrigger=PropertyChanged}"
@@ -437,21 +437,21 @@
                                                      IsChecked="{Binding ViewMode, Converter={StaticResource Equals}, ConverterParameter=Board}">
                                             <StackPanel Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="Board24" FontSize="15" />
-                                                <TextBlock Text="Board" Margin="6,0,0,0" />
+                                                <TextBlock Text="Board" Margin="6,0,0,0" Visibility="{Binding IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
                                             </StackPanel>
                                         </RadioButton>
                                         <RadioButton Style="{StaticResource Fb.Segment}" Foreground="{DynamicResource Fb.HeaderTextBrush}" GroupName="View" ToolTip="Table (Ctrl+2)"
                                                      IsChecked="{Binding ViewMode, Converter={StaticResource Equals}, ConverterParameter=Table}">
                                             <StackPanel Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="Table24" FontSize="15" />
-                                                <TextBlock Text="Table" Margin="6,0,0,0" />
+                                                <TextBlock Text="Table" Margin="6,0,0,0" Visibility="{Binding IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
                                             </StackPanel>
                                         </RadioButton>
                                         <RadioButton Style="{StaticResource Fb.Segment}" Foreground="{DynamicResource Fb.HeaderTextBrush}" GroupName="View" ToolTip="Calendar (Ctrl+3)"
                                                      IsChecked="{Binding ViewMode, Converter={StaticResource Equals}, ConverterParameter=Calendar}">
                                             <StackPanel Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="CalendarLtr24" FontSize="15" />
-                                                <TextBlock Text="Calendar" Margin="6,0,0,0" />
+                                                <TextBlock Text="Calendar" Margin="6,0,0,0" Visibility="{Binding IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
                                             </StackPanel>
                                         </RadioButton>
                                     </StackPanel>
@@ -465,14 +465,14 @@
                                         ToolTip="Customize this board: style, transparency, background">
                                     <StackPanel Orientation="Horizontal">
                                         <ui:SymbolIcon Symbol="PaintBrush24" FontSize="16" />
-                                        <TextBlock Text="Style" Margin="6,0,0,0" />
+                                        <TextBlock Text="Style" Margin="6,0,0,0" Visibility="{Binding IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
                                     </StackPanel>
                                 </Button>
                                 <!-- Filter -->
                                 <ToggleButton x:Name="FilterToggle" Style="{StaticResource Fb.HeaderToggle}" IsChecked="{Binding IsFilterOpen}" ToolTip="Filter cards (Ctrl+F)">
                                     <StackPanel Orientation="Horizontal">
                                         <ui:SymbolIcon Symbol="Filter24" FontSize="16" />
-                                        <TextBlock Text="Filter" Margin="6,0,0,0" />
+                                        <TextBlock Text="Filter" Margin="6,0,0,0" Visibility="{Binding IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
                                         <Border Margin="6,0,0,0" CornerRadius="{DynamicResource Fb.Radius}" MinWidth="18" Padding="5,0" Background="{DynamicResource Fb.AccentBrush}"
                                                 Visibility="{Binding Filter.IsActive, Converter={StaticResource BoolToVis}}">
                                             <TextBlock Text="{Binding Filter.ActiveCount}" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"

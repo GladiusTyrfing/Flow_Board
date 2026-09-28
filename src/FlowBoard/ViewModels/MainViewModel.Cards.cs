@@ -247,7 +247,46 @@ public sealed partial class MainViewModel
         if (card.Board is { } b) Undo.Checkpoint(Workspace, b, card.IsCompleted ? "Mark incomplete" : "Mark complete");
         card.IsCompleted = !card.IsCompleted;
         card.AddActivity(card.IsCompleted ? "marked this card as complete" : "marked this card as incomplete", Me);
+        MoveForCompletion(card);
         if (ViewMode != BoardViewMode.Board) RefreshViews();
+    }
+
+    /// <summary>
+    /// Keeps lists in sync with completion: a completed card goes to the top of the board's Done list,
+    /// an un-completed card goes back to where it came from (or the first regular list).
+    /// </summary>
+    public void MoveForCompletion(Card card)
+    {
+        if (!Settings.MoveCompletedToDone || card.Board is not { } board) return;
+        var from = board.FindListOf(card);
+        if (from == null) return;
+
+        BoardList? to;
+        if (card.IsCompleted)
+        {
+            if (from.IsDoneList) return;
+            to = board.Lists.FirstOrDefault(l => l.IsDoneList)
+                 ?? board.Lists.FirstOrDefault(l => l.Name.Equals("Done", StringComparison.OrdinalIgnoreCase));
+            if (to == null || to == from) return;
+            card.CompletedFromListId = from.Id;
+            if (card.IsTimerRunning) Timer.Stop();
+        }
+        else
+        {
+            if (!from.IsDoneList) return;
+            to = board.Lists.FirstOrDefault(l => l.Id == card.CompletedFromListId && !l.IsDoneList)
+                 ?? board.Lists.FirstOrDefault(l => !l.IsDoneList);
+            if (to == null) return;
+            card.CompletedFromListId = null;
+        }
+
+        from.Cards.Remove(card);
+        to.Cards.Insert(0, card);
+        to.IsCollapsed = false;
+        card.AddActivity($"moved this card from {from.Name} to {to.Name}", Me);
+        from.RaiseCounts();
+        to.RaiseCounts();
+        ShowToast($"Moved \"{card.Title}\" to {to.Name}", "Undo", () => UndoCommand.Execute(null));
     }
 
     [RelayCommand]

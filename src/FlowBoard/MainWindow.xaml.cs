@@ -30,6 +30,11 @@ public partial class MainWindow : FluentWindow
         UpdateThemeIcon();
         Closing += OnClosing;
         PreviewKeyDown += OnPreviewKeyDown;
+        SizeChanged += (_, _) => UpdateResponsiveLayout();
+        _vm.Settings.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(Models.AppSettings.SidebarVisible)) UpdateResponsiveLayout();
+        };
 
         // Board styles (preset + transparency) are applied to the board area only.
         vm.PropertyChanged += (_, e) =>
@@ -38,6 +43,21 @@ public partial class MainWindow : FluentWindow
         };
         ThemeService.ThemeApplied += (_, _) => ApplyBoardTheme();
         ApplyBoardTheme();
+    }
+
+    /// <summary>Adapts the title bar and board header to the window width so nothing gets clipped.</summary>
+    private void UpdateResponsiveLayout()
+    {
+        var w = ActualWidth;
+        if (w <= 0) return;
+        // Title bar: icon (~60) + search + trailing buttons (~420) + window buttons (~140).
+        SearchButton.Width = Math.Clamp(w - 700, 170, 440);
+
+        // Board header: space available to the left pill after the sidebar and the right pill.
+        var boardWidth = w - 20 - (_vm.Settings.SidebarVisible ? 274 : 0);
+        _vm.IsCompact = boardWidth < 1000;
+        var reserved = _vm.IsCompact ? 420 : 640;
+        _vm.BoardNameMaxWidth = Math.Clamp(boardWidth - reserved, 80, 420);
     }
 
     private Models.Board? _themedBoard;

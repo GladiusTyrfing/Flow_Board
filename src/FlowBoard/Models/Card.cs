@@ -23,6 +23,8 @@ public partial class Card : ObservableObject
     [ObservableProperty] private string? _coverColor;
     [ObservableProperty] private Guid? _coverAttachmentId;
     [ObservableProperty] private Guid? _archivedFromListId;
+    /// <summary>The list a card was in before being auto-moved to the Done list (so un-completing can send it back).</summary>
+    [ObservableProperty] private Guid? _completedFromListId;
     [ObservableProperty] private DateTime? _archivedAt;
     /// <summary>Shows details (description, checklists, files, voice notes…) right on the board.</summary>
     [ObservableProperty] private bool _isExpanded;

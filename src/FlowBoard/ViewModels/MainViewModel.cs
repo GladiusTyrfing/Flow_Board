@@ -87,6 +87,10 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _newListName = string.Empty;
     [ObservableProperty] private string _sidebarQuery = string.Empty;
 
+    /// <summary>Narrow window: header and title bar show icons only so nothing gets cut off.</summary>
+    [ObservableProperty] private bool _isCompact;
+    [ObservableProperty] private double _boardNameMaxWidth = 420;
+
     public bool HasDialog => Dialogs.Count > 0;
     public bool HasBoards => Workspace.Boards.Count > 0;
     public string DisplayName => Settings.DisplayName;

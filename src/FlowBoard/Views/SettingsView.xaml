@@ -264,6 +264,13 @@
                             </StackPanel>
                         </DockPanel>
                         <DockPanel Style="{StaticResource Row}">
+                            <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.MoveCompletedToDone}" />
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Move completed cards to Done" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="Ticking a card moves it to the board's Done list; un-ticking moves it back. Choose which list is Done from its ⋯ menu." Style="{StaticResource RowHint}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
                             <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.MinimizeToTray}" />
                             <StackPanel Style="{StaticResource RowText}">
                                 <TextBlock Text="Keep running in the tray when closed" Style="{StaticResource RowTitle}" />
