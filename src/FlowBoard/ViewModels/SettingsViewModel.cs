@@ -8,7 +8,22 @@ public sealed partial class SettingsViewModel : DialogViewModel
 {
     public override string EnterAnimation => "pop";
 
-    public SettingsViewModel(MainViewModel main) => Main = main;
+    // Barely dim the app on the Board style page so changes are visible behind the dialog.
+    public override double BackdropOpacity => Section == "boardstyle" ? 0.12 : 1;
+
+    partial void OnSectionChanged(string value) => OnPropertyChanged(nameof(BackdropOpacity));
+
+    public SettingsViewModel(MainViewModel main)
+    {
+        Main = main;
+        if (main.CurrentBoard != null) BoardStyle = new BoardSettingsViewModel(main, main.CurrentBoard, "style");
+    }
+
+    /// <summary>Style editor for the board that is open (null when no board is open).</summary>
+    public BoardSettingsViewModel? BoardStyle { get; }
+    public bool HasBoard => BoardStyle != null;
+
+    public override void OnClosed() => BoardStyle?.OnClosed();
 
     public MainViewModel Main { get; }
     public AppSettings Settings => Main.Settings;
@@ -102,6 +117,24 @@ public sealed partial class BoardSettingsViewModel : DialogViewModel
     [RelayCommand] private void SetTab(string tab) => Tab = tab;
 
     [RelayCommand] private void SetTheme(string name) => Board.Theme = name;
+
+    /// <summary>Copies this board's look (theme, transparency, corners, blur, dim) to every board.</summary>
+    [RelayCommand]
+    private void ApplyStyleToAllBoards()
+    {
+        foreach (var b in _main.Workspace.Boards.Where(b => b != Board))
+        {
+            _main.Undo.Checkpoint(_main.Workspace, b, "Apply style to all boards");
+            b.Theme = Board.Theme;
+            b.ListOpacity = Board.ListOpacity;
+            b.CardOpacity = Board.CardOpacity;
+            b.CornerRadius = Board.CornerRadius;
+            b.BackgroundBlur = Board.BackgroundBlur;
+            b.BackgroundDim = Board.BackgroundDim;
+        }
+
+        _main.ShowToast("Style applied to all boards");
+    }
 
     /// <summary>One-click looks combining transparency and blur.</summary>
     [RelayCommand]

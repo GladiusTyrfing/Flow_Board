@@ -7,6 +7,7 @@
              xmlns:vm="clr-namespace:FlowBoard.ViewModels"
              xmlns:services="clr-namespace:FlowBoard.Services"
              xmlns:h="clr-namespace:FlowBoard.Helpers"
+             xmlns:views="clr-namespace:FlowBoard.Views"
              mc:Ignorable="d"
              x:Name="Root"
              d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
@@ -94,6 +95,12 @@
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="PaintBrush24" FontSize="16" />
                                 <TextBlock Text="Appearance" Margin="10,0,0,0" />
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=boardstyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Board24" FontSize="16" />
+                                <TextBlock Text="Board style" Margin="10,0,0,0" />
                             </StackPanel>
                         </RadioButton>
                         <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=general}">
@@ -251,6 +258,27 @@
                                 </TextBlock>
                             </DockPanel>
                         </Border>
+                    </StackPanel>
+
+                    <!-- Board style (same editor as the board's Style panel) -->
+                    <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=boardstyle}">
+                        <TextBlock Text="Board style" Style="{StaticResource PageTitle}" Margin="0,0,0,4" />
+                        <TextBlock Style="{StaticResource RowHint}" Margin="0,0,0,18"
+                                   Visibility="{Binding HasBoard, Converter={StaticResource BoolToVis}}">
+                            <Run Text="Theme, transparency and corners of lists and cards on" />
+                            <Run Text="{Binding BoardStyle.Board.Name, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource Fb.TextBrush}" /><Run Text="." />
+                            <Run Text="Changes preview live behind this window." />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource RowHint}" Text="Open a board first to change its style."
+                                   Visibility="{Binding HasBoard, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
+                        <views:BoardStyleEditor DataContext="{Binding BoardStyle}" Visibility="{Binding DataContext.HasBoard, ElementName=Root, Converter={StaticResource BoolToVis}}" />
+                        <Button Style="{StaticResource Fb.SubtleButton}" HorizontalAlignment="Left" Margin="0,6,0,0"
+                                Command="{Binding BoardStyle.ApplyStyleToAllBoardsCommand}" Visibility="{Binding HasBoard, Converter={StaticResource BoolToVis}}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Copy24" FontSize="14" />
+                                <TextBlock Text="Apply this style to all boards" Margin="6,0,0,0" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
 
                     <!-- General -->

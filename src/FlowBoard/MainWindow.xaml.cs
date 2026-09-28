@@ -35,6 +35,10 @@ public partial class MainWindow : FluentWindow
         {
             if (e.PropertyName == nameof(Models.AppSettings.SidebarVisible)) UpdateResponsiveLayout();
         };
+        vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.NarrowSidebarOpen)) UpdateResponsiveLayout();
+        };
 
         // Board styles (preset + transparency) are applied to the board area only.
         vm.PropertyChanged += (_, e) =>
@@ -50,13 +54,16 @@ public partial class MainWindow : FluentWindow
     {
         var w = ActualWidth;
         if (w <= 0) return;
-        // Title bar: icon (~60) + search + trailing buttons (~420) + window buttons (~140).
-        SearchButton.Width = Math.Clamp(w - 700, 170, 440);
+        // Title bar: small search box that never pushes into the buttons on the right.
+        SearchButton.Width = Math.Clamp(w - 900, 150, 300);
 
-        // Board header: space available to the left pill after the sidebar and the right pill.
-        var boardWidth = w - 20 - (_vm.Settings.SidebarVisible ? 274 : 0);
+        // Below ~1100px the sidebar hides itself (the header button still opens it).
+        _vm.IsNarrow = w < 1100;
+
+        // Board header: icons only when space is tight; the board name trims with "…".
+        var boardWidth = w - 20 - (_vm.IsSidebarShown ? 274 : 0);
         _vm.IsCompact = boardWidth < 1000;
-        var reserved = _vm.IsCompact ? 420 : 640;
+        var reserved = _vm.IsCompact ? 380 : 620;
         _vm.BoardNameMaxWidth = Math.Clamp(boardWidth - reserved, 80, 420);
     }
 
@@ -70,11 +77,26 @@ public partial class MainWindow : FluentWindow
         BoardThemeService.Apply(BoardArea, _themedBoard);
     }
 
+    private DispatcherTimer? _boardThemeTimer;
+
     private void OnBoardPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(Models.Board.Theme) or nameof(Models.Board.ListOpacity) or nameof(Models.Board.CardOpacity)
-            or nameof(Models.Board.CornerRadius))
-            BoardThemeService.Apply(BoardArea, _themedBoard);
+        if (e.PropertyName is not (nameof(Models.Board.Theme) or nameof(Models.Board.ListOpacity) or nameof(Models.Board.CardOpacity)
+            or nameof(Models.Board.CornerRadius))) return;
+
+        // Sliders fire many changes per second: batch them so dragging stays smooth.
+        if (_boardThemeTimer == null)
+        {
+            _boardThemeTimer = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(40) };
+            _boardThemeTimer.Tick += (_, _) =>
+            {
+                _boardThemeTimer.Stop();
+                BoardThemeService.Apply(BoardArea, _themedBoard);
+            };
+        }
+
+        _boardThemeTimer.Stop();
+        _boardThemeTimer.Start();
     }
 
     /// <summary>Routes hotkeys that plain KeyBindings can't express (single letters, hover-card actions).</summary>

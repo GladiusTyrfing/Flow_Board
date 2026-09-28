@@ -137,7 +137,7 @@
             </ui:TitleBar.Icon>
 
             <ui:TitleBar.CenterContent>
-                <Button x:Name="SearchButton" Width="440" Height="30" Margin="18,0,12,0" Cursor="IBeam" Command="{Binding OpenCommandPaletteCommand}" ToolTip="Search (Ctrl+K)">
+                <Button x:Name="SearchButton" Width="260" Height="30" Margin="18,0,12,0" Cursor="IBeam" Command="{Binding OpenCommandPaletteCommand}" ToolTip="Search (Ctrl+K)">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="Bd" ClipToBounds="True" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" BorderThickness="1"
@@ -145,13 +145,9 @@
                                 <Grid>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <ui:SymbolIcon Symbol="Search24" FontSize="15" Foreground="{DynamicResource Fb.MutedTextBrush}" />
-                                        <TextBlock Margin="8,0,0,0" Text="Search cards, boards and commands" FontSize="13" TextTrimming="CharacterEllipsis"
+                                        <TextBlock Margin="8,0,0,0" Text="Search" FontSize="13" TextTrimming="CharacterEllipsis"
                                                    Foreground="{DynamicResource Fb.MutedTextBrush}" />
                                     </StackPanel>
-                                    <Border HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="{DynamicResource Fb.RadiusSmall}" Padding="8,2"
-                                            Background="{DynamicResource Fb.SubtleHoverBrush}">
-                                        <TextBlock Text="Ctrl K" FontSize="11" Foreground="{DynamicResource Fb.MutedTextBrush}" />
-                                    </Border>
                                 </Grid>
                             </Border>
                             <ControlTemplate.Triggers>
@@ -295,7 +291,7 @@
 
             <!-- Sidebar: floating glass panel -->
             <Border x:Name="Sidebar" Width="264" Margin="0,0,10,0" Style="{StaticResource Fb.Glass}"
-                    Visibility="{Binding Settings.SidebarVisible, Converter={StaticResource BoolToVis}}">
+                    Visibility="{Binding IsSidebarShown, Converter={StaticResource BoolToVis}}">
                 <DockPanel Margin="12,14,12,12">
                     <Grid DockPanel.Dock="Top" Margin="4,0,0,8">
                         <TextBlock Text="Boards" FontSize="20" Style="{StaticResource Fb.GradientTitle}" VerticalAlignment="Center" />
@@ -394,18 +390,20 @@
 
                 <DockPanel Visibility="{Binding CurrentBoard, Converter={StaticResource HasValueToVis}}">
                     <!-- Board header -->
-                    <Border DockPanel.Dock="Top" Padding="12,12,12,2" TextElement.Foreground="{DynamicResource Fb.HeaderTextBrush}">
+                    <!-- One header bar, aligned with the lists below (same 12px side margins). -->
+                    <Border DockPanel.Dock="Top" Style="{StaticResource Fb.HeaderPill}" Margin="12,12,12,0" Padding="6,5"
+                            TextElement.Foreground="{DynamicResource Fb.HeaderTextBrush}">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <Border Style="{StaticResource Fb.HeaderPill}">
+                            <!-- Left side shrinks (and clips) instead of sliding under the buttons on the right. -->
+                            <Border HorizontalAlignment="Left" ClipToBounds="True">
                             <StackPanel Orientation="Horizontal">
                                 <Button Style="{StaticResource Fb.HeaderButton}" Command="{Binding ToggleSidebarCommand}" ToolTip="Show sidebar (Ctrl+B)"
-                                        Visibility="{Binding Settings.SidebarVisible, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+                                        Visibility="{Binding IsSidebarShown, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
                                     <ui:SymbolIcon Symbol="PanelLeft24" FontSize="16" />
                                 </Button>
 
@@ -459,7 +457,7 @@
                             </StackPanel>
                             </Border>
 
-                            <Border Grid.Column="2" Style="{StaticResource Fb.HeaderPill}">
+                            <Border Grid.Column="1" Margin="8,0,0,0">
                             <StackPanel Orientation="Horizontal">
                                 <Button Style="{StaticResource Fb.HeaderButton}" Command="{Binding OpenBoardSettingsCommand}" CommandParameter="style"
                                         ToolTip="Customize this board: style, transparency, background">

@@ -58,6 +58,35 @@ public static class ThemeService
         };
     }
 
+    private static System.Windows.Threading.DispatcherTimer? _radiusTimer;
+    private static double _appliedRadius = double.NaN;
+
+    /// <summary>
+    /// Cheap path for the corner slider: only the corner resources change (no palette/theme swap),
+    /// and updates are batched so dragging the slider stays smooth.
+    /// </summary>
+    public static void QueueRadiusUpdate()
+    {
+        if (_radiusTimer == null)
+        {
+            _radiusTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render)
+            {
+                Interval = TimeSpan.FromMilliseconds(50),
+            };
+            _radiusTimer.Tick += (_, _) =>
+            {
+                _radiusTimer.Stop();
+                var r = Math.Round(_settings?.CornerRadius ?? 8);
+                if (r.Equals(_appliedRadius)) return;
+                _appliedRadius = r;
+                ApplyRadius(Application.Current.Resources, r);
+            };
+        }
+
+        _radiusTimer.Stop();
+        _radiusTimer.Start();
+    }
+
     public static void Attach(Window window)
     {
         _window = window;
@@ -83,7 +112,8 @@ public static class ThemeService
         var accent = CurrentAccent;
         ApplicationAccentColorManager.Apply(accent.Primary, theme);
         SetAccentResources(accent);
-        ApplyRadius(Application.Current.Resources, s.CornerRadius);
+        _appliedRadius = Math.Round(s.CornerRadius);
+        ApplyRadius(Application.Current.Resources, _appliedRadius);
 
         if (_window is FluentWindow fw)
         {

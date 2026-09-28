@@ -89,6 +89,20 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Narrow window: header and title bar show icons only so nothing gets cut off.</summary>
     [ObservableProperty] private bool _isCompact;
+
+    /// <summary>Window is too narrow for the sidebar: it hides automatically unless opened on purpose.</summary>
+    [ObservableProperty] private bool _isNarrow;
+    [ObservableProperty] private bool _narrowSidebarOpen;
+
+    public bool IsSidebarShown => IsNarrow ? NarrowSidebarOpen : Settings.SidebarVisible;
+
+    partial void OnIsNarrowChanged(bool value)
+    {
+        NarrowSidebarOpen = false;
+        OnPropertyChanged(nameof(IsSidebarShown));
+    }
+
+    partial void OnNarrowSidebarOpenChanged(bool value) => OnPropertyChanged(nameof(IsSidebarShown));
     [ObservableProperty] private double _boardNameMaxWidth = 420;
 
     public bool HasDialog => Dialogs.Count > 0;
@@ -120,14 +134,19 @@ public sealed partial class MainViewModel : ObservableObject
             case nameof(AppSettings.AccentColor):
             case nameof(AppSettings.Backdrop):
             case nameof(AppSettings.AccentPreset):
-            case nameof(AppSettings.CornerRadius):
                 ThemeService.Apply();
+                break;
+            case nameof(AppSettings.CornerRadius):
+                ThemeService.QueueRadiusUpdate();
                 break;
             case nameof(AppSettings.StartWithWindows):
                 StartupService.Apply(Settings.StartWithWindows);
                 break;
             case nameof(AppSettings.Animations):
                 Helpers.Behaviors.AnimationsEnabled = Settings.Animations;
+                break;
+            case nameof(AppSettings.SidebarVisible):
+                OnPropertyChanged(nameof(IsSidebarShown));
                 break;
             case nameof(AppSettings.DisplayName):
                 OnPropertyChanged(nameof(DisplayName));

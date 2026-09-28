@@ -133,7 +133,11 @@ public sealed partial class MainViewModel
     }
 
     [RelayCommand]
-    private void ToggleSidebar() => Settings.SidebarVisible = !Settings.SidebarVisible;
+    private void ToggleSidebar()
+    {
+        if (IsNarrow) NarrowSidebarOpen = !NarrowSidebarOpen;
+        else Settings.SidebarVisible = !Settings.SidebarVisible;
+    }
 
     [RelayCommand]
     private void OpenSettings()
