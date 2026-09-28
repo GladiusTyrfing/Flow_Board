@@ -1,0 +1,164 @@
+<UserControl x:Class="FlowBoard.Views.TableView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:FlowBoard.ViewModels"
+             xmlns:models="clr-namespace:FlowBoard.Models"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:MainViewModel}">
+    <Border Margin="14" CornerRadius="12" Background="{DynamicResource Fb.SurfaceBrush}" Padding="4" Effect="{StaticResource Fb.CardShadow}">
+        <DockPanel>
+            <Grid DockPanel.Dock="Top" Margin="12,10,12,8">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:SymbolIcon Symbol="Table24" FontSize="18" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                    <TextBlock Text="{Binding Table.Rows.Count, StringFormat='{}{0} cards'}" Style="{StaticResource Fb.SectionTitle}" Margin="8,0,0,0" />
+                    <TextBlock Text="· double-click a row to open it, click a header to sort" Style="{StaticResource Fb.Muted}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <CheckBox Content="All boards" IsChecked="{Binding Table.AllBoards}" Margin="0,0,12,0" />
+                    <Button Style="{StaticResource Fb.SubtleButton}" Command="{Binding QuickAddCardCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Add24" FontSize="14" />
+                            <TextBlock Text="New card" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <DataGrid x:Name="Grid" ItemsSource="{Binding Table.Rows}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                      SelectionMode="Single" SelectedItem="{Binding Table.SelectedRow}" HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                      Background="Transparent" RowBackground="Transparent" AlternatingRowBackground="{DynamicResource Fb.SubtleBrush}"
+                      BorderThickness="0" CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True"
+                      MouseDoubleClick="Grid_MouseDoubleClick" KeyDown="Grid_KeyDown">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="" Width="44" SortMemberPath="Card.IsCompleted">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:TableRow}">
+                                <CheckBox Style="{StaticResource Fb.RoundCheck}" HorizontalAlignment="Center" IsChecked="{Binding Card.IsCompleted, Mode=OneWay}"
+                                          Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ToggleCompleteCommand}" CommandParameter="{Binding Card}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Title" Width="3*" MinWidth="200" SortMemberPath="Card.Title">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:TableRow}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="4" Height="18" CornerRadius="2" Margin="0,0,8,0"
+                                            Background="{Binding Card.Priority, Converter={StaticResource PriorityToBrush}}" />
+                                    <TextBlock Text="{Binding Card.Title}" TextTrimming="CharacterEllipsis" FontWeight="Medium" Foreground="{DynamicResource Fb.TextBrush}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                        <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate DataType="{x:Type vm:TableRow}">
+                                <TextBox Text="{Binding Card.Title, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Fb.Input}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Board" Binding="{Binding BoardName}" Width="*" IsReadOnly="True"
+                                        Visibility="Collapsed" x:Name="BoardColumn" />
+
+                    <DataGridTemplateColumn Header="List" Width="*" SortMemberPath="ListIndex">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:TableRow}">
+                                <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" Background="{DynamicResource Fb.SubtleBrush}">
+                                    <TextBlock Text="{Binding ListName}" FontSize="12" Foreground="{DynamicResource Fb.TextBrush}" />
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Labels" Width="1.5*" SortMemberPath="LabelsText">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:TableRow}">
+                                <ItemsControl ItemsSource="{Binding Card.ResolvedLabels}" VerticalAlignment="Center">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type models:Label}">
+                                            <Border CornerRadius="4" MinWidth="28" Height="16" Padding="6,0" Margin="0,1,4,1"
+                                                    Background="{Binding Color, Converter={StaticResource HexToBrush}}">
+                                                <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"
+                                                           Foreground="{Binding Color, Converter={StaticResource ContrastBrush}}" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Priority" Width="110" SortMemberPath="Card.Priority">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:TableRow}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Ellipse Width="8" Height="8" Fill="{Binding Card.Priority, Converter={StaticResource PriorityToBrush}}" Margin="0,0,6,0" />
+                                    <TextBlock Text="{Binding Card.Priority, Converter={StaticResource PriorityToText}}" Foreground="{DynamicResource Fb.TextBrush}" FontSize="12" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                        <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate DataType="{x:Type vm:TableRow}">
+                                <ComboBox ItemsSource="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=Table.Priorities}"
+                                          SelectedItem="{Binding Card.Priority, UpdateSourceTrigger=PropertyChanged}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Due" Width="140" SortMemberPath="DueSort">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:TableRow}">
+                                <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" Background="{Binding Card.DueState, Converter={StaticResource DueStateToBrush}}"
+                                        Visibility="{Binding Card.HasDue, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding Card.DueText}" FontSize="12" Foreground="{Binding Card.DueState, Converter={StaticResource DueStateToForeground}}" />
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Checklist" Width="110" SortMemberPath="ChecklistSort">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:TableRow}">
+                                <StackPanel Visibility="{Binding Card.HasChecklist, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Card.ChecklistText}" FontSize="11" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                    <ProgressBar Style="{StaticResource Fb.ThinProgress}" Height="4" Maximum="{Binding Card.ChecklistTotal, Mode=OneWay}"
+                                                 Value="{Binding Card.ChecklistDone, Mode=OneWay}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Files" Width="70" SortMemberPath="Card.FileCount">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:TableRow}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Visibility="{Binding Card.Attachments.Count, Converter={StaticResource HasValueToVis}}">
+                                    <ui:SymbolIcon Symbol="Attach24" FontSize="13" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                    <TextBlock Text="{Binding Card.Attachments.Count}" FontSize="12" Margin="4,0,0,0" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Time" Width="90" SortMemberPath="TrackedSort">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:TableRow}">
+                                <TextBlock Text="{Binding Card.TrackedTimeText}" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource Fb.MutedTextBrush}"
+                                           Visibility="{Binding Card.HasTrackedTime, Converter={StaticResource BoolToVis}}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Created" Width="110" Binding="{Binding Card.CreatedAt, StringFormat='MMM d, yyyy'}" IsReadOnly="True"
+                                        SortMemberPath="Card.CreatedAt" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
+    </Border>
+</UserControl>

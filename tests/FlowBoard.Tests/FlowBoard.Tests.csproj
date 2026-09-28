@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Tests for the UI-independent core (models, JSON storage, undo, templates, filtering).
+    The source files are linked in directly so the tests run on any OS without the Windows Desktop runtime.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\src\FlowBoard\Models\*.cs" Link="Core\Models\%(Filename)%(Extension)" />
+    <Compile Include="..\..\src\FlowBoard\Services\AppPaths.cs" Link="Core\Services\AppPaths.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\Json.cs" Link="Core\Services\Json.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\UndoService.cs" Link="Core\Services\UndoService.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\TemplateService.cs" Link="Core\Services\TemplateService.cs" />
+    <Compile Include="..\..\src\FlowBoard\ViewModels\FilterState.cs" Link="Core\ViewModels\FilterState.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+</Project>

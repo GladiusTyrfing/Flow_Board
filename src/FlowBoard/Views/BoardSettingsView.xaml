@@ -1,0 +1,156 @@
+<UserControl x:Class="FlowBoard.Views.BoardSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:FlowBoard.ViewModels"
+             xmlns:models="clr-namespace:FlowBoard.Models"
+             mc:Ignorable="d"
+             x:Name="Root"
+             d:DataContext="{d:DesignInstance vm:BoardSettingsViewModel}">
+    <Border Style="{StaticResource Fb.Dialog}" Width="620" Margin="0,24" Padding="24">
+        <DockPanel MaxHeight="640">
+            <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
+                <TextBlock Text="{Binding Board.Name, StringFormat='{}{0} · board settings'}" Style="{StaticResource Fb.DialogTitle}" TextTrimming="CharacterEllipsis" Margin="0,0,40,0" />
+                <Button Style="{StaticResource Fb.IconButton}" HorizontalAlignment="Right" Command="{Binding CloseCommand}">
+                    <ui:SymbolIcon Symbol="Dismiss24" FontSize="16" />
+                </Button>
+            </Grid>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,14">
+                <RadioButton Style="{StaticResource Fb.Segment}" GroupName="BsTab" Content="Background"
+                             IsChecked="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=background}" />
+                <RadioButton Style="{StaticResource Fb.Segment}" GroupName="BsTab" Content="Labels"
+                             IsChecked="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=labels}" />
+            </StackPanel>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <!-- Background tab -->
+                    <StackPanel Visibility="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=background}">
+                        <Border Height="120" CornerRadius="10" Background="{Binding Board.Background, Converter={StaticResource BoardBackground}}" Margin="0,0,0,14">
+                            <Border CornerRadius="10" Background="Black" Opacity="{Binding Board.BackgroundDim}" />
+                        </Border>
+                        <TextBlock Text="Photos" Style="{StaticResource Fb.Caption}" Margin="0,0,0,6" />
+                        <WrapPanel>
+                            <Button Style="{StaticResource Fb.SubtleButton}" Width="104" Height="64" Margin="0,0,6,6" HorizontalContentAlignment="Center"
+                                    Command="{Binding ChooseImageCommand}">
+                                <StackPanel>
+                                    <ui:SymbolIcon Symbol="ImageAdd24" FontSize="20" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Choose photo…" FontSize="11" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </Button>
+                            <ItemsControl ItemsSource="{Binding RecentImages}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource Fb.SwatchButton}" Width="104" Height="64" Background="{Binding Converter={StaticResource BoardThumbnail}}"
+                                                Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </WrapPanel>
+                        <TextBlock Text="Gradients" Style="{StaticResource Fb.Caption}" Margin="0,10,0,6" />
+                        <ItemsControl ItemsSource="{Binding Gradients}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource Fb.SwatchButton}" Width="80" Height="50" Background="{Binding Converter={StaticResource BoardThumbnail}}"
+                                            Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="Colors" Style="{StaticResource Fb.Caption}" Margin="0,10,0,6" />
+                        <ItemsControl ItemsSource="{Binding Solids}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource Fb.SwatchButton}" Width="52" Height="36" Background="{Binding Converter={StaticResource BoardThumbnail}}"
+                                            Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="Dim background (improves readability on busy photos)" Style="{StaticResource Fb.Caption}" Margin="0,12,0,4" />
+                        <Slider Minimum="0" Maximum="0.7" Value="{Binding Board.BackgroundDim}" TickFrequency="0.05" IsSnapToTickEnabled="True" />
+                    </StackPanel>
+
+                    <!-- Labels tab -->
+                    <StackPanel Visibility="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=labels}">
+                        <TextBlock Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,0,10"
+                                   Text="Labels belong to this board. Renaming or recoloring a label updates every card that uses it. Hover a card and press 1–9 to toggle labels." />
+                        <ItemsControl ItemsSource="{Binding Board.Labels}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:Label}">
+                                    <StackPanel Margin="0,0,0,6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border CornerRadius="5" Height="34" Padding="10,0" Background="{Binding Color, Converter={StaticResource HexToBrush}}">
+                                                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" Background="Transparent" VerticalAlignment="Center"
+                                                         FontWeight="SemiBold" Foreground="{Binding Color, Converter={StaticResource ContrastBrush}}"
+                                                         CaretBrush="{Binding Color, Converter={StaticResource ContrastBrush}}">
+                                                    <TextBox.Template>
+                                                        <ControlTemplate TargetType="TextBox">
+                                                            <ScrollViewer x:Name="PART_ContentHost" />
+                                                        </ControlTemplate>
+                                                    </TextBox.Template>
+                                                </TextBox>
+                                            </Border>
+                                            <Button Grid.Column="1" Style="{StaticResource Fb.IconButton}" Margin="6,0,0,0" ToolTip="Change color"
+                                                    Command="{Binding DataContext.EditLabelCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                <ui:SymbolIcon Symbol="Color24" FontSize="15" />
+                                            </Button>
+                                            <Button Grid.Column="2" Style="{StaticResource Fb.IconButton}" ToolTip="Delete label"
+                                                    Command="{Binding DataContext.DeleteLabelCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                <ui:SymbolIcon Symbol="Delete24" FontSize="15" />
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Border Style="{StaticResource Fb.Section}" Margin="0,6,0,0" Visibility="{Binding EditingLabel, Converter={StaticResource HasValueToVis}}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding EditingLabel.Name, StringFormat='Color for “{0}”'}" Style="{StaticResource Fb.Caption}" Margin="0,0,0,6" />
+                                <ItemsControl ItemsSource="{Binding LabelPalette}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Style="{StaticResource Fb.SwatchButton}" Background="{Binding Converter={StaticResource HexToBrush}}"
+                                                    Command="{Binding DataContext.SetLabelColorCommand, ElementName=Root}" CommandParameter="{Binding}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                        <Button Style="{StaticResource Fb.SubtleButton}" HorizontalAlignment="Left" Margin="0,8,0,0" Command="{Binding AddLabelCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Add24" FontSize="14" />
+                                <TextBlock Text="New label" Margin="6,0,0,0" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</UserControl>
