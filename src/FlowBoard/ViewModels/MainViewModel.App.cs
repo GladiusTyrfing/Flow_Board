@@ -349,6 +349,56 @@ public sealed partial class MainViewModel
         }
     }
 
+    // ================= export =================
+
+    private static readonly Dictionary<string, (string Ext, string Filter)> ExportFormats = new()
+    {
+        ["txt"] = (".txt", "Plain text"),
+        ["md"] = (".md", "Markdown"),
+        ["json"] = (".json", "JSON"),
+        ["csv"] = (".csv", "CSV spreadsheet (Excel, Sheets)"),
+        ["mmd"] = (".mmd", "Mermaid diagram (GitHub, Notion, Obsidian)"),
+        ["drawio"] = (".drawio", "draw.io / diagrams.net diagram"),
+        ["svg"] = (".svg", "SVG vector image"),
+    };
+
+    /// <summary>Asks where to save an export and writes it (UTF-8).</summary>
+    public void SaveExport(string content, string name, string format)
+    {
+        var (ext, filter) = ExportFormats[format];
+        var dlg = new SaveFileDialog
+        {
+            Title = $"Export as {filter}",
+            Filter = $"{filter}|*{ext}",
+            FileName = AppPaths.SafeName(name) + ext,
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            File.WriteAllText(dlg.FileName, content, new System.Text.UTF8Encoding(format == "csv"));
+            ShowToast($"Exported {Path.GetFileName(dlg.FileName)}", "Show", () => Process.Start("explorer.exe", $"/select,\"{dlg.FileName}\""));
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"Export failed: {ex.Message}", isError: true);
+        }
+    }
+
+    [RelayCommand]
+    private void ExportBoardAs(string format)
+    {
+        if (CurrentBoard is not { } b) return;
+        var content = format switch
+        {
+            "drawio" => Exporters.BoardToDrawio(b),
+            "mmd" => Exporters.BoardToMermaid(b),
+            "csv" => Exporters.BoardToCsv(b),
+            "md" => Exporters.BoardToMarkdown(b),
+            _ => Exporters.BoardToJson(b, Workspace),
+        };
+        SaveExport(content, b.Name, format);
+    }
+
     [RelayCommand]
     private void ToggleMinimap()
     {

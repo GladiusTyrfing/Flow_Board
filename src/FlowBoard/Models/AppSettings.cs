@@ -50,8 +50,23 @@ public partial class AppSettings : ObservableObject
     /// <summary>System-wide hotkey that shows or hides the FlowBoard window.</summary>
     [ObservableProperty] private string _showHideHotkey = "Ctrl+Alt+F";
     [ObservableProperty] private bool _cardHoverHotkeys = true;
+    /// <summary>Windows user name when the display name was last synced; the name follows Windows while they match.</summary>
+    public string? LastSystemUserName { get; set; }
+    /// <summary>Where new projects are saved by default (null = Documents\FlowBoard Projects).</summary>
+    [ObservableProperty] private string? _projectsFolder;
     /// <summary>Recently opened project files, newest first.</summary>
     public List<string> RecentProjects { get; set; } = [];
     /// <summary>Set once the pre-projects data.json has been offered in the recent list.</summary>
     public bool LegacyWorkspaceListed { get; set; }
+
+    /// <summary>
+    /// The display name follows the Windows user name (also after it changes, or on another PC)
+    /// until someone types their own name in Settings.
+    /// </summary>
+    public void SyncDisplayName(string systemName)
+    {
+        var followsWindows = string.IsNullOrWhiteSpace(DisplayName) || LastSystemUserName == null || DisplayName == LastSystemUserName;
+        if (followsWindows) DisplayName = systemName;
+        if (followsWindows) LastSystemUserName = systemName;
+    }
 }

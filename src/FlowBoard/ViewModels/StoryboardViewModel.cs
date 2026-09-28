@@ -16,6 +16,56 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         Board = board;
         Board.Shots.CollectionChanged += OnShotsChanged;
         Renumber();
+        RefreshCardLinks();
+    }
+
+    // ---------- links to cards (Done follows both ways) ----------
+
+    public void RefreshCardLinks()
+    {
+        var counts = LinkSync.AllCards(Main.Workspace)
+            .SelectMany(c => c.Links.Where(l => l.Kind == LinkTarget.Shot).Select(l => l.Id))
+            .GroupBy(id => id).ToDictionary(g => g.Key, g => g.Count());
+        foreach (var s in Board.Shots) s.LinkedCardCount = counts.GetValueOrDefault(s.Id);
+    }
+
+    [RelayCommand]
+    private async Task LinkShotToCard(Shot? shot)
+    {
+        if (shot == null) return;
+        var pick = await Main.PickLinkAsync($"Link {ShotWord.ToLowerInvariant()} {shot.Number} to a card", LinkTarget.Card);
+        if (pick == null || Main.Workspace.FindCard(pick.Value.Id, out _, out _) is not { } card) return;
+        Main.AddCardLink(card, LinkTarget.Shot, shot.Id);
+        RefreshCardLinks();
+        Main.ShowToast($"Linked to \"{card.Title}\" — Done follows both ways");
+    }
+
+    [RelayCommand]
+    private void MakeCardForShot(Shot? shot)
+    {
+        if (shot == null) return;
+        var board = Main.CurrentBoard ?? Main.Workspace.Boards.FirstOrDefault();
+        var list = board?.Lists.FirstOrDefault(l => !l.IsDoneList);
+        if (board == null || list == null)
+        {
+            Main.ShowToast("Create a board with a list first.", isError: true);
+            return;
+        }
+
+        var title = string.IsNullOrWhiteSpace(shot.Title) ? $"{Board.Name} — {ShotWord} {shot.Number}" : $"{ShotWord} {shot.Number}: {shot.Title}";
+        var card = new Card { Title = title, Description = shot.Description, DueDate = shot.Date, Board = board };
+        list.Cards.Add(card);
+        Main.AddCardLink(card, LinkTarget.Shot, shot.Id);
+        RefreshCardLinks();
+        Main.ShowToast($"Card added to \"{list.Name}\" on {board.Name}", "Open", () => Main.OpenTarget(LinkTarget.Card, card.Id));
+    }
+
+    [RelayCommand]
+    private void OpenShotCard(Shot? shot)
+    {
+        if (shot == null) return;
+        var card = LinkSync.CardsLinkedTo(Main.Workspace, LinkTarget.Shot, shot.Id).FirstOrDefault();
+        if (card != null) Main.OpenTarget(LinkTarget.Card, card.Id);
     }
 
     public Storyboard Board { get; }
@@ -518,6 +568,10 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
     public event EventHandler<string>? RenderRequested;
 
     [RelayCommand] private void ExportImage() => RenderRequested?.Invoke(this, "export");
+
+    [RelayCommand]
+    private void ExportAs(string format) =>
+        Main.SaveExport(format == "csv" ? Exporters.StoryboardToCsv(Board) : Exporters.StoryboardToJson(Board), Board.Name, format);
     [RelayCommand] private void Print() => RenderRequested?.Invoke(this, "print");
 
     [RelayCommand]
@@ -531,10 +585,20 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
             return;
         }
 
-        foreach (var s in Board.Shots)
+        // Shots that already have a card keep it.
+        var shots = Board.Shots.Where(s => !LinkSync.CardsLinkedTo(Main.Workspace, LinkTarget.Shot, s.Id).Any()).ToList();
+        if (shots.Count == 0)
+        {
+            Main.ShowToast("Every shot already has a card.");
+            return;
+        }
+
+        foreach (var s in shots)
         {
             var title = string.IsNullOrWhiteSpace(s.Title) ? $"{Board.Name} — {ShotWord} {s.Number}" : $"{ShotWord} {s.Number}: {s.Title}";
-            var card = new Card { Title = title, Description = s.Description, DueDate = s.Date };
+            var card = new Card { Title = title, Description = s.Description, DueDate = s.Date, IsCompleted = LinkSync.IsDoneStatus(s.Status) };
+            // Linked both ways: marking the shot Done completes the card, and completing the card marks the shot Done.
+            card.Links.Add(new ItemLink(LinkTarget.Shot, s.Id));
             if (s.ShotList.Count > 0)
             {
                 var cl = new Checklist { Title = "Shots required" };
@@ -546,6 +610,7 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         }
 
         board.Hydrate();
-        Main.ShowToast($"Added {Board.Shots.Count} cards to \"{list.Name}\" on {board.Name}");
+        RefreshCardLinks();
+        Main.ShowToast($"Added {shots.Count} cards to \"{list.Name}\" on {board.Name}");
     }
 }

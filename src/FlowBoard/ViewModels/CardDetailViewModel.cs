@@ -40,7 +40,12 @@ public partial class LabelOption : ObservableObject
 public sealed record ReminderChoice(int Minutes, string Text);
 
 /// <summary>A related card shown in the card editor. Relation: "Linked", "Blocked by" or "Blocks".</summary>
-public sealed record CardRelation(Guid Id, Card? Card, string Relation, string Title, string Where, bool IsDone);
+public sealed record CardRelation(Guid Id, Card? Card, string Relation, string Title, string Where, bool IsDone)
+{
+    /// <summary>What the row points at (a card, or an item in another section).</summary>
+    public LinkTarget Kind { get; init; } = LinkTarget.Card;
+    public string Icon { get; init; } = "TaskListLtr24";
+}
 
 /// <summary>The big card editor (Trello's "card back").</summary>
 public sealed partial class CardDetailViewModel : DialogViewModel
@@ -92,12 +97,46 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         foreach (var (_, _, other) in _main.Workspace.EnumerateActiveCards())
             if (other.BlockedByIds.Contains(Card.Id)) Relations.Add(Make(other.Id, "Blocks"));
         foreach (var id in Card.LinkedCardIds) Relations.Add(Make(id, "Linked"));
+        foreach (var link in Card.Links)
+        {
+            var preview = LinkResolver.Describe(_main.Workspace, link.Kind, link.Id);
+            var shot = link.Kind == LinkTarget.Shot ? LinkResolver.FindShot(_main.Workspace, link.Id, out _) : null;
+            Relations.Add(new CardRelation(link.Id, null, KindName(link.Kind),
+                preview.IsMissing ? "(deleted)" : preview.Title,
+                shot != null ? $"{preview.Subtitle}{(string.IsNullOrEmpty(shot.Status) ? "" : " · " + shot.Status)}" : preview.Subtitle,
+                shot != null && LinkSync.IsDoneStatus(shot.Status))
+            {
+                Kind = link.Kind,
+                Icon = preview.Icon,
+            });
+        }
+
         OnPropertyChanged(nameof(HasRelations));
         OnPropertyChanged(nameof(BlockedText));
         Card.NotifyRelationsChanged();
     }
 
     private IEnumerable<Guid> Related() => Relations.Select(r => r.Id).Append(Card.Id);
+
+    private static string KindName(LinkTarget kind) => kind switch
+    {
+        LinkTarget.Note => "Page",
+        _ => kind.ToString(),
+    };
+
+    /// <summary>Links this card to a board, storyboard, single shot, canvas or page.</summary>
+    [RelayCommand]
+    private async Task LinkItem()
+    {
+        var pick = await _main.PickLinkAsync("Link this card to…", MainViewModel.CardLinkKinds, Related());
+        if (pick == null) return;
+        _main.AddCardLink(Card, pick.Value.Kind, pick.Value.Id);
+        Card.AddActivity($"linked {KindName(pick.Value.Kind).ToLowerInvariant()} \"{pick.Value.Title}\"", Me);
+        RefreshRelations();
+        OnPropertyChanged(nameof(CurrentList));
+        if (pick.Value.Kind == LinkTarget.Shot)
+            _main.ShowToast("Linked — marking the shot Done completes this card, and completing the card marks the shot Done.");
+    }
 
     [RelayCommand]
     private async Task LinkCard()
@@ -179,9 +218,12 @@ public sealed partial class CardDetailViewModel : DialogViewModel
             case "Blocks":
                 other?.BlockedByIds.Remove(Card.Id);
                 break;
-            default:
+            case "Linked":
                 Card.LinkedCardIds.Remove(r.Id);
                 other?.LinkedCardIds.Remove(Card.Id);
+                break;
+            default:
+                foreach (var l in Card.Links.Where(l => l.Kind == r.Kind && l.Id == r.Id).ToList()) Card.Links.Remove(l);
                 break;
         }
 
@@ -193,9 +235,9 @@ public sealed partial class CardDetailViewModel : DialogViewModel
     [RelayCommand]
     private void OpenRelation(CardRelation r)
     {
-        if (r.Card == null) return;
+        if (r.Kind == LinkTarget.Card && r.Card == null) return;
         _main.CloseDialog(this);
-        _main.OpenTarget(LinkTarget.Card, r.Id);
+        _main.OpenTarget(r.Kind, r.Id);
     }
 
     public Card Card { get; }

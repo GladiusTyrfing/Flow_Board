@@ -177,6 +177,10 @@
                                         <MenuItem Header="Link a related card…" Command="{Binding LinkCardCommand}">
                                             <MenuItem.Icon><ui:SymbolIcon Symbol="Link24" /></MenuItem.Icon>
                                         </MenuItem>
+                                        <MenuItem Header="Link a storyboard, shot, canvas or page…" Command="{Binding LinkItemCommand}">
+                                            <MenuItem.Icon><ui:SymbolIcon Symbol="VideoClip24" /></MenuItem.Icon>
+                                        </MenuItem>
+                                        <Separator />
                                         <MenuItem Header="Blocked by…" Command="{Binding AddBlockerCommand}">
                                             <MenuItem.Icon><ui:SymbolIcon Symbol="LockClosed24" /></MenuItem.Icon>
                                         </MenuItem>
@@ -593,12 +597,14 @@
                             <Grid>
                                 <StackPanel Style="{StaticResource SectionHeader}">
                                     <ui:SymbolIcon Symbol="BranchFork24" Style="{StaticResource SectionIcon}" />
-                                    <TextBlock Text="Links &amp; dependencies" Style="{StaticResource Fb.SectionTitle}" />
+                                    <TextBlock Text="Links, dependencies &amp; linked items" Style="{StaticResource Fb.SectionTitle}" />
                                     <TextBlock Text="{Binding BlockedText}" Foreground="{DynamicResource Fb.WarningBrush}" FontSize="13" FontWeight="SemiBold"
                                                Margin="10,0,0,0" VerticalAlignment="Center" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,8">
                                     <Button Style="{StaticResource Fb.SubtleButton}" Content="Link card…" Command="{Binding LinkCardCommand}" Margin="0,0,6,0" />
+                                    <Button Style="{StaticResource Fb.SubtleButton}" Content="Link item…" Command="{Binding LinkItemCommand}" Margin="0,0,6,0"
+                                            ToolTip="Link a board, storyboard, shot, canvas or page" />
                                     <Button Style="{StaticResource Fb.SubtleButton}" Content="Blocked by…" Command="{Binding AddBlockerCommand}" Margin="0,0,6,0" />
                                     <Button Style="{StaticResource Fb.SubtleButton}" Content="Blocks…" Command="{Binding AddBlocksCommand}" />
                                 </StackPanel>
@@ -621,6 +627,8 @@
                                                         Command="{Binding DataContext.OpenRelationCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
                                                     <StackPanel>
                                                         <StackPanel Orientation="Horizontal">
+                                                            <ui:SymbolIcon Symbol="{Binding Icon, Converter={StaticResource SymbolName}}" FontSize="14" Margin="0,0,6,0"
+                                                                           Foreground="{DynamicResource Fb.MutedTextBrush}" />
                                                             <ui:SymbolIcon x:Name="Done" Symbol="CheckmarkCircle24" Filled="True" FontSize="14" Foreground="{DynamicResource Fb.SuccessBrush}"
                                                                            Margin="0,0,6,0" Visibility="Collapsed" />
                                                             <TextBlock x:Name="Title" Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />

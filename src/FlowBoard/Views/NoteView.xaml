@@ -207,6 +207,12 @@
                                 <MenuItem Header="Export as Markdown…" Command="{Binding ExportMarkdownCommand}">
                                     <MenuItem.Icon><ui:SymbolIcon Symbol="ArrowExport24" /></MenuItem.Icon>
                                 </MenuItem>
+                                <MenuItem Header="Export as text…" Command="{Binding ExportAsCommand}" CommandParameter="txt">
+                                    <MenuItem.Icon><ui:SymbolIcon Symbol="DocumentText24" /></MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Export as JSON…" Command="{Binding ExportAsCommand}" CommandParameter="json">
+                                    <MenuItem.Icon><ui:SymbolIcon Symbol="BracesVariable24" /></MenuItem.Icon>
+                                </MenuItem>
                                 <MenuItem Header="Copy as Markdown" Command="{Binding CopyMarkdownCommand}">
                                     <MenuItem.Icon><ui:SymbolIcon Symbol="Copy24" /></MenuItem.Icon>
                                 </MenuItem>

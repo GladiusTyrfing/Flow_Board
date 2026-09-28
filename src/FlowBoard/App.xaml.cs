@@ -41,9 +41,16 @@ public partial class App : Application
         _mutex = new Mutex(true, MutexName, out var isFirst);
         if (!isFirst && !e.Args.Contains("--restarted"))
         {
-            // Another FlowBoard is running: ask it to come to the front and quit.
+            // Another FlowBoard is running: hand it the project to open (if any), bring it to the front and quit.
             try
             {
+                AppPaths.DetectLocation();
+                if (ProjectArg(e.Args) is { } file)
+                {
+                    Directory.CreateDirectory(AppPaths.AppDir);
+                    File.WriteAllText(AppPaths.OpenRequestFile, Path.GetFullPath(file));
+                }
+
                 using var ev = EventWaitHandle.OpenExisting(ShowEventName);
                 ev.Set();
             }
@@ -101,8 +108,8 @@ public partial class App : Application
         _store.StartAutoSave();
 
         // Double-clicking a .flowboard file in Explorer opens that project.
-        var file = e.Args.FirstOrDefault(a => a.EndsWith(AppPaths.ProjectExtension, StringComparison.OrdinalIgnoreCase) && File.Exists(a));
-        if (file != null) _vm.OpenProjectFile(file);
+        if (ProjectArg(e.Args) is { } file) _vm.OpenProjectFile(file);
+        FileAssociation.Register();
         _vm.ShowStartupWarning();
     }
 
@@ -220,11 +227,34 @@ public partial class App : Application
             while (_showEvent.WaitOne())
             {
                 if (IsExiting) return;
-                Dispatcher.BeginInvoke(ShowMainWindow);
+                Dispatcher.BeginInvoke(() =>
+                {
+                    ShowMainWindow();
+                    OpenRequestedProject();
+                });
             }
         })
         { IsBackground = true, Name = "FlowBoard single-instance listener" };
         thread.Start();
+    }
+
+    private static string? ProjectArg(string[] args) =>
+        args.FirstOrDefault(a => a.EndsWith(AppPaths.ProjectExtension, StringComparison.OrdinalIgnoreCase) && File.Exists(a));
+
+    /// <summary>Opens a project another FlowBoard launch (e.g. a double-click in Explorer) passed along.</summary>
+    private void OpenRequestedProject()
+    {
+        try
+        {
+            if (!File.Exists(AppPaths.OpenRequestFile)) return;
+            var file = File.ReadAllText(AppPaths.OpenRequestFile).Trim();
+            File.Delete(AppPaths.OpenRequestFile);
+            if (File.Exists(file)) _vm?.OpenProjectFile(file);
+        }
+        catch
+        {
+            // Nothing to open.
+        }
     }
 
     public void ShowMainWindow()

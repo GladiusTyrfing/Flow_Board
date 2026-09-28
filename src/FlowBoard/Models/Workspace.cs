@@ -7,6 +7,8 @@ namespace FlowBoard.Models;
 public partial class Workspace : ObservableObject
 {
     [ObservableProperty] private int _version = 1;
+    /// <summary>Name of the folder next to the project file that holds its media ("&lt;name&gt; files").</summary>
+    public string? MediaFolder { get; set; }
     [ObservableProperty] private ObservableCollection<Board> _boards = [];
     [ObservableProperty] private ObservableCollection<BoardTemplate> _userTemplates = [];
     [ObservableProperty] private ObservableCollection<Storyboard> _storyboards = [];

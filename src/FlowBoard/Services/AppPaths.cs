@@ -19,8 +19,10 @@ public static class AppPaths
     /// <summary>The open project file, or null when no project is open.</summary>
     public static string? ProjectFile { get; private set; }
 
-    /// <summary>Folder of the open project; media paths are stored relative to it.</summary>
-    public static string DataDir => ProjectFile != null ? Path.GetDirectoryName(ProjectFile)! : AppDir;
+    private static string? _mediaDir;
+
+    /// <summary>Media folder of the open project; media paths are stored relative to it.</summary>
+    public static string DataDir => ProjectFile != null ? _mediaDir ?? Path.GetDirectoryName(ProjectFile)! : AppDir;
 
     public static string DataFile => ProjectFile ?? LegacyDataFile;
     /// <summary>Where everything was stored before projects existed. It opens like any other project.</summary>
@@ -31,11 +33,17 @@ public static class AppPaths
     public static string BackupsDir => Path.Combine(DataDir, "backups");
     public static string TempDir => Path.Combine(AppDir, "temp");
 
-    public static string DefaultProjectsDir => IsPortable
+    /// <summary>Projects folder chosen in Settings (null = the built-in default).</summary>
+    public static string? CustomProjectsDir { get; set; }
+
+    public static string BuiltInProjectsDir => IsPortable
         ? Path.Combine(AppDir, "Projects")
         : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "FlowBoard Projects");
 
-    public static void Initialize()
+    public static string DefaultProjectsDir => string.IsNullOrWhiteSpace(CustomProjectsDir) ? BuiltInProjectsDir : CustomProjectsDir;
+
+    /// <summary>Works out where app data lives (normal or portable) without touching any files.</summary>
+    public static void DetectLocation()
     {
         var exeDir = AppContext.BaseDirectory;
         if (File.Exists(Path.Combine(exeDir, "portable.txt")))
@@ -43,6 +51,14 @@ public static class AppPaths
             IsPortable = true;
             AppDir = Path.Combine(exeDir, "Data");
         }
+    }
+
+    /// <summary>A second FlowBoard started with a file leaves it here for the running one.</summary>
+    public static string OpenRequestFile => Path.Combine(AppDir, "open-request.txt");
+
+    public static void Initialize()
+    {
+        DetectLocation();
 
         foreach (var dir in new[] { AppDir, TempDir })
             Directory.CreateDirectory(dir);
@@ -59,9 +75,10 @@ public static class AppPaths
     }
 
     /// <summary>Switches to a project file (or to none) and makes sure its media folders exist.</summary>
-    public static void SetProject(string? file)
+    public static void SetProject(string? file, string? mediaDir = null)
     {
         ProjectFile = file == null ? null : Path.GetFullPath(file);
+        _mediaDir = mediaDir == null ? null : Path.GetFullPath(mediaDir);
         if (ProjectFile == null) return;
         foreach (var dir in new[] { AttachmentsDir, BackgroundsDir, BackupsDir })
             Directory.CreateDirectory(dir);

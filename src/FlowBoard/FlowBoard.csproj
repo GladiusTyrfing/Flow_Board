@@ -14,7 +14,10 @@
     <Version>1.0.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <Product>FlowBoard</Product>
-    <Description>A local-first Kanban task board for Windows.</Description>
+    <Description>FlowBoard — a local-first workspace for boards, storyboards, canvases and pages.</Description>
+    <Authors>Gladius_Tyrfing</Authors>
+    <Company>Gladius_Tyrfing</Company>
+    <Copyright>© 2026 Gladius_Tyrfing. All rights reserved.</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +28,7 @@
   <ItemGroup>
     <Resource Include="Assets\app.ico" />
     <Resource Include="Assets\app.png" />
+    <Resource Include="Assets\project.ico" />
     <Resource Include="Assets\Fonts\*.ttf" />
   </ItemGroup>
 

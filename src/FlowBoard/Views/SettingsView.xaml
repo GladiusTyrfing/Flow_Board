@@ -133,6 +133,12 @@
                                 <TextBlock Text="Data &amp; backup" Margin="10,0,0,0" />
                             </StackPanel>
                         </RadioButton>
+                        <RadioButton Style="{StaticResource NavItem}" IsChecked="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=about}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Info24" FontSize="16" />
+                                <TextBlock Text="About" Margin="10,0,0,0" />
+                            </StackPanel>
+                        </RadioButton>
                     </StackPanel>
                 </DockPanel>
             </Border>
@@ -297,10 +303,34 @@
                     <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=general}">
                         <TextBlock Text="General" Style="{StaticResource PageTitle}" />
                         <DockPanel Style="{StaticResource Row}">
-                            <ui:TextBox DockPanel.Dock="Right" Width="220" VerticalAlignment="Center" Text="{Binding Settings.DisplayName, UpdateSourceTrigger=PropertyChanged}" />
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <ui:TextBox Width="220" Text="{Binding Settings.DisplayName, UpdateSourceTrigger=PropertyChanged}" />
+                                <Button Style="{StaticResource Fb.IconButton}" Margin="6,0,0,0" Command="{Binding UseWindowsNameCommand}" ToolTip="Use my Windows user name">
+                                    <ui:SymbolIcon Symbol="ArrowReset24" FontSize="15" />
+                                </Button>
+                            </StackPanel>
                             <StackPanel Style="{StaticResource RowText}">
                                 <TextBlock Text="Your name" Style="{StaticResource RowTitle}" />
-                                <TextBlock Text="Shown on comments and activity." Style="{StaticResource RowHint}" />
+                                <TextBlock Style="{StaticResource RowHint}" TextWrapping="Wrap">
+                                    <Run Text="Shown on comments and activity. Follows your Windows user name (" /><Run Text="{Binding WindowsUserName, Mode=OneWay}" FontWeight="SemiBold" /><Run Text=") unless you type your own." />
+                                </TextBlock>
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource Row}">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Style="{StaticResource Fb.SubtleButton}" Content="Change…" Command="{Binding BrowseProjectsFolderCommand}" />
+                                <Button Style="{StaticResource Fb.IconButton}" Margin="6,0,0,0" Command="{Binding OpenProjectsFolderCommand}" ToolTip="Open the folder">
+                                    <ui:SymbolIcon Symbol="FolderOpen24" FontSize="15" />
+                                </Button>
+                                <Button Style="{StaticResource Fb.IconButton}" Margin="2,0,0,0" Command="{Binding ResetProjectsFolderCommand}" ToolTip="Back to the default folder"
+                                        Visibility="{Binding HasCustomProjectsDir, Converter={StaticResource BoolToVis}}">
+                                    <ui:SymbolIcon Symbol="ArrowReset24" FontSize="15" />
+                                </Button>
+                            </StackPanel>
+                            <StackPanel Style="{StaticResource RowText}">
+                                <TextBlock Text="Projects folder" Style="{StaticResource RowTitle}" />
+                                <TextBlock Text="{Binding ProjectsDir}" Style="{StaticResource RowHint}" FontFamily="Consolas" TextWrapping="Wrap" />
+                                <TextBlock Text="Where the save dialog starts for new projects and “Save project as”. You can still save anywhere." Style="{StaticResource RowHint}" TextWrapping="Wrap" />
                             </StackPanel>
                         </DockPanel>
                         <DockPanel Style="{StaticResource Row}">
@@ -440,6 +470,82 @@
                                 <TextBlock Text="Start the next focus session automatically" Style="{StaticResource RowTitle}" />
                             </StackPanel>
                         </DockPanel>
+                    </StackPanel>
+
+                    <!-- About -->
+                    <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=about}">
+                        <Grid Margin="0,4,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Image Source="pack://application:,,,/Assets/app.png" Width="84" Height="84" RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Top" />
+                            <StackPanel Grid.Column="1" Margin="18,2,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="FlowBoard" Style="{StaticResource Fb.GradientTitle}" FontSize="30" />
+                                <TextBlock Style="{StaticResource Fb.Muted}" FontSize="13">
+                                    <Run Text="Version" /> <Run Text="{Binding Version, Mode=OneWay}" FontWeight="SemiBold" /> <Run Text="· Windows 10 &amp; 11 · 64-bit" />
+                                </TextBlock>
+                                <TextBlock Text="Plan, storyboard and think visually — all in one place, all on your PC." Style="{StaticResource Fb.Text}" FontSize="14" Margin="0,6,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Style="{StaticResource Fb.Section}">
+                            <StackPanel>
+                                <TextBlock Text="Created by" Style="{StaticResource Fb.Caption}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <Border Width="40" Height="40" CornerRadius="20" Background="{DynamicResource Fb.AccentGradientBrush}">
+                                        <TextBlock Text="GT" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="14" Foreground="White" />
+                                    </Border>
+                                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Gladius_Tyrfing" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource Fb.TextBrush}" />
+                                        <TextBlock Text="Designer &amp; developer of FlowBoard" Style="{StaticResource Fb.Muted}" FontSize="12.5" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Fb.Section}">
+                            <StackPanel>
+                                <TextBlock Text="What FlowBoard is" Style="{StaticResource Fb.Caption}" />
+                                <TextBlock Style="{StaticResource Fb.Text}" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0" LineHeight="20"
+                                           Text="FlowBoard is a local-first workspace for Windows that brings task management, pre-production and visual thinking together. Everything lives in project files on your own computer, and every part links to every other part — a card can point to a storyboard shot, a page can mention a canvas, and marking a shot done completes its card." />
+                                <Grid Margin="0,12,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource Fb.Text}" FontSize="12.5" Margin="0,2"><Run Text="Boards" FontWeight="Bold" /><Run Text=" — Kanban, table, calendar and timeline views" /></TextBlock>
+                                        <TextBlock Style="{StaticResource Fb.Text}" FontSize="12.5" Margin="0,2"><Run Text="Storyboards" FontWeight="Bold" /><Run Text=" — film and animation, animatic player" /></TextBlock>
+                                        <TextBlock Style="{StaticResource Fb.Text}" FontSize="12.5" Margin="0,2"><Run Text="Canvas" FontWeight="Bold" /><Run Text=" — flowcharts, mind maps, sections, ink" /></TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Style="{StaticResource Fb.Text}" FontSize="12.5" Margin="0,2"><Run Text="Pages" FontWeight="Bold" /><Run Text=" — rich-text docs with inline links" /></TextBlock>
+                                        <TextBlock Style="{StaticResource Fb.Text}" FontSize="12.5" Margin="0,2"><Run Text="Home" FontWeight="Bold" /><Run Text=" — projects and stats for every section" /></TextBlock>
+                                        <TextBlock Style="{StaticResource Fb.Text}" FontSize="12.5" Margin="0,2"><Run Text="Export" FontWeight="Bold" /><Run Text=" — PNG, SVG, draw.io, Mermaid, JSON, CSV, text" /></TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Fb.Section}">
+                            <StackPanel>
+                                <TextBlock Text="Privacy" Style="{StaticResource Fb.Caption}" />
+                                <TextBlock Style="{StaticResource Fb.Text}" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"
+                                           Text="FlowBoard works fully offline. There is no account, no cloud sync, no telemetry and no network access — your projects never leave your computer unless you copy them yourself." />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Fb.Section}">
+                            <StackPanel>
+                                <TextBlock Text="Open-source components" Style="{StaticResource Fb.Caption}" />
+                                <TextBlock Style="{StaticResource Fb.Muted}" FontSize="12.5" TextWrapping="Wrap" Margin="0,8,0,0" LineHeight="19">
+                                    <Run Text="WPF-UI (MIT) · CommunityToolkit.Mvvm (MIT) · gong-wpf-dragdrop (BSD-3-Clause) · NAudio (MIT) · Fluent System Icons (MIT) · .NET 8 (MIT)" />
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="{Binding Copyright}" Style="{StaticResource Fb.Muted}" FontSize="12" Margin="2,4,0,0" />
                     </StackPanel>
 
                     <!-- Data -->

@@ -55,9 +55,8 @@ public sealed partial class DashboardViewModel : DocumentViewModel
     public void Refresh()
     {
         var now = DateTime.Now;
-        var name = Main.Settings.DisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
-        var part = now.Hour switch { < 5 => "Good night", < 12 => "Good morning", < 18 => "Good afternoon", _ => "Good evening" };
-        Greeting = string.IsNullOrEmpty(name) ? part : $"{part}, {name}";
+        // A plain title: the project's name, or a welcome when nothing is open.
+        Greeting = Main.HasProject ? Main.ProjectName : "Welcome to FlowBoard";
         DateText = now.ToString("dddd, d MMMM");
         Projects = Main.RecentProjects;
         OnPropertyChanged(nameof(HasProject));

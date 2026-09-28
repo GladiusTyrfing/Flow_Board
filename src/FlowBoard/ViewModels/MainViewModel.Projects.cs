@@ -80,6 +80,8 @@ public sealed partial class MainViewModel
         OnPropertyChanged(nameof(WindowTitle));
         OpenDashboard();
         ShowStartupWarning();
+        if (_store.IsLegacyWorkspace)
+            ShowToast("This is the workspace from an older FlowBoard. Save it as a project file to keep it anywhere you like.", "Save project as…", () => SaveProjectAsCommand.Execute(null));
     }
 
     private void RunProjectSwitch(Func<string?> action, string? toast)
@@ -103,33 +105,36 @@ public sealed partial class MainViewModel
     // ---------- commands ----------
 
     [RelayCommand]
-    private async Task NewProject() => await CreateProjectIn(AppPaths.DefaultProjectsDir, sample: false);
+    private void NewProject() => CreateProject(sample: false);
 
     [RelayCommand]
-    private async Task NewSampleProject() => await CreateProjectIn(AppPaths.DefaultProjectsDir, sample: true);
+    private void NewSampleProject() => CreateProject(sample: true);
 
-    [RelayCommand]
-    private async Task NewProjectIn()
+    /// <summary>A save dialog: pick the name and any folder. A "&lt;name&gt; files" folder for pictures and recordings goes next to it.</summary>
+    private static string? AskProjectPath(string title, string suggestedName)
     {
-        var dlg = new OpenFolderDialog { Title = "Choose where the new project folder goes", InitialDirectory = AppPaths.DefaultProjectsDir };
         Directory.CreateDirectory(AppPaths.DefaultProjectsDir);
-        if (dlg.ShowDialog() != true) return;
-        await CreateProjectIn(dlg.FolderName, sample: false);
+        var dlg = new SaveFileDialog
+        {
+            Title = title,
+            Filter = $"FlowBoard project (*{AppPaths.ProjectExtension})|*{AppPaths.ProjectExtension}",
+            DefaultExt = AppPaths.ProjectExtension,
+            AddExtension = true,
+            FileName = AppPaths.SafeName(suggestedName),
+            InitialDirectory = AppPaths.DefaultProjectsDir,
+        };
+        return dlg.ShowDialog() == true ? dlg.FileName : null;
     }
 
-    private async Task CreateProjectIn(string parent, bool sample)
+    private void CreateProject(bool sample)
     {
-        var name = await PromptAsync(
-            sample ? "New sample project" : "New project",
-            $"A folder with this name is created in {parent}. Boards, storyboards, canvases, pages and their files all live inside it.",
-            "Project name", "Create project", sample ? "Sample project" : "My project");
-        if (name == null) return;
+        var file = AskProjectPath(sample ? "Create a sample project" : "Create a new project", sample ? "Sample project" : "Untitled project");
+        if (file == null) return;
         var ws = new Workspace();
         if (sample) ws.Boards.Add(TemplateService.CreateWelcomeBoard(Settings.DisplayName));
         RunProjectSwitch(() =>
         {
-            Directory.CreateDirectory(parent);
-            _store.CreateProject(parent, name, ws);
+            _store.CreateProject(file, ws);
             return null;
         }, $"Project \"{_store.ProjectName}\" created");
         if (sample && Workspace.Boards.FirstOrDefault() is { } b) SelectBoard(b);
@@ -143,7 +148,7 @@ public sealed partial class MainViewModel
         {
             Title = "Open project",
             Filter = $"FlowBoard project|*{AppPaths.ProjectExtension};data.json|All files|*.*",
-            InitialDirectory = ProjectPath != null ? Path.GetDirectoryName(Path.GetDirectoryName(ProjectPath)) : AppPaths.DefaultProjectsDir,
+            InitialDirectory = ProjectPath != null ? Path.GetDirectoryName(ProjectPath) : AppPaths.DefaultProjectsDir,
         };
         if (dlg.ShowDialog() != true) return;
         OpenProjectFile(dlg.FileName);
@@ -194,19 +199,18 @@ public sealed partial class MainViewModel
         }, null);
     }
 
+    /// <summary>Saves the open project as a new .flowboard file anywhere (its files are copied along) and keeps working in it.</summary>
     [RelayCommand]
-    private async Task SaveProjectCopy()
+    private void SaveProjectAs()
     {
         if (!HasProject) return;
-        var name = await PromptAsync("Save a copy as", $"The project and all its files are copied to a new folder in {AppPaths.DefaultProjectsDir}, and the copy is opened.",
-            "Project name", "Save copy", ProjectName + " copy");
-        if (name == null) return;
+        var file = AskProjectPath("Save project as", ProjectName);
+        if (file == null) return;
         RunProjectSwitch(() =>
         {
-            Directory.CreateDirectory(AppPaths.DefaultProjectsDir);
-            _store.SaveCopyAs(AppPaths.DefaultProjectsDir, name);
+            _store.SaveProjectAs(file);
             return null;
-        }, "Copy saved and opened");
+        }, "Project saved");
     }
 
     [RelayCommand]

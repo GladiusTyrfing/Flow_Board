@@ -33,6 +33,8 @@ public partial class Card : ObservableObject
     [ObservableProperty] private ObservableCollection<Guid> _linkedCardIds = [];
     /// <summary>Cards that must be finished before this one (dependencies, drawn on the timeline).</summary>
     [ObservableProperty] private ObservableCollection<Guid> _blockedByIds = [];
+    /// <summary>Things in other sections this card is about: boards, storyboards, single shots, canvases, pages.</summary>
+    [ObservableProperty] private ObservableCollection<ItemLink> _links = [];
     [ObservableProperty] private ObservableCollection<Checklist> _checklists = [];
     [ObservableProperty] private ObservableCollection<Attachment> _attachments = [];
     [ObservableProperty] private ObservableCollection<Comment> _comments = [];
@@ -45,7 +47,7 @@ public partial class Card : ObservableObject
     /// <summary>Waiting on at least one unfinished "blocked by" card (set by the app when the board is shown).</summary>
     [ObservableProperty][property: JsonIgnore] private bool _isBlocked;
 
-    [JsonIgnore] public int RelationCount => LinkedCardIds.Count + BlockedByIds.Count;
+    [JsonIgnore] public int RelationCount => LinkedCardIds.Count + BlockedByIds.Count + Links.Count;
 
     private Board? _board;
 
@@ -184,6 +186,7 @@ public partial class Card : ObservableObject
     {
         CompletedAt = value ? DateTime.Now : null;
         RefreshTimeState();
+        ModelEvents.RaiseCardCompletion(this);
     }
 
     partial void OnDueDateChanged(DateTime? value)
@@ -317,4 +320,29 @@ public partial class Card : ObservableObject
         OnPropertyChanged(nameof(TrackedTimeText));
         OnPropertyChanged(nameof(HasTrackedTime));
     }
+}
+
+/// <summary>A card's link to something in another section.</summary>
+public sealed class ItemLink
+{
+    public LinkTarget Kind { get; set; }
+    public Guid Id { get; set; }
+
+    public ItemLink() { }
+    public ItemLink(LinkTarget kind, Guid id) { Kind = kind; Id = id; }
+}
+
+/// <summary>
+/// Completion changes anywhere in the model, so linked items can follow each other
+/// (a shot marked Done completes its card, a completed card ticks its to-do on a page, and back).
+/// </summary>
+public static class ModelEvents
+{
+    public static event Action<Card>? CardCompletionChanged;
+    public static event Action<Shot>? ShotStatusChanged;
+    public static event Action<NoteBlock>? TodoChanged;
+
+    public static void RaiseCardCompletion(Card c) => CardCompletionChanged?.Invoke(c);
+    public static void RaiseShotStatus(Shot s) => ShotStatusChanged?.Invoke(s);
+    public static void RaiseTodo(NoteBlock b) => TodoChanged?.Invoke(b);
 }

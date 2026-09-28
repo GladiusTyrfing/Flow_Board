@@ -47,6 +47,50 @@ public sealed partial class SettingsViewModel : DialogViewModel
     public IReadOnlyList<BackdropMode> Backdrops { get; } = Enum.GetValues<BackdropMode>();
     public string AppDir => AppPaths.AppDir;
     public string ProjectsDir => AppPaths.DefaultProjectsDir;
+    public bool HasCustomProjectsDir => !string.IsNullOrWhiteSpace(Settings.ProjectsFolder);
+    public string WindowsUserName => Environment.UserName;
+    public string Copyright => $"© {Math.Max(2026, DateTime.Now.Year)} Gladius_Tyrfing. All rights reserved.";
+
+    [RelayCommand]
+    private void BrowseProjectsFolder()
+    {
+        var dlg = new Microsoft.Win32.OpenFolderDialog { Title = "Choose where new projects are saved", InitialDirectory = ProjectsDir };
+        System.IO.Directory.CreateDirectory(ProjectsDir);
+        if (dlg.ShowDialog() != true) return;
+        Settings.ProjectsFolder = dlg.FolderName;
+        OnPropertyChanged(nameof(ProjectsDir));
+        OnPropertyChanged(nameof(HasCustomProjectsDir));
+    }
+
+    [RelayCommand]
+    private void ResetProjectsFolder()
+    {
+        Settings.ProjectsFolder = null;
+        OnPropertyChanged(nameof(ProjectsDir));
+        OnPropertyChanged(nameof(HasCustomProjectsDir));
+    }
+
+    [RelayCommand]
+    private void OpenProjectsFolder()
+    {
+        try
+        {
+            System.IO.Directory.CreateDirectory(ProjectsDir);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ProjectsDir) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Main.ShowToast(ex.Message, isError: true);
+        }
+    }
+
+    /// <summary>Back to following the Windows user name.</summary>
+    [RelayCommand]
+    private void UseWindowsName()
+    {
+        Settings.LastSystemUserName = null;
+        Settings.SyncDisplayName(Environment.UserName);
+    }
     public IReadOnlyList<AccentPreset> Accents => ThemeService.AccentPresets;
 
     /// <summary>Which settings page is shown (appearance, general, hotkeys, reminders, focus, data).</summary>

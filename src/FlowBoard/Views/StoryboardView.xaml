@@ -138,6 +138,12 @@
                                 <MenuItem Header="Export as image…" Command="{Binding ExportImageCommand}">
                                     <MenuItem.Icon><ui:SymbolIcon Symbol="ImageArrowForward24" /></MenuItem.Icon>
                                 </MenuItem>
+                                <MenuItem Header="Export shot list (CSV)…" Command="{Binding ExportAsCommand}" CommandParameter="csv">
+                                    <MenuItem.Icon><ui:SymbolIcon Symbol="Table24" /></MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Export as JSON…" Command="{Binding ExportAsCommand}" CommandParameter="json">
+                                    <MenuItem.Icon><ui:SymbolIcon Symbol="BracesVariable24" /></MenuItem.Icon>
+                                </MenuItem>
                                 <MenuItem Header="Print…" Command="{Binding PrintCommand}">
                                     <MenuItem.Icon><ui:SymbolIcon Symbol="Print24" /></MenuItem.Icon>
                                 </MenuItem>
@@ -195,6 +201,7 @@
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
@@ -272,10 +279,22 @@
                                                         </ContextMenu>
                                                     </Button.ContextMenu>
                                                 </Button>
-                                                <Button Grid.Column="3" Style="{StaticResource Fb.IconButton}" Width="28" Height="28" h:Behaviors.ClickOpensContextMenu="True" ToolTip="Shot menu">
+                                                <Button Grid.Column="3" Style="{StaticResource Fb.IconButton}" Width="28" Height="28" ToolTip="Open the linked card (Done follows both ways)"
+                                                        Visibility="{Binding LinkedCardCount, Converter={StaticResource HasValueToVis}}"
+                                                        Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.OpenShotCardCommand}" CommandParameter="{Binding}">
+                                                    <ui:SymbolIcon Symbol="TaskListLtr24" FontSize="15" Foreground="{DynamicResource Fb.AccentTextBrush}" />
+                                                </Button>
+                                                <Button Grid.Column="4" Style="{StaticResource Fb.IconButton}" Width="28" Height="28" h:Behaviors.ClickOpensContextMenu="True" ToolTip="Shot menu">
                                                     <ui:SymbolIcon Symbol="MoreVertical24" FontSize="15" />
                                                     <Button.ContextMenu>
                                                         <ContextMenu>
+                                                            <MenuItem Header="Make a card for this shot" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.MakeCardForShotCommand}" CommandParameter="{Binding}">
+                                                                <MenuItem.Icon><ui:SymbolIcon Symbol="TaskListAdd24" /></MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <MenuItem Header="Link to a card…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.LinkShotToCardCommand}" CommandParameter="{Binding}">
+                                                                <MenuItem.Icon><ui:SymbolIcon Symbol="Link24" /></MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <Separator />
                                                             <MenuItem Header="Play from here" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.PlayAnimaticCommand}" CommandParameter="{Binding}">
                                                                 <MenuItem.Icon><ui:SymbolIcon Symbol="Play24" /></MenuItem.Icon>
                                                             </MenuItem>

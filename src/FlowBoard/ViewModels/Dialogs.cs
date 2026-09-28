@@ -90,6 +90,7 @@ public sealed class ShortcutsViewModel : DialogViewModel
                 new("Ctrl + Z / Ctrl + Y", "Undo / Redo"),
                 new("Ctrl + S", "Save now (FlowBoard also saves automatically)"),
                 new("Ctrl + O", "Open a project"),
+                new("Ctrl + Shift + Alt + S", "Save project as… (any name, any folder)"),
                 new("Ctrl + H", "Home: projects, and stats for every section"),
                 new("Ctrl + M", "Show or hide the minimap"),
                 new("Ctrl + Shift + S", "High-res screenshot of what's open (the whole board, canvas, storyboard or page)"),

@@ -136,6 +136,10 @@ public partial class Shot : ObservableObject
     [JsonIgnore] public bool HasVoice => VoiceNote != null;
 
     partial void OnVoiceNoteChanged(Attachment? value) => OnPropertyChanged(nameof(HasVoice));
+    partial void OnStatusChanged(string value) => ModelEvents.RaiseShotStatus(this);
+
+    /// <summary>How many cards link to this shot (kept up to date by the storyboard view).</summary>
+    [ObservableProperty][property: JsonIgnore] private int _linkedCardCount;
 
     partial void OnImagePathChanged(string? value)
     {
@@ -413,6 +417,7 @@ public partial class NoteBlock : ObservableObject
     [JsonIgnore] public bool IsEmpty => Text.Length == 0;
 
     partial void OnImagePathChanged(string? value) => OnPropertyChanged(nameof(ImageFullPath));
+    partial void OnIsCheckedChanged(bool value) => ModelEvents.RaiseTodo(this);
 
     /// <summary>The block's text as formatted spans (a single plain span when it has no formatting).</summary>
     public List<TextSpan> GetSpans() => Spans is { Count: > 0 } s ? s.Select(x => x.With(x.Text)).ToList() : [new TextSpan { Text = Text }];

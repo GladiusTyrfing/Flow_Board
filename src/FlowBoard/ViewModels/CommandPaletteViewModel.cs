@@ -197,7 +197,7 @@ public sealed partial class CommandPaletteViewModel : DialogViewModel
         new() { Title = "Home", Group = "Commands", Icon = SymbolRegular.Home24, Shortcut = "Ctrl+H", Execute = () => _main.OpenDashboardCommand.Execute(null) },
         new() { Title = "New project…", Group = "Project", Icon = SymbolRegular.FolderAdd24, Execute = () => _main.NewProjectCommand.Execute(null) },
         new() { Title = "Open project…", Group = "Project", Icon = SymbolRegular.FolderOpen24, Shortcut = "Ctrl+O", Execute = () => _main.OpenProjectCommand.Execute(null) },
-        new() { Title = "Save a copy of the project as…", Group = "Project", Icon = SymbolRegular.DocumentCopy24, Execute = () => _main.SaveProjectCopyCommand.Execute(null) },
+        new() { Title = "Save project as…", Group = "Project", Icon = SymbolRegular.SaveEdit24, Shortcut = "Ctrl+Shift+Alt+S", Execute = () => _main.SaveProjectAsCommand.Execute(null) },
         new() { Title = "Close project", Group = "Project", Icon = SymbolRegular.Dismiss20, Execute = () => _main.CloseProjectCommand.Execute(null) },
         new() { Title = "Show / hide minimap", Group = "Commands", Icon = SymbolRegular.Map24, Shortcut = "Ctrl+M", Execute = () => _main.ToggleMinimapCommand.Execute(null) },
         new() { Title = "New storyboard", Group = "Commands", Icon = SymbolRegular.VideoClip24, Execute = () => _main.NewStoryboardCommand.Execute(null) },

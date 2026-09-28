@@ -627,6 +627,11 @@ public sealed partial class NoteViewModel : DocumentViewModel
         }
     }
 
+    /// <summary>Export as plain text or JSON (Markdown has its own command).</summary>
+    [RelayCommand]
+    private void ExportAs(string format) =>
+        Main.SaveExport(format == "json" ? Exporters.PageToJson(Page, Main.Workspace) : Exporters.PageToText(Page, Main.Workspace), Page.Title, format);
+
     [RelayCommand]
     private void CopyMarkdown()
     {
@@ -647,18 +652,25 @@ public sealed partial class NoteViewModel : DocumentViewModel
     {
         var board = Main.CurrentBoard;
         var list = board?.Lists.FirstOrDefault(l => !l.IsDoneList);
-        var todos = Page.Blocks.Where(b => b.Type == BlockType.Todo && !b.IsChecked && !string.IsNullOrWhiteSpace(b.Text)).ToList();
+        // To-dos that already have a card stay linked to it (no duplicates).
+        var todos = Page.Blocks.Where(b => b.Type == BlockType.Todo && !b.IsChecked && !string.IsNullOrWhiteSpace(b.Text)
+                                           && !(b.LinkKind == LinkTarget.Card && b.LinkId is { } id && Main.Workspace.FindCard(id, out _, out _) != null)).ToList();
         if (board == null || list == null || todos.Count == 0)
         {
-            Main.ShowToast(todos.Count == 0 ? "There are no open to-dos on this page." : "Open a board with a list first.", isError: true);
+            Main.ShowToast(todos.Count == 0 ? "There are no open to-dos without a card on this page." : "Open a board with a list first.", isError: true);
             return;
         }
 
+        Checkpoint();
         foreach (var t in todos)
         {
             var card = Main.CreateCardFromText(t.Text, board, list);
             card.Description = $"From the page \"{Page.Title}\"";
+            card.Links.Add(new ItemLink(LinkTarget.Note, Page.Id));
             list.Cards.Add(card);
+            // The to-do and the card now tick each other off.
+            t.LinkKind = LinkTarget.Card;
+            t.LinkId = card.Id;
         }
 
         Main.ShowToast($"Added {todos.Count} cards to \"{list.Name}\" on {board.Name}");

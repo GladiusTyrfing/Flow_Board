@@ -110,3 +110,133 @@ public class BoxTests
         Assert.True(outer.Intersects(new Box(90, 10, 20, 20)));
     }
 }
+
+public class ProjectPackageTests
+{
+    private static string TempDir()
+    {
+        var d = Path.Combine(Path.GetTempPath(), "fb-tests-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(d);
+        return d;
+    }
+
+    [Fact]
+    public void Flowboard_files_are_packages_that_round_trip()
+    {
+        var dir = TempDir();
+        var file = Path.Combine(dir, "Film.flowboard");
+        var ws = new Workspace { MediaFolder = "Film files" };
+        ws.Boards.Add(new Board { Name = "Shots" });
+        ProjectPackage.Write(file, System.Text.Json.JsonSerializer.Serialize(ws, Json.Options));
+
+        Assert.True(ProjectPackage.IsPackage(file));
+        Assert.DoesNotContain("\"Shots\"", File.ReadAllText(file)); // compressed, not readable JSON
+        var back = ProjectPackage.Read(file);
+        Assert.Equal("Shots", back.Boards.Single().Name);
+        Assert.Equal("Film files", back.MediaFolder);
+        Directory.Delete(dir, true);
+    }
+
+    [Fact]
+    public void Plain_json_projects_still_open()
+    {
+        var dir = TempDir();
+        var file = Path.Combine(dir, "data.json");
+        var ws = new Workspace();
+        ws.Notes.Add(new NotePage { Title = "Old" });
+        ProjectPackage.Write(file, System.Text.Json.JsonSerializer.Serialize(ws, Json.Options));
+        Assert.False(ProjectPackage.IsPackage(file)); // data.json stays JSON
+        Assert.Equal("Old", ProjectPackage.Read(file).Notes.Single().Title);
+        Directory.Delete(dir, true);
+    }
+
+    [Fact]
+    public void Media_folder_sits_next_to_the_file_and_survives_renames()
+    {
+        var dir = TempDir();
+        var file = Path.Combine(dir, "Renamed.flowboard");
+        Assert.Equal(Path.Combine(dir, "Renamed files"), ProjectPackage.MediaDirFor(file, null));
+        Directory.CreateDirectory(Path.Combine(dir, "Original files"));
+        Assert.Equal(Path.Combine(dir, "Original files"), ProjectPackage.MediaDirFor(file, "Original files"));
+        Directory.Delete(dir, true);
+    }
+
+    [Fact]
+    public void Older_project_folders_keep_media_beside_the_file()
+    {
+        var dir = TempDir();
+        Directory.CreateDirectory(Path.Combine(dir, "attachments"));
+        Assert.Equal(dir, ProjectPackage.MediaDirFor(Path.Combine(dir, "X.flowboard"), null));
+        Assert.Equal(dir, ProjectPackage.MediaDirFor(Path.Combine(dir, "data.json"), null));
+        Directory.Delete(dir, true);
+    }
+}
+
+public class DisplayNameTests
+{
+    [Fact]
+    public void Name_follows_windows_until_customised()
+    {
+        var s = new AppSettings { DisplayName = "old-pc-name" };
+        s.SyncDisplayName("Gladius_Tyrfing");          // never synced before: follows Windows
+        Assert.Equal("Gladius_Tyrfing", s.DisplayName);
+
+        s.SyncDisplayName("NewPC");                     // still the Windows name: follows again
+        Assert.Equal("NewPC", s.DisplayName);
+
+        s.DisplayName = "Gladius";                      // typed by the user
+        s.SyncDisplayName("OtherPC");
+        Assert.Equal("Gladius", s.DisplayName);
+    }
+}
+
+public class LinkSyncTests
+{
+    [Theory]
+    [InlineData(true, "Planned", "Done")]
+    [InlineData(true, "Approved", null)]     // already done: leave "Approved" alone
+    [InlineData(false, "Done", "In progress")]
+    [InlineData(false, "Planned", null)]
+    public void Shot_status_follows_its_card(bool cardDone, string current, string? expected) =>
+        Assert.Equal(expected, LinkSync.ShotStatusFor(cardDone, current));
+
+    [Fact]
+    public void Finds_cards_shots_and_todos_that_belong_together()
+    {
+        var ws = new Workspace();
+        var sb = new Storyboard();
+        var shot = new Shot { Title = "Cartwheel" };
+        sb.Shots.Add(shot);
+        ws.Storyboards.Add(sb);
+
+        var card = new Card { Title = "Film the cartwheel" };
+        card.Links.Add(new ItemLink(LinkTarget.Shot, shot.Id));
+        var board = new Board();
+        var list = new BoardList();
+        list.Cards.Add(card);
+        board.Lists.Add(list);
+        ws.Boards.Add(board);
+
+        var page = new NotePage();
+        var todo = new NoteBlock { Type = BlockType.Todo, Text = "Film it", LinkKind = LinkTarget.Card, LinkId = card.Id };
+        page.Blocks.Add(todo);
+        ws.Notes.Add(page);
+
+        Assert.Same(card, LinkSync.CardsLinkedTo(ws, LinkTarget.Shot, shot.Id).Single());
+        Assert.Same(shot, LinkSync.ShotsOf(ws, card).Single());
+        Assert.Same(todo, LinkSync.TodosFor(ws, card.Id).Single());
+        Assert.True(LinkSync.ContainsShot(ws, shot));
+        Assert.False(LinkSync.ContainsShot(ws, new Shot { Id = shot.Id })); // a copy (e.g. an undo snapshot) doesn't count
+        Assert.True(LinkSync.ContainsBlock(ws, todo));
+    }
+
+    [Fact]
+    public void Card_links_survive_saving()
+    {
+        var card = new Card();
+        card.Links.Add(new ItemLink(LinkTarget.Canvas, Guid.NewGuid()));
+        var back = System.Text.Json.JsonSerializer.Deserialize<Card>(System.Text.Json.JsonSerializer.Serialize(card, Json.Options), Json.Options)!;
+        Assert.Equal(card.Links[0].Id, back.Links.Single().Id);
+        Assert.Equal(LinkTarget.Canvas, back.Links[0].Kind);
+    }
+}

@@ -41,6 +41,7 @@
         <KeyBinding Key="F1" Command="{Binding OpenShortcutsCommand}" />
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveNowCommand}" />
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenProjectCommand}" />
+        <KeyBinding Key="S" Modifiers="Control+Shift+Alt" Command="{Binding SaveProjectAsCommand}" />
         <KeyBinding Key="H" Modifiers="Control" Command="{Binding OpenDashboardCommand}" />
         <KeyBinding Key="M" Modifiers="Control" Command="{Binding ToggleMinimapCommand}" />
         <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding ScreenshotCommand}" CommandParameter="save" />
@@ -486,9 +487,6 @@
                                     <MenuItem Header="New project…" Command="{Binding NewProjectCommand}">
                                         <MenuItem.Icon><ui:SymbolIcon Symbol="FolderAdd24" /></MenuItem.Icon>
                                     </MenuItem>
-                                    <MenuItem Header="New project in folder…" Command="{Binding NewProjectInCommand}">
-                                        <MenuItem.Icon><ui:SymbolIcon Symbol="Folder24" /></MenuItem.Icon>
-                                    </MenuItem>
                                     <MenuItem Header="Open project…" InputGestureText="Ctrl+O" Command="{Binding OpenProjectCommand}">
                                         <MenuItem.Icon><ui:SymbolIcon Symbol="FolderOpen24" /></MenuItem.Icon>
                                     </MenuItem>
@@ -505,7 +503,7 @@
                                         </MenuItem.ItemContainerStyle>
                                     </MenuItem>
                                     <Separator />
-                                    <MenuItem Header="Save a copy as…" Command="{Binding SaveProjectCopyCommand}" IsEnabled="{Binding HasProject}">
+                                    <MenuItem Header="Save project as…" InputGestureText="Ctrl+Shift+Alt+S" Command="{Binding SaveProjectAsCommand}" IsEnabled="{Binding HasProject}">
                                         <MenuItem.Icon><ui:SymbolIcon Symbol="DocumentCopy24" /></MenuItem.Icon>
                                     </MenuItem>
                                     <MenuItem Header="Show in Explorer" Command="{Binding ShowProjectInExplorerCommand}" IsEnabled="{Binding HasProject}">
@@ -887,8 +885,16 @@
                                             <MenuItem Header="Duplicate board" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=DuplicateBoardCommand}">
                                                 <MenuItem.Icon><ui:SymbolIcon Symbol="Copy24" /></MenuItem.Icon>
                                             </MenuItem>
-                                            <MenuItem Header="Export board…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ExportBoardCommand}">
+                                            <MenuItem Header="Export board (FlowBoard)…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ExportBoardCommand}">
                                                 <MenuItem.Icon><ui:SymbolIcon Symbol="ArrowExport24" /></MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Export for other apps">
+                                                <MenuItem.Icon><ui:SymbolIcon Symbol="Share24" /></MenuItem.Icon>
+                                                <MenuItem Header="draw.io / diagrams.net (board layout)…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ExportBoardAsCommand}" CommandParameter="drawio"><MenuItem.Icon><ui:SymbolIcon Symbol="Flowchart24" /></MenuItem.Icon></MenuItem>
+                                                <MenuItem Header="Mermaid diagram…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ExportBoardAsCommand}" CommandParameter="mmd"><MenuItem.Icon><ui:SymbolIcon Symbol="Code24" /></MenuItem.Icon></MenuItem>
+                                                <MenuItem Header="CSV spreadsheet…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ExportBoardAsCommand}" CommandParameter="csv"><MenuItem.Icon><ui:SymbolIcon Symbol="Table24" /></MenuItem.Icon></MenuItem>
+                                                <MenuItem Header="Markdown checklist…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ExportBoardAsCommand}" CommandParameter="md"><MenuItem.Icon><ui:SymbolIcon Symbol="DocumentText24" /></MenuItem.Icon></MenuItem>
+                                                <MenuItem Header="JSON…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ExportBoardAsCommand}" CommandParameter="json"><MenuItem.Icon><ui:SymbolIcon Symbol="BracesVariable24" /></MenuItem.Icon></MenuItem>
                                             </MenuItem>
                                             <Separator />
                                             <MenuItem Header="Delete board…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=DeleteBoardCommand}">

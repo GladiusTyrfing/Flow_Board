@@ -26,6 +26,9 @@
     <Compile Include="..\..\src\FlowBoard\Services\PageTemplates.cs" Link="Core\Services\PageTemplates.cs" />
     <Compile Include="..\..\src\FlowBoard\Services\LinkResolver.cs" Link="Core\Services\LinkResolver.cs" />
     <Compile Include="..\..\src\FlowBoard\Services\DashboardStats.cs" Link="Core\Services\DashboardStats.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\ProjectPackage.cs" Link="Core\Services\ProjectPackage.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\LinkSync.cs" Link="Core\Services\LinkSync.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\Exporters.cs" Link="Core\Services\Exporters.cs" />
   </ItemGroup>
 
   <ItemGroup>

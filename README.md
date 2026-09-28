@@ -6,9 +6,10 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 ## Features
 
 **Projects**
-- Work in separate **project files** (`.flowboard`): each project has its own boards, storyboards, canvases and pages, with its images and recordings in the project folder
-- FlowBoard always starts on **Home** with nothing open: create a new project (empty or a sample), open one (Ctrl+O), pick a recent one, or restore a backup zip as a new project
-- Switch projects any time from the project name at the top of the sidebar; save a copy under a new name, back up a project to a zip, show it in Explorer, or open a `.flowboard` file from Explorer with "Open with → FlowBoard"
+- Work in separate **project files** (`.flowboard`): each project has its own boards, storyboards, canvases and pages. A `.flowboard` file is a real packaged file (compressed, not plain JSON) with its own FlowBoard icon in Explorer — double-click it to open it
+- Pictures, recordings, wallpapers and automatic backups live in a "`<name> files`" folder next to the project file
+- FlowBoard always starts on **Home** with nothing open: create a new project (empty or a sample) — choosing its name and **where to save it** — open one (Ctrl+O), pick a recent one, or restore a backup zip as a new project
+- Switch projects any time from the project name at the top of the sidebar; **Save project as…** (any name, any folder), back up a project to a zip, show it in Explorer
 
 **Boards, lists & cards**
 - Unlimited boards, created from templates (Basic Kanban, Project, Bug tracker, Weekly planner, Content pipeline, Personal, Blank) or from your own saved templates
@@ -30,7 +31,9 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 - **Board** (Kanban), **Table** (sortable spreadsheet, all boards optionally), **Calendar** (month grid; drag cards to reschedule, "no date" tray)
 - **Timeline / Gantt**: cards as bars from start to due date, grouped by list — drag a bar to move it, drag its edges to change dates, zoom, "today" line, dependency arrows (red when a card starts before its blocker ends)
 
-**Linked cards & dependencies**
+**Everything is connected**
+- Link a card to a **board, storyboard, single shot, canvas or page** (card → Relate → Link item…), or add a card *for* one straight from a list's "Add card" box (Link… button)
+- **Done follows the links, both ways:** mark a shot *Done* or *Approved* and its cards complete (and move to Done); complete a card and its shots are marked Done and its page to-dos get ticked; tick the to-do and the card completes. "Turn shots into cards" and "turn to-dos into cards" link them automatically
 - Link related cards on any board, and mark cards as *blocked by* / *blocks* other cards (loops are refused)
 - Blocked cards show a lock badge on the board and in the timeline; links open the other card in one click
 
@@ -71,6 +74,7 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 - A full **color picker** (any color, hex, recent colors) next to every palette: labels, lists, covers, board backgrounds, canvas, sketches, note text
 - **Themes and wallpapers for storyboards, canvases and pages** too (Style button): theme presets, photos, gradients, colors, dim, blur, panel transparency
 - **Minimap** in the corner of boards, storyboards, canvases, timelines and pages — drag the box to look around, click to jump (and wheel to zoom on the canvas); hide it with its × button, **Ctrl+M** or in Settings
+- **Export for other apps:** pages as text, JSON or Markdown; canvases as **SVG**, **draw.io / diagrams.net** (same shapes, colors, positions and sections), **Mermaid** or a JSON graph; boards as a draw.io board layout, Mermaid, CSV, Markdown or JSON; storyboards as a CSV shot list or JSON
 - **High-res screenshots** (Ctrl+Shift+S or the camera button): the whole board, canvas, storyboard, timeline or page rendered sharply at up to 3× resolution, saved as PNG or copied
 - Autosave every 2 seconds, rolling automatic backups per project, zip backup of a project and restore as a new project, portable mode
 
@@ -86,7 +90,8 @@ Press **F1** in the app for the full cheat sheet. Highlights:
 | App | Ctrl+F | Filter |
 | App | Ctrl+N or N | New card · Ctrl+Shift+N new board · Ctrl+Shift+L new list |
 | App | Ctrl+Z / Ctrl+Y | Undo / redo |
-| App | Ctrl+O · Ctrl+H · Ctrl+M | Open project · Home · show/hide minimap |
+| App | Ctrl+O · Ctrl+Shift+Alt+S | Open project · save project as |
+| App | Ctrl+H · Ctrl+M | Home · show/hide minimap |
 | App | Ctrl+Tab · Alt+1…9 | Next board · jump to board |
 | App | Ctrl+1 / 2 / 3 / 4 | Board / Table / Calendar / Timeline |
 | App | Ctrl+B or [ · Ctrl+T · Ctrl+P | Sidebar · theme · focus timer |
@@ -119,10 +124,14 @@ Global hotkeys can be changed (or turned off) in **Settings → Hotkeys**.
 
 ## Where is my data?
 
-- **Projects:** each project is a folder (by default in `Documents\FlowBoard Projects\<name>`) holding `<name>.flowboard` (boards, storyboards, canvases, pages as JSON), `attachments\` (card files; storyboard/canvas/page images, sketches and recordings under `attachments\docs\`), `backgrounds\` and `backups\` (rolling automatic copies). Copy or move the folder as a whole.
+- **Projects:** wherever you save them (by default `Documents\FlowBoard Projects`, changeable in **Settings → General**). A project is `<name>.flowboard` plus a `<name> files` folder next to it with `attachments\` (card files; storyboard/canvas/page images, sketches and recordings under `attachments\docs\`), `backgrounds\` and `backups\` (rolling automatic copies). Keep the file and its folder together when copying or moving a project.
 - **App settings** (theme, hotkeys, recent projects) live in `%AppData%\FlowBoard\settings.json`.
-- Data from older versions (`%AppData%\FlowBoard\data.json`) shows up in the recent list as **My workspace** and opens like any other project.
+- Data from older versions (`%AppData%\FlowBoard\data.json`) shows up in the recent list as **My workspace**; open it and use **Save project as…** to turn it into a project file.
 - Create an empty `portable.txt` next to `FlowBoard.exe` to keep settings and new projects in a `Data` folder beside the exe instead (e.g. on a USB stick or a synced folder).
+
+## About
+
+FlowBoard is designed and developed by **Gladius_Tyrfing**. © 2026 Gladius_Tyrfing. All rights reserved.
 
 ## Project layout
 
@@ -132,15 +141,17 @@ src/FlowBoard/
                  Documents (storyboards & shots, canvas nodes & edges, note pages & blocks)
   Services/      Project files, JSON storage & backups, undo, templates, audio record/playback, reminders,
                  Pomodoro, time tracking, tray, theme, global hotkeys, start-with-Windows,
-                 smart quick-add parser, connector routing & auto-layout, Markdown, dashboard stats
-  ViewModels/    MainViewModel (+ Cards, App, Hotkeys, Projects partials), card details, calendar, table,
+                 smart quick-add parser, connector routing & auto-layout, Markdown, dashboard stats,
+                 .flowboard packages, link sync, exporters (SVG, draw.io, Mermaid, CSV, JSON)
+  ViewModels/    MainViewModel (+ Cards, App, Hotkeys, Projects, Links partials), card details, calendar, table,
                  timeline, command palette, quick add, settings, drag & drop handlers,
                  storyboard (+ sketch pad, animatic), canvas, notes, home/dashboard, link picker
   Views/         Board (Kanban), Table, Calendar, Timeline, card details, storyboard, canvas,
                  notes, dashboard, dialogs
   Themes/        Dark/light palettes and shared styles
+tools/make_icons.py      Renders the app icon and the .flowboard document icon
 tests/FlowBoard.Tests/   Tests for models, storage, undo, templates, filters, quick-add parsing, connector
-                         routing, layout, Markdown, dashboard and project stats (run anywhere with `dotnet test`)
+                         routing, layout, Markdown, stats, project files, link sync and exports (run anywhere with `dotnet test`)
 ```
 
 Built with [WPF-UI](https://github.com/lepoco/wpfui) (Fluent design), [CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet), [gong-wpf-dragdrop](https://github.com/punker76/gong-wpf-dragdrop) and [NAudio](https://github.com/naudio/NAudio).

@@ -1193,5 +1193,42 @@ public sealed partial class CanvasViewModel : DocumentViewModel
     public event EventHandler<string>? RenderRequested;
 
     [RelayCommand] private void ExportImage() => RenderRequested?.Invoke(this, "export");
+
+    /// <summary>The canvas as a graph for other apps: SVG, draw.io, Mermaid or JSON.</summary>
+    [RelayCommand]
+    private void ExportAs(string format)
+    {
+        var content = format switch
+        {
+            "svg" => Exporters.CanvasToSvg(Doc, Main.Workspace, EmbedImage),
+            "drawio" => Exporters.CanvasToDrawio(Doc, Main.Workspace),
+            "mmd" => Exporters.CanvasToMermaid(Doc, Main.Workspace),
+            _ => Exporters.CanvasToJson(Doc, Main.Workspace),
+        };
+        Main.SaveExport(content, Doc.Name, format);
+    }
+
+    /// <summary>Pictures go inside the SVG so it works on its own.</summary>
+    private static string? EmbedImage(string relative)
+    {
+        try
+        {
+            var full = AppPaths.ToFull(relative);
+            if (!System.IO.File.Exists(full)) return null;
+            var mime = System.IO.Path.GetExtension(full).ToLowerInvariant() switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".gif" => "image/gif",
+                ".bmp" => "image/bmp",
+                ".webp" => "image/webp",
+                _ => "image/png",
+            };
+            return $"data:{mime};base64,{Convert.ToBase64String(System.IO.File.ReadAllBytes(full))}";
+        }
+        catch
+        {
+            return null;
+        }
+    }
     [RelayCommand] private void Print() => RenderRequested?.Invoke(this, "print");
 }

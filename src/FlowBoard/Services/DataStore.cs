@@ -40,6 +40,12 @@ public sealed class DataStore
     public void Load()
     {
         Settings = TryRead<AppSettings>(AppPaths.SettingsFile, out _) ?? new AppSettings();
+        Settings.SyncDisplayName(Environment.UserName);
+        AppPaths.CustomProjectsDir = Settings.ProjectsFolder;
+        Settings.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(AppSettings.ProjectsFolder)) AppPaths.CustomProjectsDir = Settings.ProjectsFolder;
+        };
 
         // Data from before projects existed shows up once in the recent list as "My workspace".
         if (!Settings.LegacyWorkspaceListed)
@@ -62,12 +68,23 @@ public sealed class DataStore
     {
         path = Path.GetFullPath(path);
         if (!File.Exists(path)) return "The project file no longer exists.";
-        var ws = TryRead<Workspace>(path, out var error);
+        Workspace? ws = null;
+        string? error = null;
+        try
+        {
+            ws = ProjectPackage.Read(path);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+
         string? warning = null;
         if (ws == null)
         {
-            // Keep the damaged file and fall back to the newest backup next to it.
-            var backup = LoadNewestBackup(Path.Combine(Path.GetDirectoryName(path)!, "backups"));
+            // Keep the damaged file and fall back to the newest backup.
+            var backup = LoadNewestBackup(Path.Combine(ProjectPackage.MediaDirFor(path, null), "backups"))
+                         ?? LoadNewestBackup(Path.Combine(Path.GetDirectoryName(path)!, "backups"));
             if (backup == null) return $"The project could not be read ({error}).";
             try { File.Copy(path, path + $".corrupt-{DateTime.Now:yyyyMMddHHmmss}", true); } catch { }
             ws = backup;
@@ -75,7 +92,7 @@ public sealed class DataStore
         }
 
         SaveIfChanged();
-        AppPaths.SetProject(path);
+        AppPaths.SetProject(path, ProjectPackage.MediaDirFor(path, ws.MediaFolder));
         Replace(ws);
         LoadWarning = warning;
         AddRecent(path);
@@ -84,51 +101,65 @@ public sealed class DataStore
         return null;
     }
 
-    /// <summary>Creates a project folder "<paramref name="parentDir"/>\name\name.flowboard" and opens it.</summary>
-    public string CreateProject(string parentDir, string name, Workspace initial)
+    /// <summary>
+    /// Creates a project at <paramref name="file"/> (any folder) with its "&lt;name&gt; files" folder beside it, and opens it.
+    /// </summary>
+    public void CreateProject(string file, Workspace initial)
     {
-        name = AppPaths.SafeName(name);
-        var dir = Path.Combine(parentDir, name);
-        int i = 2;
-        while (Directory.Exists(dir) && Directory.EnumerateFileSystemEntries(dir).Any()) dir = Path.Combine(parentDir, $"{name} ({i++})");
-        Directory.CreateDirectory(dir);
-        var file = Path.Combine(dir, Path.GetFileName(dir) + AppPaths.ProjectExtension);
-        WriteAtomic(file, JsonSerializer.Serialize(initial, Json.Options));
+        file = WithExtension(file);
+        var media = Path.Combine(Path.GetDirectoryName(file)!, ProjectPackage.MediaFolderName(file));
+        Directory.CreateDirectory(media);
+        initial.MediaFolder = Path.GetFileName(media);
+        ProjectPackage.Write(file, JsonSerializer.Serialize(initial, Json.Options));
         var error = OpenProject(file);
         if (error != null) throw new IOException(error);
-        return file;
     }
 
-    /// <summary>Copies the open project (data and media, not backups) to a new folder and switches to the copy.</summary>
-    public string SaveCopyAs(string parentDir, string name)
+    /// <summary>
+    /// Saves the open project under a new name / place (with copies of its pictures, recordings and wallpapers)
+    /// and continues working in the new file.
+    /// </summary>
+    public void SaveProjectAs(string file)
     {
         if (!HasProject) throw new InvalidOperationException("No project is open.");
+        file = WithExtension(Path.GetFullPath(file));
+        if (string.Equals(file, ProjectFile, StringComparison.OrdinalIgnoreCase))
+        {
+            SaveIfChanged();
+            return;
+        }
+
         SaveIfChanged();
         var fromDir = AppPaths.DataDir;
-        var json = JsonSerializer.Serialize(Workspace, Json.Options);
-        name = AppPaths.SafeName(name);
-        var dir = Path.Combine(parentDir, name);
-        int i = 2;
-        while (Directory.Exists(dir) && Directory.EnumerateFileSystemEntries(dir).Any()) dir = Path.Combine(parentDir, $"{name} ({i++})");
-        Directory.CreateDirectory(dir);
+        var media = Path.Combine(Path.GetDirectoryName(file)!, ProjectPackage.MediaFolderName(file));
+        Directory.CreateDirectory(media);
         foreach (var sub in new[] { "attachments", "backgrounds" })
         {
             var src = Path.Combine(fromDir, sub);
             if (!Directory.Exists(src)) continue;
             foreach (var f in Directory.EnumerateFiles(src, "*", SearchOption.AllDirectories))
             {
-                var target = Path.Combine(dir, sub, Path.GetRelativePath(src, f));
+                var target = Path.Combine(media, sub, Path.GetRelativePath(src, f));
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 File.Copy(f, target, true);
             }
         }
 
-        var file = Path.Combine(dir, Path.GetFileName(dir) + AppPaths.ProjectExtension);
-        WriteAtomic(file, json);
+        var previous = Workspace.MediaFolder;
+        Workspace.MediaFolder = Path.GetFileName(media);
+        var json = JsonSerializer.Serialize(Workspace, Json.Options);
+        Workspace.MediaFolder = previous; // the old file keeps pointing at its own folder
+        _lastWorkspaceJson = JsonSerializer.Serialize(Workspace, Json.Options);
+        ProjectPackage.Write(file, json);
         var error = OpenProject(file);
         if (error != null) throw new IOException(error);
-        return file;
     }
+
+    private static string WithExtension(string file) =>
+        string.Equals(Path.GetExtension(file), AppPaths.ProjectExtension, StringComparison.OrdinalIgnoreCase) ? file : file + AppPaths.ProjectExtension;
+
+    /// <summary>True for the pre-projects data.json (plain JSON in the app folder).</summary>
+    public bool IsLegacyWorkspace => ProjectFile != null && !string.Equals(Path.GetExtension(ProjectFile), AppPaths.ProjectExtension, StringComparison.OrdinalIgnoreCase);
 
     public void CloseProject()
     {
@@ -157,6 +188,7 @@ public sealed class DataStore
     {
         from.Hydrate();
         Workspace.Version = from.Version;
+        Workspace.MediaFolder = from.MediaFolder;
         Refill(Workspace.Boards, from.Boards);
         Refill(Workspace.UserTemplates, from.UserTemplates);
         Refill(Workspace.Storyboards, from.Storyboards);
@@ -183,7 +215,7 @@ public sealed class DataStore
                 var ws = JsonSerializer.Serialize(Workspace, Json.Options);
                 if (ws != _lastWorkspaceJson)
                 {
-                    WriteAtomic(AppPaths.DataFile, ws);
+                    ProjectPackage.Write(AppPaths.DataFile, ws);
                     _lastWorkspaceJson = ws;
                     Saved?.Invoke(this, EventArgs.Empty);
                 }
@@ -209,9 +241,9 @@ public sealed class DataStore
         try
         {
             Directory.CreateDirectory(AppPaths.BackupsDir);
-            var existing = Directory.GetFiles(AppPaths.BackupsDir, "data-*.json").OrderByDescending(f => f).ToList();
+            var existing = BackupFiles(AppPaths.BackupsDir).ToList();
             if (existing.Count > 0 && DateTime.Now - File.GetLastWriteTime(existing[0]) < TimeSpan.FromHours(12)) return;
-            var target = Path.Combine(AppPaths.BackupsDir, $"data-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+            var target = Path.Combine(AppPaths.BackupsDir, $"backup-{DateTime.Now:yyyyMMdd-HHmmss}{Path.GetExtension(AppPaths.DataFile)}");
             File.Copy(AppPaths.DataFile, target, true);
             foreach (var old in existing.Skip(19)) File.Delete(old);
         }
@@ -234,7 +266,7 @@ public sealed class DataStore
             zip.CreateEntryFromFile(full, rel, CompressionLevel.Optimal);
         }
 
-        AddFile(AppPaths.DataFile);
+        zip.CreateEntryFromFile(AppPaths.DataFile, Path.GetFileName(AppPaths.DataFile), CompressionLevel.Optimal);
         foreach (var dir in new[] { AppPaths.AttachmentsDir, AppPaths.BackgroundsDir })
             if (Directory.Exists(dir))
                 foreach (var f in Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories))
@@ -242,54 +274,68 @@ public sealed class DataStore
     }
 
     /// <summary>
-    /// Unpacks a backup zip into a new project folder (never over existing data) and returns the project file.
+    /// Unpacks a backup zip next to the other projects (never over existing data) and returns the project file.
     /// </summary>
     public string ImportZip(string zipPath)
     {
-        string entryName;
-        using (var zip = ZipFile.OpenRead(zipPath))
-        {
-            var entry = zip.Entries.FirstOrDefault(e => !e.FullName.Contains('/') && e.FullName.EndsWith(AppPaths.ProjectExtension, StringComparison.OrdinalIgnoreCase))
-                        ?? zip.GetEntry("data.json")
-                        ?? throw new InvalidDataException("This zip does not contain a FlowBoard project.");
-            using (var s = entry.Open())
-                _ = JsonSerializer.Deserialize<Workspace>(s, Json.Options) ?? throw new InvalidDataException("The project in the backup is empty.");
-            entryName = entry.FullName;
+        using var zip = ZipFile.OpenRead(zipPath);
+        var entry = zip.Entries.FirstOrDefault(e => !e.FullName.Contains('/') && e.FullName.EndsWith(AppPaths.ProjectExtension, StringComparison.OrdinalIgnoreCase))
+                    ?? zip.GetEntry("data.json")
+                    ?? throw new InvalidDataException("This zip does not contain a FlowBoard project.");
 
-            var name = AppPaths.SafeName(Path.GetFileNameWithoutExtension(zipPath));
-            var dir = Path.Combine(AppPaths.DefaultProjectsDir, name);
-            int i = 2;
-            while (Directory.Exists(dir)) dir = Path.Combine(AppPaths.DefaultProjectsDir, $"{name} ({i++})");
-            Directory.CreateDirectory(dir);
+        var name = AppPaths.SafeName(Path.GetFileNameWithoutExtension(zipPath));
+        var parent = AppPaths.DefaultProjectsDir;
+        var file = Path.Combine(parent, name + AppPaths.ProjectExtension);
+        int i = 2;
+        while (File.Exists(file) || Directory.Exists(Path.Combine(parent, ProjectPackage.MediaFolderName(file))))
+            file = Path.Combine(parent, $"{name} ({i++}){AppPaths.ProjectExtension}");
+        var media = Path.Combine(parent, ProjectPackage.MediaFolderName(file));
+        Directory.CreateDirectory(media);
+
+        try
+        {
             foreach (var e in zip.Entries)
             {
                 // Old full-app backups also carried settings.json: app settings are left alone.
                 if (e.FullName.EndsWith('/') || e.FullName == "settings.json") continue;
-                var target = Path.GetFullPath(Path.Combine(dir, e.FullName));
-                if (!target.StartsWith(dir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) continue; // no path escapes
+                var target = e == entry ? file : Path.GetFullPath(Path.Combine(media, e.FullName));
+                if (e != entry && !target.StartsWith(media + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) continue; // no path escapes
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 e.ExtractToFile(target, true);
             }
 
-            var file = Path.Combine(dir, entryName);
-            if (entryName == "data.json")
-            {
-                var renamed = Path.Combine(dir, Path.GetFileName(dir) + AppPaths.ProjectExtension);
-                File.Move(file, renamed);
-                file = renamed;
-            }
-
+            // Validate, and point the project at its media folder (this also turns an old data.json into a package).
+            var ws = ProjectPackage.Read(file);
+            ws.MediaFolder = Path.GetFileName(media);
+            ProjectPackage.Write(file, JsonSerializer.Serialize(ws, Json.Options));
             return file;
+        }
+        catch
+        {
+            try { File.Delete(file); Directory.Delete(media, true); } catch { }
+            throw;
         }
     }
 
+    /// <summary>Automatic backups, newest first (current and older naming).</summary>
+    private static IEnumerable<string> BackupFiles(string dir) =>
+        Directory.Exists(dir)
+            ? Directory.GetFiles(dir, "backup-*").Concat(Directory.GetFiles(dir, "data-*.json"))
+                .Where(f => !f.EndsWith(".tmp")).OrderByDescending(File.GetLastWriteTime)
+            : [];
+
     private static Workspace? LoadNewestBackup(string backupsDir)
     {
-        if (!Directory.Exists(backupsDir)) return null;
-        foreach (var f in Directory.GetFiles(backupsDir, "data-*.json").OrderByDescending(f => f))
+        foreach (var f in BackupFiles(backupsDir))
         {
-            var ws = TryRead<Workspace>(f, out _);
-            if (ws != null) return ws;
+            try
+            {
+                return ProjectPackage.Read(f);
+            }
+            catch
+            {
+                // Try the next one.
+            }
         }
 
         return null;
