@@ -59,9 +59,9 @@
                             <Grid Style="{StaticResource Row}">
                                 <StackPanel>
                                     <TextBlock Text="Window material" Style="{StaticResource RowTitle}" />
-                                    <TextBlock Text="Mica and Acrylic need Windows 11." Style="{StaticResource Fb.Muted}" />
+                                    <TextBlock Text="Mica, Acrylic and Tabbed need Windows 11 — on Windows 10 a solid window is used." Style="{StaticResource Fb.Muted}" />
                                 </StackPanel>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" IsEnabled="{Binding SupportsBackdrop}">
                                     <RadioButton Style="{StaticResource Fb.Segment}" GroupName="Backdrop" Content="Mica"
                                                  IsChecked="{Binding Settings.Backdrop, Converter={StaticResource Equals}, ConverterParameter=Mica}" />
                                     <RadioButton Style="{StaticResource Fb.Segment}" GroupName="Backdrop" Content="Acrylic"

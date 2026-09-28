@@ -10,6 +10,8 @@ public static class Json
     {
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        // Window position defaults to NaN ("not set yet"), which plain JSON can't represent.
+        NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
         Converters = { new JsonStringEnumConverter() },
     };
 

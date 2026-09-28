@@ -180,6 +180,26 @@ public class CoreTests
     }
 
     [Fact]
+    public void DefaultSettings_RoundTripThroughJson()
+    {
+        // Regression: the NaN window position used to make the first save throw, so the app never showed.
+        var json = JsonSerializer.Serialize(new AppSettings(), Json.Options);
+        var back = JsonSerializer.Deserialize<AppSettings>(json, Json.Options)!;
+        Assert.True(double.IsNaN(back.WindowLeft));
+        Assert.Equal("Ctrl+Alt+Space", back.QuickAddHotkey);
+    }
+
+    [Fact]
+    public void FirstRunWorkspace_Serializes()
+    {
+        var ws = new Workspace();
+        ws.Boards.Add(TemplateService.CreateWelcomeBoard("Tester"));
+        ws.UserTemplates.Add(TemplateService.SaveAsTemplate(ws.Boards[0], "T", true));
+        var json = JsonSerializer.Serialize(ws, Json.Options);
+        Assert.NotNull(JsonSerializer.Deserialize<Workspace>(json, Json.Options));
+    }
+
+    [Fact]
     public void WelcomeBoard_IsValid()
     {
         var board = TemplateService.CreateWelcomeBoard("Tester");

@@ -11,8 +11,8 @@ namespace FlowBoard;
 
 public partial class App : Application
 {
-    private const string MutexName = "FlowBoard.SingleInstance.v1";
-    private const string ShowEventName = "FlowBoard.ShowWindow.v1";
+    private const string MutexName = "FlowBoard.SingleInstance.v2";
+    private const string ShowEventName = "FlowBoard.ShowWindow.v2";
 
     private static Mutex? _mutex;
     private EventWaitHandle? _showEvent;
@@ -58,6 +58,19 @@ public partial class App : Application
 
         DispatcherUnhandledException += OnUnhandledException;
 
+        try
+        {
+            Start(e);
+        }
+        catch (Exception ex)
+        {
+            // Never leave an invisible process behind: report the problem and quit.
+            ReportFatal(ex);
+        }
+    }
+
+    private void Start(StartupEventArgs e)
+    {
         AppPaths.Initialize();
         _store = new DataStore();
         _store.Load();
@@ -80,7 +93,9 @@ public partial class App : Application
         SetUpHotkeys();
         ListenForSecondInstance();
 
+        _window.ContentRendered += (_, _) => _windowShownOnce = true;
         var startHidden = e.Args.Contains("--minimized") || _store.Settings.StartMinimized;
+        if (startHidden) _windowShownOnce = true;
         if (!startHidden) _window.Show();
         else if (!_store.Settings.MinimizeToTray)
         {
@@ -117,7 +132,7 @@ public partial class App : Application
         {
             if (_store!.Settings.PlaySounds) System.Media.SystemSounds.Exclamation.Play();
             var (title, msg) = phase == PomodoroPhase.Focus
-                ? ("Focus session complete 🎉", "Time for a break.")
+                ? ("Focus session complete", "Time for a break.")
                 : ("Break is over", "Ready for the next focus session?");
             _tray.Notify(title, msg);
             _vm.ShowToast($"{title} — {msg}");
@@ -130,7 +145,7 @@ public partial class App : Application
         _reminders.ReminderDue += (card, board) =>
         {
             var when = card.DueDate is { } d ? Models.Card.FormatDate(d) : string.Empty;
-            _tray?.Notify($"⏰ {card.Title}", $"Due {when} · {board.Name}", card.Id);
+            _tray?.Notify($"Reminder: {card.Title}", $"Due {when} · {board.Name}", card.Id);
             _vm?.ShowToast($"Reminder: \"{card.Title}\" is due {when}", "Open", () =>
             {
                 _vm.SelectBoard(board);
@@ -290,16 +305,45 @@ public partial class App : Application
 
     private void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
+        e.Handled = true;
+        LogError(e.Exception);
+
+        // Before the window is up there is nothing to recover to.
+        if (_window == null || !_windowShownOnce)
+        {
+            ReportFatal(e.Exception);
+            return;
+        }
+
+        _vm?.ShowToast($"Something went wrong: {e.Exception.Message}", isError: true);
+    }
+
+    private bool _windowShownOnce;
+
+    private static string LogError(Exception ex)
+    {
+        var path = Path.Combine(AppPaths.DataDir, "error.log");
         try
         {
-            File.AppendAllText(Path.Combine(AppPaths.DataDir, "error.log"), $"[{DateTime.Now:u}] {e.Exception}\n\n");
+            Directory.CreateDirectory(AppPaths.DataDir);
+            File.AppendAllText(path, $"[{DateTime.Now:u}] {ex}\n\n");
         }
         catch
         {
             // Ignore logging failures.
         }
 
-        _vm?.ShowToast($"Something went wrong: {e.Exception.Message}", isError: true);
-        e.Handled = true;
+        return path;
+    }
+
+    private void ReportFatal(Exception ex)
+    {
+        var log = LogError(ex);
+        MessageBox.Show(
+            $"FlowBoard couldn't start:\n\n{ex.GetType().Name}: {ex.Message}\n\nDetails were written to:\n{log}",
+            "FlowBoard", MessageBoxButton.OK, MessageBoxImage.Error);
+        IsExiting = true;
+        try { _tray?.Dispose(); } catch { }
+        Shutdown(1);
     }
 }

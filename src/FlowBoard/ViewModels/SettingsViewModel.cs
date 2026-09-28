@@ -13,6 +13,7 @@ public sealed partial class SettingsViewModel : DialogViewModel
     public IReadOnlyList<ThemeMode> Themes { get; } = Enum.GetValues<ThemeMode>();
     public IReadOnlyList<BackdropMode> Backdrops { get; } = Enum.GetValues<BackdropMode>();
     public string DataDir => AppPaths.DataDir;
+    public bool SupportsBackdrop => ThemeService.SupportsBackdrop;
     public bool IsPortable => AppPaths.IsPortable;
     public string Version => typeof(App).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
 

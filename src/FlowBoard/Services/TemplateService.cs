@@ -124,7 +124,7 @@ public static class TemplateService
         var doing = board.Lists[1];
         var done = board.Lists[2];
 
-        todo.Cards.Add(Make("👋 Click a card to open it",
+        todo.Cards.Add(Make("Click a card to open it",
             "Cards hold a description, checklists, labels, dates with reminders, file/image attachments, voice notes, comments and time tracking.",
             labels[0]));
         todo.Cards.Add(Make("Drag cards between lists",
@@ -136,14 +136,14 @@ public static class TemplateService
             labels[5]);
         todo.Cards.Add(shortcuts);
 
-        var voice = Make("Record a voice note 🎙️",
+        var voice = Make("Record a voice note",
             "Open this card and press \"Voice\" to record from your microphone. Paste images with Ctrl+V or drop files onto an open card.",
             labels[5]);
         voice.DueDate = DateTime.Today.AddDays(2);
         voice.ReminderMinutes = 15;
         doing.Cards.Add(voice);
 
-        var focus = Make("Try a focus session 🍅",
+        var focus = Make("Try a focus session",
             "Open a card and press \"Focus\" to start a Pomodoro linked to it. Finished focus time is logged on the card automatically.",
             labels[5], labels[3]);
         var cl = new Checklist { Title = "Get started" };

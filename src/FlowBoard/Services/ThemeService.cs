@@ -61,7 +61,10 @@ public static class ThemeService
         ThemeApplied?.Invoke(null, EventArgs.Empty);
     }
 
-    public static WindowBackdropType ToBackdrop(BackdropMode mode) => mode switch
+    /// <summary>Mica/Acrylic/Tabbed backdrops need Windows 11 (build 22000+). Windows 10 gets a solid window.</summary>
+    public static bool SupportsBackdrop { get; } = Environment.OSVersion.Version.Build >= 22000;
+
+    public static WindowBackdropType ToBackdrop(BackdropMode mode) => !SupportsBackdrop ? WindowBackdropType.None : mode switch
     {
         BackdropMode.Acrylic => WindowBackdropType.Acrylic,
         BackdropMode.Tabbed => WindowBackdropType.Tabbed,
