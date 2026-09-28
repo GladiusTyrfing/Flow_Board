@@ -91,6 +91,12 @@
                     </StackPanel>
                 </Border>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
+                    <Button Style="{StaticResource Fb.HeaderButton}" Focusable="False" Command="{Binding Main.OpenDocStyleCommand}" ToolTip="Theme and wallpaper">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="PaintBrush24" FontSize="16" />
+                            <TextBlock Text="Style" Margin="6,0,0,0" Visibility="{Binding Main.IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
+                        </StackPanel>
+                    </Button>
                     <Button Style="{StaticResource Fb.HeaderButton}" Focusable="False" Command="{Binding AutoLayoutCommand}" ToolTip="Tidy up: arrange shapes left to right along the connectors">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="Organization24" FontSize="16" />
@@ -154,6 +160,9 @@
                         <MenuItem Header="Add text here" Command="{Binding AddShapeAtContextCommand}" CommandParameter="{x:Static models:NodeShape.Text}">
                             <MenuItem.Icon><ui:SymbolIcon Symbol="TextT24" /></MenuItem.Icon>
                         </MenuItem>
+                        <MenuItem Header="Add circle here" Command="{Binding AddShapeAtContextCommand}" CommandParameter="{x:Static models:NodeShape.Circle}">
+                            <MenuItem.Icon><ui:SymbolIcon Symbol="Circle24" /></MenuItem.Icon>
+                        </MenuItem>
                         <MenuItem Header="Add decision here" Command="{Binding AddShapeAtContextCommand}" CommandParameter="{x:Static models:NodeShape.Diamond}">
                             <MenuItem.Icon><ui:SymbolIcon Symbol="Diamond24" /></MenuItem.Icon>
                         </MenuItem>
@@ -166,6 +175,9 @@
                         </MenuItem>
                         <MenuItem Header="Add image…" Command="{Binding AddImageCommand}">
                             <MenuItem.Icon><ui:SymbolIcon Symbol="Image24" /></MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Add link to a board, storyboard, shot or page…" Command="{Binding AddLinkCommand}">
+                            <MenuItem.Icon><ui:SymbolIcon Symbol="Link24" /></MenuItem.Icon>
                         </MenuItem>
                         <MenuItem Header="Add card…" Command="{Binding AddCardCommand}">
                             <MenuItem.Icon><ui:SymbolIcon Symbol="TaskListLtr24" /></MenuItem.Icon>
@@ -201,6 +213,17 @@
                                                     <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Fb.TextBrush}" IsHitTestVisible="False" />
                                                 </Border>
                                             </Grid>
+                                            <!-- Middle handle: drag to curve the line, double-click to straighten -->
+                                            <Rectangle x:Name="BendHandle" Tag="bend" Canvas.Left="{Binding LabelX}" Canvas.Top="{Binding LabelY}" Width="12" Height="12" RadiusX="3" RadiusY="3"
+                                                       Fill="{DynamicResource Fb.AccentBrush}" Stroke="White" StrokeThickness="1.5" Cursor="Hand" Visibility="Collapsed"
+                                                       ToolTip="Drag to curve · double-click to straighten">
+                                                <Rectangle.RenderTransform>
+                                                    <TransformGroup>
+                                                        <TranslateTransform X="-6" Y="-6" />
+                                                        <RotateTransform Angle="45" />
+                                                    </TransformGroup>
+                                                </Rectangle.RenderTransform>
+                                            </Rectangle>
                                             <!-- End handles (drag to move an end; drop on a shape to attach) -->
                                             <Ellipse x:Name="FromHandle" Tag="end-from" Canvas.Left="{Binding StartX}" Canvas.Top="{Binding StartY}" Width="12" Height="12"
                                                      Fill="White" Stroke="{DynamicResource Fb.AccentBrush}" StrokeThickness="2" Cursor="Cross" Visibility="Collapsed">
@@ -220,6 +243,7 @@
                                                 <Setter TargetName="Head" Property="Fill" Value="{DynamicResource Fb.AccentBrush}" />
                                                 <Setter TargetName="FromHandle" Property="Visibility" Value="Visible" />
                                                 <Setter TargetName="ToHandle" Property="Visibility" Value="Visible" />
+                                                <Setter TargetName="BendHandle" Property="Visibility" Value="Visible" />
                                             </DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>
@@ -246,6 +270,17 @@
                                                 <ContextMenu>
                                                     <MenuItem Header="Edit text" InputGestureText="F2" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.OpenNodeCommand}" CommandParameter="{Binding}">
                                                         <MenuItem.Icon><ui:SymbolIcon Symbol="Edit24" /></MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="Open" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.OpenNodeCommand}" CommandParameter="{Binding}"
+                                                              Visibility="{Binding Shape, Converter={StaticResource Equals}, ConverterParameter=Link}">
+                                                        <MenuItem.Icon><ui:SymbolIcon Symbol="Open24" /></MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="Lock / unlock position" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.ToggleLockCommand}" CommandParameter="{Binding}">
+                                                        <MenuItem.Icon><ui:SymbolIcon Symbol="LockClosed24" /></MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="Remove from section" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.RemoveFromFrameCommand}" CommandParameter="{Binding}"
+                                                              Visibility="{Binding FrameId, Converter={StaticResource HasValueToVis}}">
+                                                        <MenuItem.Icon><ui:SymbolIcon Symbol="GroupDismiss24" /></MenuItem.Icon>
                                                     </MenuItem>
                                                     <MenuItem Header="Crop image…" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.CropNodeCommand}" CommandParameter="{Binding}"
                                                               Visibility="{Binding Shape, Converter={StaticResource Equals}, ConverterParameter=Image}">
@@ -296,7 +331,7 @@
                                             <Grid x:Name="FrameBox" Visibility="Collapsed">
                                                 <Rectangle RadiusX="10" RadiusY="10" Fill="{Binding Fill, Converter={StaticResource HexToBrush}}" Opacity="0.08" IsHitTestVisible="False" />
                                                 <Rectangle RadiusX="10" RadiusY="10" Stroke="{Binding Fill, Converter={StaticResource HexToBrush}}" StrokeThickness="2" StrokeDashArray="5 3" />
-                                                <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,-30,0,0" Padding="10,3" CornerRadius="{DynamicResource Fb.RadiusSmall}"
+                                                <Border x:Name="FrameTitle" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,-30,0,0" Padding="10,3" CornerRadius="{DynamicResource Fb.RadiusSmall}"
                                                         Background="{Binding Fill, Converter={StaticResource HexToBrush}}" MinWidth="40">
                                                     <TextBlock Text="{Binding Text}" FontWeight="Bold" FontSize="13" Foreground="{Binding Fill, Converter={StaticResource ContrastBrush}}" />
                                                 </Border>
@@ -323,6 +358,51 @@
                                                     <TextBlock Text="The linked card was deleted" Style="{StaticResource Fb.Muted}" FontSize="12"
                                                                Visibility="{Binding IsCardMissing, Converter={StaticResource BoolToVis}}" />
                                                 </StackPanel>
+                                            </Border>
+
+                                            <!-- Link to a board / storyboard / shot / canvas / page / card -->
+                                            <Border x:Name="LinkBody" Visibility="Collapsed" CornerRadius="{DynamicResource Fb.Radius}" Padding="6"
+                                                    Background="{DynamicResource Fb.CardBrush}" BorderThickness="1" BorderBrush="{DynamicResource Fb.CardBorderBrush}" Effect="{StaticResource Fb.CardShadow}"
+                                                    ToolTip="Double-click to open">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Width="84" CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{DynamicResource Fb.SubtleHoverBrush}" ClipToBounds="True">
+                                                        <Grid>
+                                                            <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{Binding Link.Background, Converter={StaticResource BoardThumbnail}}"
+                                                                    Visibility="{Binding Link.Background, Converter={StaticResource HasValueToVis}}" />
+                                                            <ItemsControl ItemsSource="{Binding Link.Images}" Focusable="False" IsHitTestVisible="False">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <UniformGrid Rows="1" />
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Image Source="{Binding Converter={StaticResource ImagePath}, ConverterParameter=240}" Stretch="UniformToFill" />
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                            <ui:SymbolIcon Symbol="{Binding Link.Icon, Converter={StaticResource SymbolName}}" FontSize="22" Foreground="{DynamicResource Fb.AccentTextBrush}"
+                                                                           Visibility="{Binding Link.Images, Converter={StaticResource HasValueToVis}, ConverterParameter=invert}" />
+                                                        </Grid>
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,4,0">
+                                                        <TextBlock Text="{Binding Link.Title}" FontWeight="SemiBold" FontSize="14" TextWrapping="Wrap" MaxHeight="40" TextTrimming="CharacterEllipsis"
+                                                                   Foreground="{DynamicResource Fb.TextBrush}" />
+                                                        <TextBlock Text="{Binding Link.Subtitle}" Style="{StaticResource Fb.Muted}" FontSize="11" TextWrapping="Wrap" MaxHeight="30" TextTrimming="CharacterEllipsis"
+                                                                   Margin="0,3,0,0" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- Locked -->
+                                            <Border x:Name="LockBadge" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-10,-10,0"
+                                                    Width="20" Height="20" CornerRadius="10" Background="{DynamicResource Fb.SurfaceBrush}" BorderThickness="1"
+                                                    BorderBrush="{DynamicResource Fb.DividerBrush}" IsHitTestVisible="False">
+                                                <ui:SymbolIcon Symbol="LockClosed24" FontSize="11" Foreground="{DynamicResource Fb.MutedTextBrush}" />
                                             </Border>
 
                                             <!-- Text -->
@@ -356,6 +436,16 @@
                                             <DataTrigger Binding="{Binding Shape}" Value="Ellipse">
                                                 <Setter TargetName="Body" Property="Visibility" Value="Collapsed" />
                                                 <Setter TargetName="EllipseShape" Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Shape}" Value="Circle">
+                                                <Setter TargetName="Body" Property="Visibility" Value="Collapsed" />
+                                                <Setter TargetName="EllipseShape" Property="Visibility" Value="Visible" />
+                                                <Setter TargetName="Halo" Property="CornerRadius" Value="999" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Shape}" Value="Link">
+                                                <Setter TargetName="Body" Property="Visibility" Value="Collapsed" />
+                                                <Setter TargetName="LinkBody" Property="Visibility" Value="Visible" />
+                                                <Setter TargetName="Label" Property="Visibility" Value="Collapsed" />
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding Shape}" Value="Diamond">
                                                 <Setter TargetName="Body" Property="Visibility" Value="Collapsed" />
@@ -404,10 +494,13 @@
                                                 <Setter TargetName="Ports" Property="IsHitTestVisible" Value="False" />
                                                 <Setter TargetName="Editor" Property="VerticalAlignment" Value="Top" />
                                                 <Setter TargetName="Editor" Property="HorizontalAlignment" Value="Left" />
-                                                <Setter TargetName="Editor" Property="Margin" Value="10,-28,0,0" />
-                                                <Setter TargetName="Editor" Property="MinWidth" Value="120" />
-                                                <Setter TargetName="Editor" Property="Foreground" Value="{DynamicResource Fb.TextBrush}" />
-                                                <Setter TargetName="Editor" Property="Background" Value="{DynamicResource Fb.SurfaceBrush}" />
+                                                <Setter TargetName="Editor" Property="Margin" Value="0,-30,0,0" />
+                                                <Setter TargetName="Editor" Property="Padding" Value="10,3" />
+                                                <Setter TargetName="Editor" Property="MinWidth" Value="140" />
+                                                <Setter TargetName="Editor" Property="TextAlignment" Value="Left" />
+                                                <Setter TargetName="Editor" Property="FontSize" Value="13" />
+                                                <Setter TargetName="Editor" Property="FontWeight" Value="Bold" />
+                                                <Setter TargetName="Editor" Property="AcceptsReturn" Value="False" />
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding Shape}" Value="Card">
                                                 <Setter TargetName="Body" Property="Visibility" Value="Collapsed" />
@@ -420,6 +513,21 @@
                                             <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                 <Setter TargetName="Halo" Property="Visibility" Value="Visible" />
                                                 <Setter TargetName="Resize" Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding Shape}" Value="Frame" />
+                                                    <Condition Binding="{Binding IsEditing}" Value="True" />
+                                                </MultiDataTrigger.Conditions>
+                                                <!-- While renaming a section only the text box shows (no second label behind it). -->
+                                                <Setter TargetName="FrameTitle" Property="Visibility" Value="Hidden" />
+                                                <Setter TargetName="Editor" Property="Background" Value="{Binding Fill, Converter={StaticResource HexToBrush}}" />
+                                            </MultiDataTrigger>
+                                            <DataTrigger Binding="{Binding Locked}" Value="True">
+                                                <Setter TargetName="LockBadge" Property="Visibility" Value="Visible" />
+                                                <Setter TargetName="Resize" Property="Opacity" Value="0" />
+                                                <Setter TargetName="Resize" Property="IsHitTestVisible" Value="False" />
+                                                <Setter TargetName="NodeRoot" Property="Cursor" Value="Arrow" />
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding IsEditing}" Value="True">
                                                 <Setter TargetName="Editor" Property="Visibility" Value="Visible" />
@@ -469,6 +577,9 @@
                     <RadioButton Style="{StaticResource ToolButton}" GroupName="CvTool" ToolTip="Ellipse / start–end (O)" IsChecked="{Binding Tool, Converter={StaticResource Equals}, ConverterParameter=Ellipse}">
                         <Ellipse Width="18" Height="14" StrokeThickness="2" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
                     </RadioButton>
+                    <RadioButton Style="{StaticResource ToolButton}" GroupName="CvTool" ToolTip="Circle (Shift+O)" IsChecked="{Binding Tool, Converter={StaticResource Equals}, ConverterParameter=Circle}">
+                        <Ellipse Width="15" Height="15" StrokeThickness="2" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                    </RadioButton>
                     <RadioButton Style="{StaticResource ToolButton}" GroupName="CvTool" ToolTip="Decision diamond (D)" IsChecked="{Binding Tool, Converter={StaticResource Equals}, ConverterParameter=Diamond}">
                         <Path Data="M 9,0 L 18,8 L 9,16 L 0,8 Z" StrokeThickness="2" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
                     </RadioButton>
@@ -496,6 +607,9 @@
                     <Border Height="1" Background="{DynamicResource Fb.DividerBrush}" Margin="4,4" />
                     <Button Style="{StaticResource BarButton}" Width="38" Height="38" Command="{Binding AddImageCommand}" ToolTip="Add an image (I) — or paste / drop one">
                         <ui:SymbolIcon Symbol="Image24" FontSize="18" />
+                    </Button>
+                    <Button Style="{StaticResource BarButton}" Width="38" Height="38" Command="{Binding AddLinkCommand}" ToolTip="Link a board, storyboard, shot, canvas or page (K)">
+                        <ui:SymbolIcon Symbol="Link24" FontSize="18" />
                     </Button>
                     <Button Style="{StaticResource BarButton}" Width="38" Height="38" Command="{Binding AddCardCommand}" ToolTip="Add a card from a board">
                         <ui:SymbolIcon Symbol="TaskListLtr24" FontSize="18" />
@@ -576,6 +690,9 @@
                         </Button>
                         <Button Style="{StaticResource BarButton}" ToolTip="Ellipse" Command="{Binding SetShapeCommand}" CommandParameter="{x:Static models:NodeShape.Ellipse}">
                             <Ellipse Width="16" Height="12" StrokeThickness="1.6" Stroke="{DynamicResource Fb.TextBrush}" />
+                        </Button>
+                        <Button Style="{StaticResource BarButton}" ToolTip="Circle" Command="{Binding SetShapeCommand}" CommandParameter="{x:Static models:NodeShape.Circle}">
+                            <Ellipse Width="13" Height="13" StrokeThickness="1.6" Stroke="{DynamicResource Fb.TextBrush}" />
                         </Button>
                         <Button Style="{StaticResource BarButton}" ToolTip="Diamond" Command="{Binding SetShapeCommand}" CommandParameter="{x:Static models:NodeShape.Diamond}">
                             <Path Data="M 8,0 L 16,7 L 8,14 L 0,7 Z" StrokeThickness="1.6" Stroke="{DynamicResource Fb.TextBrush}" />
@@ -663,6 +780,9 @@
                                 </ContextMenu>
                             </Button.ContextMenu>
                         </Button>
+                        <Button Style="{StaticResource BarButton}" ToolTip="Straighten (remove the curve)" Command="{Binding StraightenCommand}">
+                            <ui:SymbolIcon Symbol="LineHorizontal124" FontSize="15" />
+                        </Button>
                         <Button Style="{StaticResource BarButton}" ToolTip="Reverse direction" Command="{Binding ReverseEdgeCommand}">
                             <ui:SymbolIcon Symbol="ArrowSwap24" FontSize="15" />
                         </Button>
@@ -691,6 +811,28 @@
                     </Button>
                 </StackPanel>
             </Border>
+
+            <!-- ============ Minimap (bottom right, above zoom) ============ -->
+            <Grid HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,12,62">
+                <Border x:Name="MiniPanel" Background="{DynamicResource Fb.SurfaceBrush}" BorderBrush="{DynamicResource Fb.PanelBorderBrush}" BorderThickness="1"
+                        CornerRadius="{DynamicResource Fb.Radius}" Padding="5" Effect="{StaticResource Fb.PopupShadow}" Opacity="0.94">
+                    <Grid>
+                        <Canvas x:Name="MiniMap" Width="200" Height="130" Background="Transparent" ClipToBounds="True" Cursor="Hand"
+                                MouseLeftButtonDown="OnMiniDown" MouseMove="OnMiniMove" MouseLeftButtonUp="OnMiniUp">
+                            <Rectangle x:Name="MiniPreview" IsHitTestVisible="False" />
+                            <Border x:Name="MiniViewport" BorderBrush="{DynamicResource Fb.AccentBrush}" BorderThickness="1.5" CornerRadius="3"
+                                    Background="{DynamicResource Fb.AccentSoftBrush}" IsHitTestVisible="False" />
+                        </Canvas>
+                        <Button Style="{StaticResource Fb.IconButton}" Width="18" Height="18" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                Margin="0,-3,-3,0" Click="OnMiniHide" ToolTip="Hide the map" Focusable="False">
+                            <ui:SymbolIcon Symbol="Dismiss24" FontSize="9" />
+                        </Button>
+                    </Grid>
+                </Border>
+                <Button x:Name="MiniShow" Style="{StaticResource Fb.SubtleButton}" Padding="7" Click="OnMiniShow" ToolTip="Show the map" Focusable="False" Visibility="Collapsed">
+                    <ui:SymbolIcon Symbol="Map24" FontSize="15" />
+                </Button>
+            </Grid>
 
             <!-- ============ Zoom (bottom right) ============ -->
             <Border Style="{StaticResource Fb.Glass}" Background="{DynamicResource Fb.SurfaceBrush}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,12,12" Padding="4"

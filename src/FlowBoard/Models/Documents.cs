@@ -16,6 +16,23 @@ public enum ActiveView
     Dashboard,
 }
 
+/// <summary>Look shared by storyboards, canvases and pages: a theme preset and a wallpaper, like boards.</summary>
+public abstract partial class StyledDocument : ObservableObject
+{
+    /// <summary>Theme preset name (see BoardThemeService), "Auto" follows the app.</summary>
+    [ObservableProperty] private string _theme = "Auto";
+    /// <summary>Wallpaper spec like board backgrounds ("none", "gradient:#a,#b", "color:#a", "image:path").</summary>
+    [ObservableProperty] private string _background = "none";
+    [ObservableProperty] private double _backgroundDim = 0.2;
+    [ObservableProperty] private double _backgroundBlur;
+    /// <summary>How see-through panels and columns are (0..1).</summary>
+    [ObservableProperty] private double _panelOpacity = 0.9;
+
+    [JsonIgnore] public bool HasWallpaper => !string.IsNullOrEmpty(Background) && Background != "none";
+
+    partial void OnBackgroundChanged(string value) => OnPropertyChanged(nameof(HasWallpaper));
+}
+
 // =====================================================================
 // Storyboards
 // =====================================================================
@@ -26,7 +43,7 @@ public enum StoryboardMode
     Animation,
 }
 
-public partial class Storyboard : ObservableObject
+public partial class Storyboard : StyledDocument
 {
     [ObservableProperty] private Guid _id = Guid.NewGuid();
     [ObservableProperty] private string _name = "Untitled storyboard";
@@ -111,6 +128,8 @@ public partial class Shot : ObservableObject
     [ObservableProperty][property: JsonIgnore] private string _newShotItem = string.Empty;
     [ObservableProperty][property: JsonIgnore] private string _newEquipment = string.Empty;
     [ObservableProperty][property: JsonIgnore] private int _number;
+    /// <summary>Briefly true when the shot is opened from a link (the column flashes).</summary>
+    [ObservableProperty][property: JsonIgnore] private bool _isFlashing;
 
     [JsonIgnore] public string? ImageFullPath => ImagePath == null ? null : Path.Combine(AppPaths.DataDir, ImagePath);
     [JsonIgnore] public bool HasImage => ImagePath != null;
@@ -149,6 +168,9 @@ public enum NodeShape
     Ink,
     /// <summary>Labelled area that groups the shapes inside it.</summary>
     Frame,
+    Circle,
+    /// <summary>Preview of a board, storyboard, shot, canvas, page or card (double-click opens it).</summary>
+    Link,
 }
 
 public enum EdgeStyle
@@ -158,7 +180,7 @@ public enum EdgeStyle
     Elbow,
 }
 
-public partial class CanvasDoc : ObservableObject
+public partial class CanvasDoc : StyledDocument
 {
     [ObservableProperty] private Guid _id = Guid.NewGuid();
     [ObservableProperty] private string _name = "Untitled canvas";
@@ -192,6 +214,12 @@ public partial class CanvasNode : ObservableObject
     /// <summary>Size of the box the ink was drawn in (the drawing scales from it when resized).</summary>
     [ObservableProperty] private double _inkWidth;
     [ObservableProperty] private double _inkHeight;
+    /// <summary>The section (frame) this shape belongs to; it moves with it until removed.</summary>
+    [ObservableProperty] private Guid? _frameId;
+    [ObservableProperty] private bool _locked;
+    [ObservableProperty] private LinkTarget _linkKind;
+    [ObservableProperty] private Guid? _linkId;
+    [ObservableProperty][property: JsonIgnore] private LinkPreview? _link;
 
     [ObservableProperty][property: JsonIgnore] private bool _isSelected;
     [ObservableProperty][property: JsonIgnore] private bool _isEditing;
@@ -224,6 +252,12 @@ public partial class CanvasEdge : ObservableObject
     [ObservableProperty] private double _fromY;
     [ObservableProperty] private double _toX;
     [ObservableProperty] private double _toY;
+    /// <summary>How far the middle of the line is pulled away from straight (0,0 = no bend).</summary>
+    [ObservableProperty] private double _bendX;
+    [ObservableProperty] private double _bendY;
+    [JsonIgnore] public bool HasBend => BendX != 0 || BendY != 0;
+    partial void OnBendXChanged(double value) => OnPropertyChanged(nameof(HasBend));
+    partial void OnBendYChanged(double value) => OnPropertyChanged(nameof(HasBend));
 
     // Runtime: where the line actually starts and ends (for the drag handles).
     [ObservableProperty][property: JsonIgnore] private double _startX;
@@ -282,6 +316,8 @@ public enum LinkTarget
     Storyboard,
     Canvas,
     Note,
+    /// <summary>A single storyboard shot / frame.</summary>
+    Shot,
 }
 
 /// <summary>A run of text with one formatting (bold, italic, underline, strike, code, color, highlight).</summary>
@@ -295,16 +331,22 @@ public sealed class TextSpan
     public bool Code { get; set; }
     public string? Color { get; set; }
     public string? Highlight { get; set; }
+    /// <summary>Inline link (mention) to a card, board, storyboard, shot, canvas or page.</summary>
+    public LinkTarget? LinkKind { get; set; }
+    public Guid? LinkId { get; set; }
 
-    [JsonIgnore] public bool IsPlain => !Bold && !Italic && !Underline && !Strike && !Code && Color == null && Highlight == null;
+    [JsonIgnore] public bool IsLink => LinkId != null;
+
+    [JsonIgnore] public bool IsPlain => !Bold && !Italic && !Underline && !Strike && !Code && Color == null && Highlight == null && LinkId == null;
 
     public bool SameStyle(TextSpan o) =>
         Bold == o.Bold && Italic == o.Italic && Underline == o.Underline && Strike == o.Strike && Code == o.Code
-        && Color == o.Color && Highlight == o.Highlight;
+        && Color == o.Color && Highlight == o.Highlight && LinkKind == o.LinkKind && LinkId == o.LinkId;
 
     public TextSpan With(string text) => new()
     {
         Text = text, Bold = Bold, Italic = Italic, Underline = Underline, Strike = Strike, Code = Code, Color = Color, Highlight = Highlight,
+        LinkKind = LinkKind, LinkId = LinkId,
     };
 }
 
@@ -321,7 +363,7 @@ public sealed class LinkPreview
     public bool IsMissing { get; init; }
 }
 
-public partial class NotePage : ObservableObject
+public partial class NotePage : StyledDocument
 {
     [ObservableProperty] private Guid _id = Guid.NewGuid();
     [ObservableProperty] private string _title = "Untitled page";

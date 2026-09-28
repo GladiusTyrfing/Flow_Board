@@ -6,7 +6,7 @@ using FlowBoard.ViewModels;
 
 namespace FlowBoard.Views;
 
-public partial class CalendarView : UserControl
+public partial class CalendarView : UserControl, Helpers.ICapturable
 {
     private Point _down;
 
@@ -26,4 +26,10 @@ public partial class CalendarView : UserControl
             e.Handled = true;
         }
     }
+
+    // ----- high-res screenshot -----
+    FrameworkElement Helpers.ICapturable.CaptureElement => this;
+    Rect? Helpers.ICapturable.CaptureArea => null;
+    System.Windows.Media.Brush? Helpers.ICapturable.CaptureBackground => null;
+    string Helpers.ICapturable.CaptureName => ((DataContext as ViewModels.MainViewModel)?.CurrentBoard?.Name ?? "Board") + " calendar";
 }

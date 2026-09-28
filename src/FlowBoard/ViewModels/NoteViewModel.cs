@@ -181,15 +181,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
 
     private void UpdateSlash(NoteBlock b)
     {
-        // "@" on an empty line = link to a card, board, storyboard, canvas or page.
-        if (b.Text == "@" && b.Type != BlockType.Code && !_converting)
-        {
-            _converting = true;
-            b.SetSpans([]);
-            _converting = false;
-            _ = TurnInto(b, BlockType.Link);
-            return;
-        }
 
         if (b.Type is BlockType.Code || !b.Text.StartsWith('/') || b.Text.Contains(' ') || b.Text.Contains('\n'))
         {
@@ -422,7 +413,7 @@ public sealed partial class NoteViewModel : DocumentViewModel
                 ReplaceOrInsert(b, new NoteBlock { Type = BlockType.Image, ImagePath = rel });
                 return;
             case BlockType.Link:
-                var pick = await Main.PickLinkAsync("Link to…", LinkTarget.Card, LinkTarget.Board, LinkTarget.Storyboard, LinkTarget.Canvas, LinkTarget.Note);
+                var pick = await Main.PickLinkAsync("Link to…", LinkResolver.All);
                 if (pick == null)
                 {
                     Focus(b, -1);
@@ -602,51 +593,8 @@ public sealed partial class NoteViewModel : DocumentViewModel
         foreach (var b in Page.Blocks.Where(b => b.Type == BlockType.Link)) b.Link = Preview(b);
     }
 
-    private LinkPreview Preview(NoteBlock b)
-    {
-        var ws = Main.Workspace;
-        if (b.LinkId is not { } id) return new LinkPreview { Title = b.Text, IsMissing = true };
-        switch (b.LinkKind)
-        {
-            case LinkTarget.Board when ws.Boards.FirstOrDefault(x => x.Id == id) is { } board:
-                return new LinkPreview
-                {
-                    Title = board.Name, Icon = "Board24", Background = board.Background,
-                    Subtitle = $"Board · {board.Lists.Count} lists · {board.ActiveCardCount} cards · {board.AllActiveCards.Count(c => c.IsCompleted)} done",
-                };
-            case LinkTarget.Card when ws.FindCard(id, out var cb, out var cl) is { } card:
-                var due = card.DueDate is { } d ? $" · due {Card.FormatDate(d)}" : string.Empty;
-                return new LinkPreview
-                {
-                    Title = card.Title, Icon = card.IsCompleted ? "CheckmarkCircle24" : "TaskListLtr24",
-                    Subtitle = $"Card · {cb?.Name} › {cl?.Name ?? "archived"}{due}",
-                    Images = card.CoverImagePath is { } cover ? [cover] : [],
-                };
-            case LinkTarget.Storyboard when ws.Storyboards.FirstOrDefault(x => x.Id == id) is { } sb:
-                return new LinkPreview
-                {
-                    Title = sb.Name, Icon = "VideoClip24",
-                    Subtitle = $"{sb.Mode} storyboard · {sb.Shots.Count} {(sb.Mode == StoryboardMode.Animation ? "frames" : "shots")}",
-                    Images = sb.Shots.Where(x => x.ImageFullPath != null).Select(x => x.ImageFullPath!).Take(4).ToList(),
-                };
-            case LinkTarget.Canvas when ws.Canvases.FirstOrDefault(x => x.Id == id) is { } cv:
-                return new LinkPreview
-                {
-                    Title = cv.Name, Icon = "Flowchart24",
-                    Subtitle = $"Canvas · {cv.Nodes.Count} shapes · {cv.Edges.Count} connectors",
-                    Images = cv.Nodes.Where(n => n.ImageFullPath != null).Select(n => n.ImageFullPath!).Take(4).ToList(),
-                };
-            case LinkTarget.Note when ws.Notes.FirstOrDefault(x => x.Id == id) is { } note:
-                return new LinkPreview
-                {
-                    Title = note.Title, Icon = note.Icon,
-                    Subtitle = $"Page · edited {note.UpdatedAt:d MMM}",
-                    Images = note.CoverFullPath is { } c ? [c] : [],
-                };
-            default:
-                return new LinkPreview { Title = b.Text, Subtitle = "This item was deleted", Icon = "LinkDismiss24", IsMissing = true };
-        }
-    }
+    private LinkPreview Preview(NoteBlock b) =>
+        b.LinkId is { } id ? LinkResolver.Describe(Main.Workspace, b.LinkKind, id, b.Text) : new LinkPreview { Title = b.Text, IsMissing = true };
 
     [RelayCommand]
     private void CropBlockImage(NoteBlock b)
@@ -716,13 +664,5 @@ public sealed partial class NoteViewModel : DocumentViewModel
         Main.ShowToast($"Added {todos.Count} cards to \"{list.Name}\" on {board.Name}");
     }
 
-    private string? LinkTitle(LinkTarget kind, Guid id) => kind switch
-    {
-        LinkTarget.Card => Main.Workspace.FindCard(id, out _, out _)?.Title,
-        LinkTarget.Board => Main.Workspace.Boards.FirstOrDefault(b => b.Id == id)?.Name,
-        LinkTarget.Storyboard => Main.Workspace.Storyboards.FirstOrDefault(s => s.Id == id)?.Name,
-        LinkTarget.Canvas => Main.Workspace.Canvases.FirstOrDefault(c => c.Id == id)?.Name,
-        LinkTarget.Note => Main.Workspace.Notes.FirstOrDefault(n => n.Id == id)?.Title,
-        _ => null,
-    };
+    private string? LinkTitle(LinkTarget kind, Guid id) => LinkResolver.TitleOf(Main.Workspace, kind, id);
 }

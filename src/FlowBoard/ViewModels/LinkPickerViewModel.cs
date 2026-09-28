@@ -68,27 +68,15 @@ public sealed partial class LinkPickerViewModel : DialogViewModel
 
     private void Refresh()
     {
-        var q = Query.Trim();
-        var items = new List<LinkOption>();
-
-        void Add(LinkTarget kind, Guid id, string title, string sub, SymbolRegular icon, int bonus)
-        {
-            if (!_kinds.Contains(kind) || _exclude.Contains(id)) return;
-            var s = CommandPaletteViewModel.Score(title, q);
-            if (q.Length > 0 && s <= 0) return;
-            items.Add(new LinkOption { Kind = kind, Id = id, Title = title, Subtitle = sub, Icon = icon, Score = s + bonus });
-        }
-
-        foreach (var (board, list, card) in _main.Workspace.EnumerateActiveCards())
-            Add(LinkTarget.Card, card.Id, card.Title, $"{board.Name} › {list.Name}", card.IsCompleted ? SymbolRegular.CheckmarkCircle24 : SymbolRegular.TaskListLtr24,
-                board == _main.CurrentBoard ? 6 : 0);
-        foreach (var b in _main.Workspace.Boards) Add(LinkTarget.Board, b.Id, b.Name, $"Board · {b.ActiveCardCount} cards", SymbolRegular.Board24, 4);
-        foreach (var s in _main.Workspace.Storyboards) Add(LinkTarget.Storyboard, s.Id, s.Name, $"Storyboard · {s.Shots.Count} shots", SymbolRegular.VideoClip24, 3);
-        foreach (var c in _main.Workspace.Canvases) Add(LinkTarget.Canvas, c.Id, c.Name, $"Canvas · {c.Nodes.Count} shapes", SymbolRegular.Flowchart24, 3);
-        foreach (var n in _main.Workspace.Notes) Add(LinkTarget.Note, n.Id, n.Title, "Note page", SymbolRegular.DocumentText24, 3);
-
         Results.Clear();
-        foreach (var i in items.OrderByDescending(i => i.Score).Take(80)) Results.Add(i);
+        foreach (var h in Services.LinkResolver.Search(_main.Workspace, Query, _kinds, _exclude, _main.CurrentBoard))
+            Results.Add(FromHit(h));
         Selected = Results.FirstOrDefault();
     }
+
+    public static LinkOption FromHit(Services.LinkHit h) => new()
+    {
+        Kind = h.Kind, Id = h.Id, Title = h.Title, Subtitle = h.Subtitle, Score = h.Score,
+        Icon = Enum.TryParse<SymbolRegular>(h.Icon, out var icon) ? icon : SymbolRegular.Link24,
+    };
 }

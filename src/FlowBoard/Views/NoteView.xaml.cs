@@ -16,7 +16,7 @@ namespace FlowBoard.Views;
 /// Keyboard flow of the block editor (Enter splits, Backspace merges, arrows move between blocks, "/" menu)
 /// and rich text: every block is a RichTextBox kept in sync with the block's formatted spans.
 /// </summary>
-public partial class NoteView : UserControl
+public partial class NoteView : UserControl, Helpers.ICapturable
 {
     private static readonly string[] TextColors = ["#9CA3AF", "#EF4444", "#F97316", "#EAB308", "#22C55E", "#14B8A6", "#3B82F6", "#8B5CF6", "#EC4899", "#A16207"];
     private static readonly string[] HighlightColors = ["#66FACC15", "#6622C55E", "#663B82F6", "#66A855F7", "#66EC4899", "#66EF4444", "#66F97316", "#6694A3B8"];
@@ -27,6 +27,10 @@ public partial class NoteView : UserControl
     private bool _pickerOpen;
     private bool _highlightMode;
     private string _lastHighlight = HighlightColors[0];
+
+    // "@" link search state
+    private RichTextBox? _mentionBox;
+    private int _mentionStart = -1;
 
     public NoteView()
     {
@@ -57,6 +61,7 @@ public partial class NoteView : UserControl
         Unloaded += (_, _) =>
         {
             SlashPopup.IsOpen = false;
+            CloseMention();
             HideFormatBar();
         };
         Scroller.ScrollChanged += (_, _) => HideFormatBar();
@@ -68,6 +73,10 @@ public partial class NoteView : UserControl
     {
         if (sender is not RichTextBox box || box.DataContext is not NoteBlock block) return;
         DataObject.AddPastingHandler(box, OnPasting);
+        box.PreviewTextInput -= OnEditorTextInput;
+        box.PreviewTextInput += OnEditorTextInput;
+        box.PreviewMouseLeftButtonUp -= OnEditorClick;
+        box.PreviewMouseLeftButtonUp += OnEditorClick;
         block.PropertyChanged -= OnBlockPropertyChanged;
         block.PropertyChanged += OnBlockPropertyChanged;
         LoadInto(box, block);
@@ -77,6 +86,8 @@ public partial class NoteView : UserControl
     {
         if (sender is not RichTextBox box || box.DataContext is not NoteBlock block) return;
         DataObject.RemovePastingHandler(box, OnPasting);
+        box.PreviewTextInput -= OnEditorTextInput;
+        box.PreviewMouseLeftButtonUp -= OnEditorClick;
         block.PropertyChanged -= OnBlockPropertyChanged;
         if (_active == box) _active = null;
     }
@@ -132,6 +143,116 @@ public partial class NoteView : UserControl
         {
             _loading.Remove(box);
         }
+
+        UpdateMention(box, block);
+    }
+
+    // ================= "@" links inside text =================
+
+    private void UpdateMention(RichTextBox box, NoteBlock block)
+    {
+        if (block.Type == BlockType.Code) return;
+        var caret = RichDoc.OffsetOf(box, box.CaretPosition);
+        var text = block.Text;
+        if (_mentionBox == box && _mentionStart >= 0)
+        {
+            // Still typing the search after "@"?
+            if (caret <= _mentionStart || _mentionStart >= text.Length || text[_mentionStart] != '@' || caret - _mentionStart > 40
+                || text[(_mentionStart + 1)..Math.Min(caret, text.Length)].Contains('\n'))
+            {
+                CloseMention();
+                return;
+            }
+
+            ShowMention(box, text[(_mentionStart + 1)..Math.Min(caret, text.Length)]);
+            return;
+        }
+
+        // A fresh "@" at the start of a word opens the search.
+        if (caret >= 1 && caret <= text.Length && text[caret - 1] == '@' && (caret == 1 || char.IsWhiteSpace(text[caret - 2])))
+        {
+            _mentionBox = box;
+            _mentionStart = caret - 1;
+            ShowMention(box, string.Empty);
+        }
+    }
+
+    private void ShowMention(RichTextBox box, string query)
+    {
+        if (_vm == null) return;
+        var hits = LinkResolver.Search(_vm.Main.Workspace, query, LinkResolver.All, [_vm.Page.Id], _vm.Main.CurrentBoard, 30)
+            .Select(LinkPickerViewModel.FromHit).ToList();
+        MentionList.ItemsSource = hits;
+        MentionList.SelectedIndex = hits.Count > 0 ? 0 : -1;
+        var rect = box.CaretPosition.GetCharacterRect(LogicalDirection.Backward);
+        MentionPopup.PlacementTarget = box;
+        MentionPopup.HorizontalOffset = Math.Max(0, rect.Left - 20);
+        MentionPopup.VerticalOffset = rect.Bottom + 4;
+        MentionPopup.IsOpen = hits.Count > 0 || query.Length == 0;
+    }
+
+    private void CloseMention()
+    {
+        MentionPopup.IsOpen = false;
+        _mentionBox = null;
+        _mentionStart = -1;
+    }
+
+    private void InsertMention(LinkOption option)
+    {
+        if (_mentionBox is not { } box || box.DataContext is not NoteBlock block || _mentionStart < 0) return;
+        _vm?.Checkpoint();
+        var start = RichDoc.PointerAt(box, _mentionStart);
+        // Replace "@query" with the link, followed by a space so typing continues as normal text.
+        new TextRange(start, box.CaretPosition).Text = string.Empty;
+        var at = RichDoc.PointerAt(box, _mentionStart);
+        var run = RichDoc.MakeLinkRun(option.Title, option.Kind, option.Id, at);
+        var space = new Run(" ", run.ElementEnd);
+        box.CaretPosition = space.ContentEnd;
+        CloseMention();
+        Sync(box, block);
+    }
+
+    private void OnMentionClick(object sender, MouseButtonEventArgs e)
+    {
+        if ((e.OriginalSource as DependencyObject) is { } d && ItemsControl.ContainerFromElement(MentionList, d) is ListBoxItem { DataContext: LinkOption option })
+        {
+            InsertMention(option);
+            _mentionBox?.Focus();
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>Links behave as one piece: typing next to one never extends it.</summary>
+    private void OnEditorTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (sender is not RichTextBox box || !box.Selection.IsEmpty || e.Text.Length == 0) return;
+        var pos = box.CaretPosition;
+        if (pos.Parent is not Run run || !RichDoc.TryParseLink(run.Tag, out _, out _)) return;
+        TextPointer insertAt;
+        if (pos.CompareTo(run.ContentEnd) >= 0) insertAt = run.ElementEnd;
+        else if (pos.CompareTo(run.ContentStart) <= 0) insertAt = run.ElementStart;
+        else
+        {
+            e.Handled = true; // no typing inside a link
+            return;
+        }
+
+        var plain = new Run(e.Text, insertAt);
+        box.CaretPosition = plain.ContentEnd;
+        e.Handled = true;
+    }
+
+    /// <summary>Clicking a link opens what it points to.</summary>
+    private void OnEditorClick(object sender, MouseButtonEventArgs e)
+    {
+        if (_vm == null || sender is not RichTextBox box || !box.Selection.IsEmpty) return;
+        var pos = box.GetPositionFromPoint(e.GetPosition(box), false);
+        if (pos?.Parent is Run run && RichDoc.TryParseLink(run.Tag, out var kind, out var id))
+        {
+            e.Handled = true;
+            _vm.Main.OpenTarget(kind, id);
+        }
     }
 
     /// <summary>Pasted text arrives as plain text (formatting from web pages or Word would clash with the theme).</summary>
@@ -174,6 +295,7 @@ public partial class NoteView : UserControl
 
     private void OnBlocksLostFocus(object sender, KeyboardFocusChangedEventArgs e)
     {
+        if (!MentionPopup.IsMouseOver && e.NewFocus != _mentionBox) CloseMention();
         if (!FormatBar.IsMouseOver && !ColorMenu.IsMouseOver && !_pickerOpen && e.NewFocus is not RichTextBox) HideFormatBar();
 
         // Clicking an entry in the "/" menu must not close it first.
@@ -255,6 +377,33 @@ public partial class NoteView : UserControl
         }
 
         if (e.OriginalSource is not RichTextBox { DataContext: NoteBlock block } box) return;
+
+        // ----- "@" link search -----
+        if (MentionPopup.IsOpen && _mentionBox == box)
+        {
+            var list = MentionList.ItemsSource as IList<LinkOption>;
+            switch (key)
+            {
+                case Key.Down when list is { Count: > 0 }:
+                    MentionList.SelectedIndex = (MentionList.SelectedIndex + 1) % list.Count;
+                    MentionList.ScrollIntoView(MentionList.SelectedItem);
+                    e.Handled = true;
+                    return;
+                case Key.Up when list is { Count: > 0 }:
+                    MentionList.SelectedIndex = (MentionList.SelectedIndex - 1 + list.Count) % list.Count;
+                    MentionList.ScrollIntoView(MentionList.SelectedItem);
+                    e.Handled = true;
+                    return;
+                case Key.Enter or Key.Tab when MentionList.SelectedItem is LinkOption option:
+                    InsertMention(option);
+                    e.Handled = true;
+                    return;
+                case Key.Escape:
+                    CloseMention();
+                    e.Handled = true;
+                    return;
+            }
+        }
 
         // ----- "/" menu -----
         if (_vm.IsSlashOpen && _vm.SlashBlock == block)
@@ -574,4 +723,10 @@ public partial class NoteView : UserControl
         _vm.DropImages(files.Where(MediaStore.IsImageFile), at);
         e.Handled = true;
     }
+
+    // ----- high-res screenshot -----
+    FrameworkElement Helpers.ICapturable.CaptureElement => PageContent;
+    Rect? Helpers.ICapturable.CaptureArea => null;
+    System.Windows.Media.Brush? Helpers.ICapturable.CaptureBackground => Helpers.CaptureHelpers.DocWallpaper();
+    string Helpers.ICapturable.CaptureName => _vm?.Page.Title ?? "Page";
 }

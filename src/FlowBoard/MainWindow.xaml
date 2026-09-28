@@ -40,6 +40,7 @@
         <KeyBinding Key="OemComma" Modifiers="Control" Command="{Binding OpenSettingsCommand}" />
         <KeyBinding Key="F1" Command="{Binding OpenShortcutsCommand}" />
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveNowCommand}" />
+        <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding ScreenshotCommand}" CommandParameter="save" />
         <KeyBinding Key="A" Modifiers="Control+Shift" Command="{Binding OpenArchiveCommand}" />
         <KeyBinding Key="Space" Modifiers="Control+Shift" Command="{Binding OpenQuickAddCommand}" />
         <KeyBinding Key="F2" Command="{Binding StartRenameBoardCommand}" />
@@ -421,6 +422,19 @@
                             ToolTip="{Binding RedoDescriptionNow, StringFormat='Redo {0} (Ctrl+Y)', TargetNullValue='Redo (Ctrl+Y)'}">
                         <ui:SymbolIcon Symbol="ArrowRedo24" FontSize="16" />
                     </Button>
+                    <Button Style="{StaticResource Fb.IconButton}" h:Behaviors.ClickOpensContextMenu="True" ToolTip="High-res screenshot of what's open (Ctrl+Shift+S)">
+                        <ui:SymbolIcon Symbol="Camera24" FontSize="16" />
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Save high-res screenshot…" InputGestureText="Ctrl+Shift+S" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ScreenshotCommand}" CommandParameter="save">
+                                    <MenuItem.Icon><ui:SymbolIcon Symbol="Save24" /></MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Copy screenshot" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ScreenshotCommand}" CommandParameter="copy">
+                                    <MenuItem.Icon><ui:SymbolIcon Symbol="Copy24" /></MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
                     <Button Style="{StaticResource Fb.IconButton}" Command="{Binding ToggleThemeCommand}" ToolTip="Toggle dark / light (Ctrl+T)">
                         <ui:SymbolIcon x:Name="ThemeIcon" Symbol="WeatherMoon24" FontSize="16" />
                     </Button>
@@ -557,6 +571,15 @@
             <Grid x:Name="DocArea" Grid.Column="1" h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}"
                   Visibility="{Binding ActiveView, Converter={StaticResource NotEquals}, ConverterParameter=Board}">
                 <Border Background="{DynamicResource Fb.PanelBrush}" CornerRadius="{DynamicResource Fb.RadiusLarge}" />
+                <!-- Wallpaper (like board backgrounds) -->
+                <Border x:Name="DocWallpaper" Margin="-48" Background="{Binding ActiveDocument.Model.Background, Converter={StaticResource BoardBackground}}"
+                        Visibility="{Binding ActiveDocument.Model.HasWallpaper, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}">
+                    <Border.Effect>
+                        <BlurEffect Radius="{Binding ActiveDocument.Model.BackgroundBlur, FallbackValue=0}" KernelType="Gaussian" RenderingBias="Performance" />
+                    </Border.Effect>
+                </Border>
+                <Border Background="Black" Opacity="{Binding ActiveDocument.Model.BackgroundDim, FallbackValue=0}"
+                        Visibility="{Binding ActiveDocument.Model.HasWallpaper, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}" />
                 <ContentControl Content="{Binding ActiveDocument}" Focusable="False" h:Behaviors.AnimateIn="fade" />
                 <Border CornerRadius="{DynamicResource Fb.RadiusLarge}" BorderThickness="1" BorderBrush="{DynamicResource Fb.PanelBorderBrush}" IsHitTestVisible="False" />
             </Grid>

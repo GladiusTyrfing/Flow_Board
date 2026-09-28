@@ -56,6 +56,12 @@ public static class RichText
         foreach (var s in spans)
         {
             if (s.Text.Length == 0) continue;
+            if (s.IsLink)
+            {
+                sb.Append('[').Append(s.Text.Trim()).Append(']');
+                continue;
+            }
+
             // Keep surrounding spaces outside the markers so "**bold** text" stays valid Markdown.
             var core = s.Text.Trim();
             if (core.Length == 0 || s.IsPlain)

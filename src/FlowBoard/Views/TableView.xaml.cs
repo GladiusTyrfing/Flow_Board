@@ -6,7 +6,7 @@ using FlowBoard.ViewModels;
 
 namespace FlowBoard.Views;
 
-public partial class TableView : UserControl
+public partial class TableView : UserControl, Helpers.ICapturable
 {
     public TableView()
     {
@@ -48,4 +48,10 @@ public partial class TableView : UserControl
             e.Handled = true;
         }
     }
+
+    // ----- high-res screenshot -----
+    FrameworkElement Helpers.ICapturable.CaptureElement => this;
+    Rect? Helpers.ICapturable.CaptureArea => null;
+    System.Windows.Media.Brush? Helpers.ICapturable.CaptureBackground => null;
+    string Helpers.ICapturable.CaptureName => ((DataContext as ViewModels.MainViewModel)?.CurrentBoard?.Name ?? "Board") + " table";
 }

@@ -8,7 +8,7 @@ using FlowBoard.ViewModels;
 
 namespace FlowBoard.Views;
 
-public partial class BoardView : UserControl
+public partial class BoardView : UserControl, Helpers.ICapturable
 {
     private Point _cardDownPoint;
     private bool _isPanning;
@@ -117,4 +117,10 @@ public partial class BoardView : UserControl
 
     private static bool IsInside<T>(DependencyObject? d, DependencyObject stopAt) where T : DependencyObject =>
         FindAncestor<T>(d, stopAt) != null;
+
+    // ----- high-res screenshot -----
+    FrameworkElement Helpers.ICapturable.CaptureElement => BoardContent;
+    Rect? Helpers.ICapturable.CaptureArea => null;
+    System.Windows.Media.Brush? Helpers.ICapturable.CaptureBackground => (DataContext as ViewModels.MainViewModel)?.CurrentBoard is { } b && b.Background != "none" ? Converters.BoardBackgroundConverter.ToBrush(b.Background) : null;
+    string Helpers.ICapturable.CaptureName => (DataContext as ViewModels.MainViewModel)?.CurrentBoard?.Name ?? "Board";
 }

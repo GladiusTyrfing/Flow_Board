@@ -9,7 +9,7 @@ using GongSolutions.Wpf.DragDrop;
 
 namespace FlowBoard.Views;
 
-public partial class StoryboardView : UserControl
+public partial class StoryboardView : UserControl, Helpers.ICapturable
 {
     private StoryboardViewModel? _vm;
 
@@ -19,11 +19,29 @@ public partial class StoryboardView : UserControl
         InitializeComponent();
         DataContextChanged += (_, _) =>
         {
-            if (_vm != null) _vm.RenderRequested -= OnRenderRequested;
+            if (_vm != null)
+            {
+                _vm.RenderRequested -= OnRenderRequested;
+                _vm.ShotFocusRequested -= OnShotFocus;
+            }
+
             _vm = DataContext as StoryboardViewModel;
-            if (_vm != null) _vm.RenderRequested += OnRenderRequested;
+            if (_vm != null)
+            {
+                _vm.RenderRequested += OnRenderRequested;
+                _vm.ShotFocusRequested += OnShotFocus;
+            }
         };
     }
+
+    /// <summary>Scrolls a linked shot into the middle of the view.</summary>
+    private void OnShotFocus(object? sender, Shot shot) =>
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            if (ShotsHost.ItemContainerGenerator.ContainerFromItem(shot) is not FrameworkElement c) return;
+            var x = c.TransformToAncestor(ExportRoot).Transform(new Point(0, 0)).X;
+            Scroller.ScrollToHorizontalOffset(Math.Max(0, x - (Scroller.ViewportWidth - c.ActualWidth) / 2));
+        });
 
     public IDropTarget ShotDropHandler { get; }
 
@@ -32,15 +50,15 @@ public partial class StoryboardView : UserControl
     {
         if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
         {
-            for (var d = e.OriginalSource as DependencyObject; d != null && d != Scroller; d = VisualTreeHelper.GetParent(d))
+            // Over a shot column: only that column scrolls (never the whole row, even at its top or bottom).
+            for (var d = e.OriginalSource as DependencyObject; d is Visual && d != Scroller; d = VisualTreeHelper.GetParent(d))
             {
-                if (d is ScrollViewer sv && sv.ScrollableHeight > 0)
+                if (d is ScrollViewer sv)
                 {
-                    var canScroll = e.Delta > 0 ? sv.VerticalOffset > 0 : sv.VerticalOffset < sv.ScrollableHeight;
-                    if (canScroll) return;
+                    sv.ScrollToVerticalOffset(sv.VerticalOffset - e.Delta / 120.0 * 48);
+                    e.Handled = true;
+                    return;
                 }
-
-                if (d is not Visual) break;
             }
         }
 
@@ -105,4 +123,10 @@ public partial class StoryboardView : UserControl
             base.Drop(dropInfo);
         }
     }
+
+    // ----- high-res screenshot -----
+    FrameworkElement Helpers.ICapturable.CaptureElement => ExportRoot;
+    Rect? Helpers.ICapturable.CaptureArea => null;
+    System.Windows.Media.Brush? Helpers.ICapturable.CaptureBackground => Helpers.CaptureHelpers.DocWallpaper();
+    string Helpers.ICapturable.CaptureName => _vm?.Board.Name ?? "Storyboard";
 }

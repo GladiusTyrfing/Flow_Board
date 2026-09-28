@@ -164,6 +164,22 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         Board.Shots.Move(i, i + 1);
     }
 
+    /// <summary>Asks the view to scroll to a shot; the shot flashes briefly.</summary>
+    public event EventHandler<Shot>? ShotFocusRequested;
+
+    public void FocusShot(Shot shot)
+    {
+        ShotFocusRequested?.Invoke(this, shot);
+        shot.IsFlashing = true;
+        var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1.6) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            shot.IsFlashing = false;
+        };
+        timer.Start();
+    }
+
     /// <summary>Called by the drag &amp; drop handler before it reorders.</summary>
     public void BeforeReorder() => Checkpoint();
 

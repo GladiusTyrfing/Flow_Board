@@ -1,3 +1,4 @@
+using System.Windows.Media;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Threading;
@@ -44,9 +45,41 @@ public partial class MainWindow : FluentWindow
         vm.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(MainViewModel.CurrentBoard)) ApplyBoardTheme();
+            if (e.PropertyName == nameof(MainViewModel.ActiveDocument)) ApplyDocTheme();
         };
-        ThemeService.ThemeApplied += (_, _) => ApplyBoardTheme();
+        ThemeService.ThemeApplied += (_, _) =>
+        {
+            ApplyBoardTheme();
+            ApplyDocTheme();
+        };
         ApplyBoardTheme();
+        vm.ScreenshotRequested += OnScreenshotRequested;
+    }
+
+    private Models.StyledDocument? _styledDoc;
+
+    /// <summary>Storyboards, canvases and pages can have their own theme preset (and see-through panels over a wallpaper).</summary>
+    private void ApplyDocTheme()
+    {
+        if (_styledDoc != null) _styledDoc.PropertyChanged -= OnDocStyleChanged;
+        _styledDoc = _vm.ActiveDocument?.Model as Models.StyledDocument;
+        if (_styledDoc != null) _styledDoc.PropertyChanged += OnDocStyleChanged;
+        var styled = _styledDoc is { } d && (d.Theme != "Auto" || d.HasWallpaper || Math.Abs(d.PanelOpacity - 0.9) > 0.01);
+        BoardThemeService.ApplyDoc(DocArea, styled ? _styledDoc : null);
+    }
+
+    private bool _docStylePending;
+
+    private void OnDocStyleChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not (nameof(Models.StyledDocument.Theme) or nameof(Models.StyledDocument.Background) or nameof(Models.StyledDocument.PanelOpacity))) return;
+        if (_docStylePending) return;
+        _docStylePending = true;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, () =>
+        {
+            _docStylePending = false;
+            ApplyDocTheme();
+        });
     }
 
     /// <summary>Adapts the title bar and board header to the window width so nothing gets clipped.</summary>
@@ -95,6 +128,63 @@ public partial class MainWindow : FluentWindow
     }
 
     /// <summary>Routes hotkeys that plain KeyBindings can't express (single letters, hover-card actions).</summary>
+    // ================= high-res screenshots =================
+
+    private void OnScreenshotRequested(object? sender, string mode)
+    {
+        var root = _vm.ActiveView == Models.ActiveView.Board ? (DependencyObject)ViewHost : DocArea;
+        var source = FindCapturable(root);
+        if (source == null)
+        {
+            _vm.ShowToast("Nothing to capture here.", isError: true);
+            return;
+        }
+
+        try
+        {
+            var el = source.CaptureElement;
+            el.UpdateLayout();
+            var area = source.CaptureArea ?? new Rect(0, 0, el.ActualWidth, el.ActualHeight);
+            if (area.Width < 1 || area.Height < 1)
+            {
+                _vm.ShowToast("Nothing to capture here.", isError: true);
+                return;
+            }
+
+            // As sharp as possible (3x) while staying a sane file size.
+            var scale = Math.Min(3, Math.Min(16000 / Math.Max(area.Width, area.Height), Math.Sqrt(120_000_000 / (area.Width * area.Height))));
+            scale = Math.Max(0.5, scale);
+            var bg = source.CaptureBackground ?? (Brush)FindResource("Fb.WindowBrush");
+            var image = Services.MediaStore.Render(el, scale, bg, area);
+            if (mode == "copy")
+            {
+                Clipboard.SetImage(image);
+                _vm.ShowToast($"Screenshot copied ({image.PixelWidth} × {image.PixelHeight})");
+            }
+            else if (Services.MediaStore.ExportPng(image, source.CaptureName))
+            {
+                _vm.ShowToast($"Screenshot saved ({image.PixelWidth} × {image.PixelHeight})");
+            }
+        }
+        catch (Exception ex)
+        {
+            _vm.ShowToast($"Screenshot failed: {ex.Message}", isError: true);
+        }
+    }
+
+    private static Helpers.ICapturable? FindCapturable(DependencyObject root)
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is UIElement { IsVisible: false }) continue;
+            if (child is Helpers.ICapturable c) return c;
+            if (FindCapturable(child) is { } found) return found;
+        }
+
+        return null;
+    }
+
     private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         var key = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;

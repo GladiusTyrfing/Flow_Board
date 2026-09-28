@@ -40,13 +40,14 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 - Infinite canvas with pan/zoom and a dot grid; boxes, rounded boxes, ellipses, decision diamonds, sticky notes, text, images and **live cards** from your boards
 - Drag from a shape's dot to connect (drop on empty space to create the next shape); curved, straight or elbow connectors with arrows, labels, colors, dashes
 - Mind-map keys (Tab = child, Enter = sibling), snap to grid, marquee select, copy/paste/duplicate, paste or drop images, **one-click tidy-up layout**, export PNG / print
-- Draw **free lines and arrows** anywhere (ends stick to shapes), **freehand pen**, **sections** that carry their contents, align & distribute, line thickness and double-headed arrows, crop images, right-click menu
+- Draw **free lines and arrows** anywhere (ends stick to shapes) and **curve** them with a drag, **freehand pen**, circles, **sections** that keep their shapes until you remove them, align & distribute, lock, Alt+drag copies, line thickness and double-headed arrows, crop images, right-click menu
+- **Link nodes**: drop a live preview of any board, storyboard, single shot, canvas, page or card onto the canvas (double-click opens it)
 
 **Notes / docs pages**
 - Block editor: headings, to-dos, bulleted and numbered lists, quotes, callouts, code, dividers, images and links to cards, boards, storyboards, canvases or other pages
 - Type `/` for the block menu or use Markdown shortcuts (`#`, `-`, `1.`, `[]`, `>`, ```` ``` ````, `---`); Tab to indent, Alt+↑/↓ to move blocks
 - **Rich text**: bold, italic, underline, strikethrough, inline code, any text color and highlight — select text for the formatting bar
-- Type `@` (or use the Link button) to embed a **preview card** of a board, storyboard, canvas, page or card
+- Type `@` anywhere in a line to link **inline** to a card, board, storyboard, a specific **shot**, canvas or page (click to open); the Link button embeds a **preview card**
 - Page icons and **cover images**, full-width or reading-width pages, an **outline** of headings, page templates (meeting notes, brief, script, shot list, to-dos, journal), word count and reading time, export/copy as Markdown, turn open to-dos into cards
 
 **Dashboard**
@@ -61,6 +62,9 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 - **Global hotkeys** that work from any app (quick add a card, show/hide) — customizable
 - Dark / light / follow-Windows theme, accent colors, Mica / Acrylic backdrops, smooth animations
 - A full **color picker** (any color, hex, recent colors) next to every palette: labels, lists, covers, board backgrounds, canvas, sketches, note text
+- **Themes and wallpapers for storyboards, canvases and pages** too (Style button): theme presets, photos, gradients, colors, dim, blur, panel transparency
+- **Minimap** in the corner of boards, storyboards, canvases, timelines, pages and the dashboard — click or drag to jump
+- **High-res screenshots** (Ctrl+Shift+S or the camera button): the whole board, canvas, storyboard, timeline or page at up to 3× resolution, saved as PNG or copied
 - Autosave every 2 seconds, rolling automatic backups, full zip backup & restore, portable mode
 
 ## Hotkeys

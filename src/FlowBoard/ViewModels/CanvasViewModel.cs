@@ -14,6 +14,7 @@ public enum CanvasTool
     Rectangle,
     Rounded,
     Ellipse,
+    Circle,
     Diamond,
     Sticky,
     Text,
@@ -139,6 +140,8 @@ public sealed partial class CanvasViewModel : DocumentViewModel
     {
         foreach (var n in Doc.Nodes.Where(n => n.CardId != null))
             n.Card = Main.Workspace.FindCard(n.CardId!.Value, out _, out _);
+        foreach (var n in Doc.Nodes.Where(n => n.Shape == NodeShape.Link && n.LinkId != null))
+            n.Link = LinkResolver.Describe(Main.Workspace, n.LinkKind, n.LinkId!.Value, n.Text);
     }
 
     public CanvasNode? FindNode(Guid id) => Doc.Nodes.FirstOrDefault(n => n.Id == id);
@@ -154,7 +157,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
             return;
         }
 
-        var shape = CanvasGeometry.Route(a.Value, b.Value, edge.Style, edge.Arrow, edge.StartArrow, edge.Thickness);
+        var shape = CanvasGeometry.Route(a.Value, b.Value, edge.Style, edge.Arrow, edge.StartArrow, edge.Thickness, edge.BendX, edge.BendY);
         edge.PathData = shape.Path;
         edge.ArrowData = shape.Arrow;
         edge.LabelX = shape.LabelX;
@@ -216,6 +219,8 @@ public sealed partial class CanvasViewModel : DocumentViewModel
         NodeShape.Text => (200, 40),
         NodeShape.Image => (260, 180),
         NodeShape.Card => (240, 96),
+        NodeShape.Circle => (110, 110),
+        NodeShape.Link => (280, 100),
         NodeShape.Frame => (480, 320),
         _ => (170, 70),
     };
@@ -225,6 +230,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
         NodeShape.Sticky => "#FACC15",
         NodeShape.Diamond => "#F97316",
         NodeShape.Ellipse => "#10B981",
+        NodeShape.Circle => "#06B6D4",
         NodeShape.Text => "#00000000",
         NodeShape.Frame => "#64748B",
         _ => "#8B5CF6",
@@ -250,8 +256,116 @@ public sealed partial class CanvasViewModel : DocumentViewModel
             node.Z = Doc.Nodes.Count == 1 ? 0 : Doc.Nodes.Min(n => n.Z) - 1; // frames sit behind everything
         }
 
-        if (edit && shape is not (NodeShape.Image or NodeShape.Card or NodeShape.Ink)) node.IsEditing = true;
+        else if (FrameAt(node.CenterX, node.CenterY, node) is { } frame)
+        {
+            node.FrameId = frame.Id; // shapes added inside a section belong to it
+        }
+
+        if (edit && shape is not (NodeShape.Image or NodeShape.Card or NodeShape.Ink or NodeShape.Link)) node.IsEditing = true;
         return node;
+    }
+
+    // ================= sections (frames) =================
+
+    /// <summary>Topmost section under a point (ignoring <paramref name="except"/>).</summary>
+    public CanvasNode? FrameAt(double x, double y, CanvasNode? except = null) =>
+        Doc.Nodes.Where(n => n.Shape == NodeShape.Frame && n != except && n.Bounds.Contains(x, y)).OrderByDescending(n => n.Z).FirstOrDefault();
+
+    /// <summary>Shapes that belong to a section (including shapes in sections inside it).</summary>
+    public IEnumerable<CanvasNode> Members(CanvasNode frame)
+    {
+        var result = new List<CanvasNode>();
+        var queue = new Queue<Guid>([frame.Id]);
+        var seen = new HashSet<Guid> { frame.Id };
+        while (queue.Count > 0)
+        {
+            var id = queue.Dequeue();
+            foreach (var n in Doc.Nodes.Where(n => n.FrameId == id && seen.Add(n.Id)))
+            {
+                result.Add(n);
+                if (n.Shape == NodeShape.Frame) queue.Enqueue(n.Id);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>After a move: shapes dropped inside a section join it. Shapes already in a section stay there until removed.</summary>
+    public void JoinFrames(IEnumerable<CanvasNode> moved)
+    {
+        foreach (var n in moved)
+        {
+            if (n.FrameId != null && FindNode(n.FrameId.Value) != null) continue;
+            var frame = FrameAt(n.CenterX, n.CenterY, n);
+            if (frame == null || frame.FrameId == n.Id) continue; // no cycles
+            n.FrameId = frame.Id;
+        }
+    }
+
+    /// <summary>A section drawn around shapes takes them in.</summary>
+    public void AdoptInto(CanvasNode frame)
+    {
+        var b = frame.Bounds;
+        foreach (var n in Doc.Nodes.Where(n => n != frame && n.FrameId == null && b.Contains(n.CenterX, n.CenterY) && n.Width <= b.W))
+            n.FrameId = frame.Id;
+    }
+
+    [RelayCommand]
+    private void RemoveFromFrame(CanvasNode? node)
+    {
+        var nodes = node != null && !node.IsSelected ? [node] : SelectedNodes.Where(n => n.FrameId != null).ToList();
+        if (nodes.Count == 0) return;
+        Checkpoint();
+        foreach (var n in nodes) n.FrameId = null;
+        Main.ShowToast(nodes.Count == 1 ? "Removed from the section" : $"Removed {nodes.Count} shapes from their section");
+    }
+
+    [RelayCommand]
+    private void ToggleLock(CanvasNode? node)
+    {
+        var nodes = node != null && !node.IsSelected ? [node] : SelectedNodes.ToList();
+        if (nodes.Count == 0) return;
+        var locked = !nodes[0].Locked;
+        foreach (var n in nodes) n.Locked = locked;
+    }
+
+    // ================= links to boards, storyboards, shots, pages… =================
+
+    [RelayCommand]
+    private async Task AddLink()
+    {
+        var pick = await Main.PickLinkAsync("Add a link to the canvas", LinkResolver.All);
+        if (pick == null) return;
+        var (x, y) = ViewCenter();
+        var node = AddNodeAt(NodeShape.Link, x, y, edit: false);
+        node.LinkKind = pick.Value.Kind;
+        node.LinkId = pick.Value.Id;
+        node.Text = pick.Value.Title;
+        node.Link = LinkResolver.Describe(Main.Workspace, node.LinkKind, pick.Value.Id, node.Text);
+    }
+
+    // ================= bending lines =================
+
+    /// <summary>Pulls the middle of a line to a point (the line curves through it).</summary>
+    public void SetBend(CanvasEdge e, double x, double y)
+    {
+        e.BendX = Math.Abs(x - (e.StartX + e.EndX) / 2) < 0.5 ? 0.01 : x - (e.StartX + e.EndX) / 2;
+        e.BendY = y - (e.StartY + e.EndY) / 2;
+        UpdateEdge(e);
+    }
+
+    [RelayCommand]
+    private void Straighten()
+    {
+        var edges = SelectedEdges.Where(e => e.HasBend).ToList();
+        if (edges.Count == 0) return;
+        Checkpoint();
+        foreach (var e in edges)
+        {
+            e.BendX = 0;
+            e.BendY = 0;
+            UpdateEdge(e);
+        }
     }
 
     // ================= pen, lines, frames =================
@@ -339,12 +453,6 @@ public sealed partial class CanvasViewModel : DocumentViewModel
         UpdateEdge(e);
     }
 
-    /// <summary>Shapes that lie completely inside a frame move with it.</summary>
-    public IEnumerable<CanvasNode> ContentsOf(CanvasNode frame)
-    {
-        var b = frame.Bounds;
-        return Doc.Nodes.Where(n => n != frame && n.X >= b.X && n.Y >= b.Y && n.X + n.Width <= b.Right && n.Y + n.Height <= b.Bottom);
-    }
 
     /// <summary>Edges drawn freely inside a moving selection move along.</summary>
     public IEnumerable<CanvasEdge> FreeEdgesWithin(Box b) =>
@@ -584,7 +692,7 @@ public sealed partial class CanvasViewModel : DocumentViewModel
 
     public void BeginEdit(CanvasNode node)
     {
-        if (node.Shape is NodeShape.Image or NodeShape.Card or NodeShape.Ink) return;
+        if (node.Shape is NodeShape.Image or NodeShape.Card or NodeShape.Ink or NodeShape.Link) return;
         Checkpoint();
         SelectOnly(node);
         node.IsEditing = true;
@@ -616,6 +724,8 @@ public sealed partial class CanvasViewModel : DocumentViewModel
         var ids = nodes.Select(n => n.Id).ToHashSet();
         foreach (var e in Doc.Edges.Where(e => e.IsSelected || ids.Contains(e.FromId) || ids.Contains(e.ToId)).ToList()) Doc.Edges.Remove(e);
         foreach (var n in nodes) Doc.Nodes.Remove(n);
+        // Shapes of a deleted section stay on the canvas, just loose.
+        foreach (var n in Doc.Nodes.Where(n => n.FrameId is { } f && ids.Contains(f))) n.FrameId = null;
     }
 
     [RelayCommand]
@@ -693,13 +803,14 @@ public sealed partial class CanvasViewModel : DocumentViewModel
     [RelayCommand]
     private void SetShape(NodeShape shape)
     {
-        var nodes = SelectedNodes.Where(n => n.Shape is not (NodeShape.Image or NodeShape.Card or NodeShape.Ink or NodeShape.Frame)).ToList();
+        var nodes = SelectedNodes.Where(n => n.Shape is not (NodeShape.Image or NodeShape.Card or NodeShape.Ink or NodeShape.Frame or NodeShape.Link)).ToList();
         if (nodes.Count == 0) return;
         Checkpoint();
         foreach (var n in nodes)
         {
             n.Shape = shape;
             if (shape == NodeShape.Sticky) n.Fill = DefaultFill(shape);
+            if (shape == NodeShape.Circle) n.Width = n.Height = Math.Max(n.Width, n.Height);
         }
     }
 
@@ -943,6 +1054,9 @@ public sealed partial class CanvasViewModel : DocumentViewModel
         {
             case NodeShape.Card when node.CardId is { } id:
                 Main.OpenTarget(LinkTarget.Card, id);
+                break;
+            case NodeShape.Link when node.LinkId is { } linkId:
+                Main.OpenTarget(node.LinkKind, linkId);
                 break;
             case NodeShape.Image when node.ImagePath != null:
                 Main.ShowDialog(new ImagePreviewViewModel(new Attachment { Kind = AttachmentKind.Image, Name = node.Text, RelativePath = node.ImagePath }));

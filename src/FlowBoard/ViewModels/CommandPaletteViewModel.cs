@@ -95,6 +95,25 @@ public sealed partial class CommandPaletteViewModel : DialogViewModel
             AddDoc(sb.Name, $"{sb.Mode} storyboard · {sb.Shots.Count} {(sb.Mode == StoryboardMode.Animation ? "frames" : "shots")}", "Storyboards", SymbolRegular.VideoClip24, () => _main.OpenStoryboard(x));
         }
 
+        if (q.Length > 0)
+        {
+            foreach (var sb in _main.Workspace.Storyboards)
+            {
+                foreach (var shot in sb.Shots)
+                {
+                    var title = Services.LinkResolver.ShotTitle(sb, shot);
+                    var s = Score(title, q);
+                    if (s <= 0) continue;
+                    var id = shot.Id;
+                    items.Add(new PaletteItem
+                    {
+                        Title = title, Subtitle = $"Shot {sb.Shots.IndexOf(shot) + 1} in {sb.Name}", Group = "Shots", Icon = SymbolRegular.SlideLayout24, Score = s + 3,
+                        Execute = () => _main.OpenTarget(LinkTarget.Shot, id),
+                    });
+                }
+            }
+        }
+
         foreach (var cv in _main.Workspace.Canvases)
         {
             var x = cv;

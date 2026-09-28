@@ -1,6 +1,7 @@
 <UserControl x:Class="FlowBoard.Views.TimelineView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:FlowBoard.Controls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
@@ -183,103 +184,106 @@
                     </ScrollViewer>
 
                     <!-- Chart -->
-                    <ScrollViewer x:Name="ChartScroller" Grid.Row="1" Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
-                                  ScrollChanged="OnChartScroll" PreviewMouseWheel="OnChartWheel">
-                        <Grid x:Name="Chart" Width="{Binding TotalWidth}" Height="{Binding TotalHeight}" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent"
-                              MouseLeftButtonDown="OnChartDown" MouseMove="OnChartMove" MouseLeftButtonUp="OnChartUp">
-                            <!-- Weekend columns + today line -->
-                            <ItemsControl ItemsSource="{Binding Days}" Focusable="False" IsHitTestVisible="False">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <Canvas />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemContainerStyle>
-                                    <Style TargetType="ContentPresenter">
-                                        <Setter Property="Canvas.Left" Value="{Binding X}" />
-                                    </Style>
-                                </ItemsControl.ItemContainerStyle>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type vm:TimelineDay}">
-                                        <Border x:Name="Col" Width="{Binding Width}" Height="{Binding DataContext.TotalHeight, ElementName=Chart}" BorderThickness="1,0,0,0"
-                                                BorderBrush="Transparent" />
-                                        <DataTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding IsWeekend}" Value="True">
-                                                <Setter TargetName="Col" Property="Background" Value="{DynamicResource Fb.SurfaceAltBrush}" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Date.DayOfWeek}" Value="Monday">
-                                                <Setter TargetName="Col" Property="BorderBrush" Value="{DynamicResource Fb.DividerBrush}" />
-                                            </DataTrigger>
-                                        </DataTemplate.Triggers>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <Canvas IsHitTestVisible="False">
-                                <Rectangle Canvas.Left="{Binding TodayX}" Width="2" Height="{Binding TotalHeight}" Fill="{DynamicResource Fb.AccentBrush}" Opacity="0.85" />
-                            </Canvas>
-
-                            <!-- Dependency arrows -->
-                            <ItemsControl ItemsSource="{Binding Links}" Focusable="False" IsHitTestVisible="False">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <Canvas />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type vm:TimelineLink}">
-                                        <Canvas>
-                                            <Path x:Name="Line" Data="{Binding Path, Converter={StaticResource Geometry}}" Stroke="{DynamicResource Fb.MutedTextBrush}" StrokeThickness="1.6" />
-                                            <Path x:Name="Head" Data="{Binding Arrow, Converter={StaticResource Geometry}}" Fill="{DynamicResource Fb.MutedTextBrush}" />
-                                        </Canvas>
-                                        <DataTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding IsBlocking}" Value="True">
-                                                <Setter TargetName="Line" Property="Stroke" Value="{DynamicResource Fb.DangerBrush}" />
-                                                <Setter TargetName="Head" Property="Fill" Value="{DynamicResource Fb.DangerBrush}" />
-                                                <Setter TargetName="Line" Property="StrokeDashArray" Value="3 2" />
-                                            </DataTrigger>
-                                        </DataTemplate.Triggers>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <!-- Bars -->
-                            <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <Canvas />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemContainerStyle>
-                                    <Style TargetType="ContentPresenter">
-                                        <Setter Property="Canvas.Left" Value="{Binding Left}" />
-                                        <Setter Property="Canvas.Top" Value="{Binding Top}" />
-                                    </Style>
-                                </ItemsControl.ItemContainerStyle>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type vm:TimelineRow}">
-                                        <Grid x:Name="Bar" Width="{Binding Width}" Height="{Binding Height}" Visibility="Collapsed">
-                                            <Border x:Name="Body" Tag="move" Margin="0,7" CornerRadius="{DynamicResource Fb.Radius}" Cursor="SizeWE"
-                                                    Background="{Binding Color, Converter={StaticResource HexToBrush}}" ToolTip="{Binding DatesText}"
-                                                    Effect="{StaticResource Fb.CardShadow}">
-                                                <TextBlock Text="{Binding Title}" Foreground="{Binding Color, Converter={StaticResource ContrastBrush}}" FontSize="12" FontWeight="SemiBold"
-                                                           VerticalAlignment="Center" Margin="10,0" TextTrimming="CharacterEllipsis" IsHitTestVisible="False" />
-                                            </Border>
-                                            <Border Tag="start" Width="8" HorizontalAlignment="Left" Margin="0,7" Background="Transparent" Cursor="SizeWE" ToolTip="Drag to change the start date" />
-                                            <Border Tag="end" Width="8" HorizontalAlignment="Right" Margin="0,7" Background="Transparent" Cursor="SizeWE" ToolTip="Drag to change the due date" />
-                                        </Grid>
-                                        <DataTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding HasBar}" Value="True">
-                                                <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Card.IsCompleted}" Value="True">
-                                                <Setter TargetName="Body" Property="Opacity" Value="0.45" />
-                                            </DataTrigger>
-                                        </DataTemplate.Triggers>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Grid>
-                    </ScrollViewer>
+                    <Grid Grid.Row="1" Grid.Column="1">
+                        <ScrollViewer x:Name="ChartScroller" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                                      ScrollChanged="OnChartScroll" PreviewMouseWheel="OnChartWheel">
+                            <Grid x:Name="Chart" Width="{Binding TotalWidth}" Height="{Binding TotalHeight}" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent"
+                                  MouseLeftButtonDown="OnChartDown" MouseMove="OnChartMove" MouseLeftButtonUp="OnChartUp">
+                                <!-- Weekend columns + today line -->
+                                <ItemsControl ItemsSource="{Binding Days}" Focusable="False" IsHitTestVisible="False">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <Canvas />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemContainerStyle>
+                                        <Style TargetType="ContentPresenter">
+                                            <Setter Property="Canvas.Left" Value="{Binding X}" />
+                                        </Style>
+                                    </ItemsControl.ItemContainerStyle>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:TimelineDay}">
+                                            <Border x:Name="Col" Width="{Binding Width}" Height="{Binding DataContext.TotalHeight, ElementName=Chart}" BorderThickness="1,0,0,0"
+                                                    BorderBrush="Transparent" />
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding IsWeekend}" Value="True">
+                                                    <Setter TargetName="Col" Property="Background" Value="{DynamicResource Fb.SurfaceAltBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Date.DayOfWeek}" Value="Monday">
+                                                    <Setter TargetName="Col" Property="BorderBrush" Value="{DynamicResource Fb.DividerBrush}" />
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Canvas IsHitTestVisible="False">
+                                    <Rectangle Canvas.Left="{Binding TodayX}" Width="2" Height="{Binding TotalHeight}" Fill="{DynamicResource Fb.AccentBrush}" Opacity="0.85" />
+                                </Canvas>
+    
+                                <!-- Dependency arrows -->
+                                <ItemsControl ItemsSource="{Binding Links}" Focusable="False" IsHitTestVisible="False">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <Canvas />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:TimelineLink}">
+                                            <Canvas>
+                                                <Path x:Name="Line" Data="{Binding Path, Converter={StaticResource Geometry}}" Stroke="{DynamicResource Fb.MutedTextBrush}" StrokeThickness="1.6" />
+                                                <Path x:Name="Head" Data="{Binding Arrow, Converter={StaticResource Geometry}}" Fill="{DynamicResource Fb.MutedTextBrush}" />
+                                            </Canvas>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding IsBlocking}" Value="True">
+                                                    <Setter TargetName="Line" Property="Stroke" Value="{DynamicResource Fb.DangerBrush}" />
+                                                    <Setter TargetName="Head" Property="Fill" Value="{DynamicResource Fb.DangerBrush}" />
+                                                    <Setter TargetName="Line" Property="StrokeDashArray" Value="3 2" />
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+    
+                                <!-- Bars -->
+                                <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <Canvas />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemContainerStyle>
+                                        <Style TargetType="ContentPresenter">
+                                            <Setter Property="Canvas.Left" Value="{Binding Left}" />
+                                            <Setter Property="Canvas.Top" Value="{Binding Top}" />
+                                        </Style>
+                                    </ItemsControl.ItemContainerStyle>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:TimelineRow}">
+                                            <Grid x:Name="Bar" Width="{Binding Width}" Height="{Binding Height}" Visibility="Collapsed">
+                                                <Border x:Name="Body" Tag="move" Margin="0,7" CornerRadius="{DynamicResource Fb.Radius}" Cursor="SizeWE"
+                                                        Background="{Binding Color, Converter={StaticResource HexToBrush}}" ToolTip="{Binding DatesText}"
+                                                        Effect="{StaticResource Fb.CardShadow}">
+                                                    <TextBlock Text="{Binding Title}" Foreground="{Binding Color, Converter={StaticResource ContrastBrush}}" FontSize="12" FontWeight="SemiBold"
+                                                               VerticalAlignment="Center" Margin="10,0" TextTrimming="CharacterEllipsis" IsHitTestVisible="False" />
+                                                </Border>
+                                                <Border Tag="start" Width="8" HorizontalAlignment="Left" Margin="0,7" Background="Transparent" Cursor="SizeWE" ToolTip="Drag to change the start date" />
+                                                <Border Tag="end" Width="8" HorizontalAlignment="Right" Margin="0,7" Background="Transparent" Cursor="SizeWE" ToolTip="Drag to change the due date" />
+                                            </Grid>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding HasBar}" Value="True">
+                                                    <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Card.IsCompleted}" Value="True">
+                                                    <Setter TargetName="Body" Property="Opacity" Value="0.45" />
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </ScrollViewer>
+                        <c:ScrollMinimap Target="{Binding ElementName=ChartScroller}" />
+                    </Grid>
                 </Grid>
             </Grid>
         </DockPanel>

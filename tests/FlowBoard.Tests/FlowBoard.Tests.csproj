@@ -24,6 +24,7 @@
     <Compile Include="..\..\src\FlowBoard\Services\NoteMarkdown.cs" Link="Core\Services\NoteMarkdown.cs" />
     <Compile Include="..\..\src\FlowBoard\Services\RichText.cs" Link="Core\Services\RichText.cs" />
     <Compile Include="..\..\src\FlowBoard\Services\PageTemplates.cs" Link="Core\Services\PageTemplates.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\LinkResolver.cs" Link="Core\Services\LinkResolver.cs" />
     <Compile Include="..\..\src\FlowBoard\Services\DashboardStats.cs" Link="Core\Services\DashboardStats.cs" />
   </ItemGroup>
 

@@ -13,9 +13,9 @@ namespace FlowBoard.Views;
 /// Pan/zoom surface and all pointer interaction for the canvas: select, move, resize, connect, marquee, create.
 /// The view model owns the data; this class only translates mouse and keyboard input.
 /// </summary>
-public partial class CanvasView : UserControl
+public partial class CanvasView : UserControl, Helpers.ICapturable
 {
-    private enum Drag { None, Pan, Move, Resize, Connect, Marquee, Pen, DrawLine, DrawFrame, MoveEdge, EdgeEnd }
+    private enum Drag { None, Pan, Move, Resize, Connect, Marquee, Pen, DrawLine, DrawFrame, MoveEdge, EdgeEnd, Bend }
 
     private CanvasViewModel? _vm;
     private readonly DrawingBrush _dots;
@@ -65,8 +65,13 @@ public partial class CanvasView : UserControl
         {
             Focus();
             ThemeService.ThemeApplied += OnThemeApplied;
+            StartMinimap();
         };
-        Unloaded += (_, _) => ThemeService.ThemeApplied -= OnThemeApplied;
+        Unloaded += (_, _) =>
+        {
+            ThemeService.ThemeApplied -= OnThemeApplied;
+            _miniTimer.Stop();
+        };
         PreviewKeyDown += OnKey;
         KeyUp += (_, e) =>
         {
@@ -75,6 +80,93 @@ public partial class CanvasView : UserControl
     }
 
     private void OnThemeApplied(object? sender, EventArgs e) => UpdateDotBrush();
+
+    // ================= minimap =================
+
+    private readonly System.Windows.Threading.DispatcherTimer _miniTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
+    private Box _miniBounds;
+    private double _miniScale = 1;
+    private bool _miniDragging;
+
+    private void StartMinimap()
+    {
+        _miniTimer.Tick -= OnMiniTick;
+        _miniTimer.Tick += OnMiniTick;
+        _miniTimer.Start();
+    }
+
+    private void OnMiniTick(object? sender, EventArgs e) => UpdateMinimap();
+
+    /// <summary>Shows the whole drawing plus the visible area; kept fresh on a light timer.</summary>
+    private void UpdateMinimap()
+    {
+        if (_vm == null) return;
+        var show = _vm.Main.Settings.ShowMinimap && !_vm.IsEmpty;
+        MiniPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        MiniShow.Visibility = !_vm.Main.Settings.ShowMinimap && !_vm.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
+        if (!show) return;
+
+        var d = _vm.Doc;
+        var view = new Box(-d.OffsetX / d.Zoom, -d.OffsetY / d.Zoom, Surface.ActualWidth / d.Zoom, Surface.ActualHeight / d.Zoom);
+        var content = _vm.ContentBounds(60);
+        double l = Math.Min(content.X, view.X), t = Math.Min(content.Y, view.Y);
+        double r = Math.Max(content.Right, view.Right), b = Math.Max(content.Bottom, view.Bottom);
+        _miniBounds = new Box(l, t, Math.Max(1, r - l), Math.Max(1, b - t));
+        _miniScale = Math.Min(MiniMap.Width / _miniBounds.W, MiniMap.Height / _miniBounds.H);
+        MiniPreview.Width = _miniBounds.W * _miniScale;
+        MiniPreview.Height = _miniBounds.H * _miniScale;
+        var box = new Rect(_miniBounds.X, _miniBounds.Y, _miniBounds.W, _miniBounds.H);
+        if (MiniPreview.Fill is not VisualBrush vb)
+            MiniPreview.Fill = new VisualBrush(World) { Stretch = Stretch.Fill, ViewboxUnits = BrushMappingMode.Absolute, Viewbox = box };
+        else
+            vb.Viewbox = box;
+        Canvas.SetLeft(MiniViewport, (view.X - _miniBounds.X) * _miniScale);
+        Canvas.SetTop(MiniViewport, (view.Y - _miniBounds.Y) * _miniScale);
+        MiniViewport.Width = view.W * _miniScale;
+        MiniViewport.Height = view.H * _miniScale;
+    }
+
+    private void MiniJump(Point p)
+    {
+        if (_vm == null || _miniScale <= 0) return;
+        var wx = _miniBounds.X + p.X / _miniScale;
+        var wy = _miniBounds.Y + p.Y / _miniScale;
+        _vm.Doc.OffsetX = Surface.ActualWidth / 2 - wx * _vm.Doc.Zoom;
+        _vm.Doc.OffsetY = Surface.ActualHeight / 2 - wy * _vm.Doc.Zoom;
+    }
+
+    private void OnMiniDown(object sender, MouseButtonEventArgs e)
+    {
+        _miniDragging = true;
+        MiniMap.CaptureMouse();
+        MiniJump(e.GetPosition(MiniMap));
+        e.Handled = true;
+    }
+
+    private void OnMiniMove(object sender, MouseEventArgs e)
+    {
+        if (!_miniDragging) return;
+        MiniJump(e.GetPosition(MiniMap));
+        UpdateMinimap();
+    }
+
+    private void OnMiniUp(object sender, MouseButtonEventArgs e)
+    {
+        _miniDragging = false;
+        MiniMap.ReleaseMouseCapture();
+    }
+
+    private void OnMiniHide(object sender, RoutedEventArgs e)
+    {
+        if (_vm != null) _vm.Main.Settings.ShowMinimap = false;
+        UpdateMinimap();
+    }
+
+    private void OnMiniShow(object sender, RoutedEventArgs e)
+    {
+        if (_vm != null) _vm.Main.Settings.ShowMinimap = true;
+        UpdateMinimap();
+    }
 
     private void UpdateDotBrush()
     {
@@ -136,7 +228,7 @@ public partial class CanvasView : UserControl
         for (var d = source; d != null && d != Surface; d = d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
         {
             if (d is TextBox) return ("text", (d as FrameworkElement)?.DataContext);
-            if (d is FrameworkElement { Tag: string tag } fe && tag is "node" or "port" or "resize" or "edge" or "end-from" or "end-to") return (tag, fe.DataContext);
+            if (d is FrameworkElement { Tag: string tag } fe && tag is "node" or "port" or "resize" or "edge" or "end-from" or "end-to" or "bend") return (tag, fe.DataContext);
         }
 
         return (null, null);
@@ -237,13 +329,26 @@ public partial class CanvasView : UserControl
 
         switch (kind)
         {
+            case "bend" when item is CanvasEdge bendEdge:
+                if (e.ClickCount == 2)
+                {
+                    // Double-click the handle: straight again.
+                    _vm.SelectEdge(bendEdge, false);
+                    _vm.StraightenCommand.Execute(null);
+                    break;
+                }
+
+                _edge = bendEdge;
+                BeginDrag(Drag.Bend);
+                break;
+
             case "end-from" or "end-to" when item is CanvasEdge endEdge:
                 _edge = endEdge;
                 _edgeFrom = kind == "end-from";
                 BeginDrag(Drag.EdgeEnd);
                 break;
 
-            case "resize" when item is CanvasNode rn2:
+            case "resize" when item is CanvasNode { Locked: false } rn2:
                 _target = rn2;
                 _startSize = new Size(rn2.Width, rn2.Height);
                 BeginDrag(Drag.Resize);
@@ -259,10 +364,19 @@ public partial class CanvasView : UserControl
                 if (shift) node.IsSelected = !node.IsSelected;
                 else if (!node.IsSelected) _vm.SelectOnly(node);
                 foreach (var n in _vm.Doc.Nodes) if (n != node) n.IsEditing = false;
+                if (node.Locked) break; // locked shapes can be selected but not moved
+                if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
+                {
+                    // Alt + drag: drag out a copy (the originals stay put).
+                    _vm.Copy();
+                    _vm.Paste(offset: false);
+                    node = _vm.SelectedNodes.FirstOrDefault(n => n.X == node.X && n.Y == node.Y && n.Text == node.Text) ?? node;
+                }
+
                 _target = node;
-                var moving = _vm.SelectedNodes.ToList();
+                var moving = _vm.SelectedNodes.Where(n => !n.Locked).ToList();
                 foreach (var f in moving.Where(n => n.Shape == NodeShape.Frame).ToList())
-                    moving.AddRange(_vm.ContentsOf(f).Where(c => !moving.Contains(c)));
+                    moving.AddRange(_vm.Members(f).Where(c => !moving.Contains(c) && !c.Locked));
                 _startPositions = moving.Distinct().ToDictionary(n => n, n => new Point(n.X, n.Y));
                 _movingEdges = moving.Where(n => n.Shape == NodeShape.Frame).SelectMany(f => _vm.FreeEdgesWithin(f.Bounds)).Distinct().ToList();
                 _edgeStarts = _movingEdges.ToDictionary(x => x, x => (x.FromX, x.FromY, x.ToX, x.ToY));
@@ -302,6 +416,7 @@ public partial class CanvasView : UserControl
         CanvasTool.Rectangle => NodeShape.Rectangle,
         CanvasTool.Rounded => NodeShape.Rounded,
         CanvasTool.Ellipse => NodeShape.Ellipse,
+        CanvasTool.Circle => NodeShape.Circle,
         CanvasTool.Diamond => NodeShape.Diamond,
         CanvasTool.Sticky => NodeShape.Sticky,
         CanvasTool.Text => NodeShape.Text,
@@ -389,6 +504,12 @@ public partial class CanvasView : UserControl
                 _vm.MoveFreeEdges(_movingEdges, (p.X - _last.X) / z, (p.Y - _last.Y) / z);
                 break;
 
+            case Drag.Bend when _edge != null:
+                if (firstMove) _vm.Checkpoint();
+                var bw = ToWorld(p);
+                _vm.SetBend(_edge, bw.X, bw.Y);
+                break;
+
             case Drag.EdgeEnd when _edge != null:
                 if (firstMove) _vm.Checkpoint();
                 var ew = ToWorld(p);
@@ -401,6 +522,7 @@ public partial class CanvasView : UserControl
                 var h = Math.Max(30, _vm.SnapValue(_startSize.Height + total.Y / z));
                 if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && _startSize.Width > 0)
                     h = Math.Max(30, w * _startSize.Height / _startSize.Width);
+                if (_target.Shape == NodeShape.Circle) w = h = Math.Max(w, h);
                 _target.Width = w;
                 _target.Height = h;
                 break;
@@ -482,6 +604,7 @@ public partial class CanvasView : UserControl
                     frame.Y = _vm.SnapValue(y);
                     frame.Width = Math.Max(120, _vm.SnapValue(w));
                     frame.Height = Math.Max(80, _vm.SnapValue(h));
+                    _vm.AdoptInto(frame);
                 }
                 else
                 {
@@ -489,6 +612,10 @@ public partial class CanvasView : UserControl
                 }
 
                 _vm.Tool = CanvasTool.Select;
+                break;
+            case Drag.Move when _moved:
+                // Shapes dropped inside a section join it (and stay in it until removed from the menu).
+                _vm.JoinFrames(_startPositions.Keys.Where(n => n.Shape != NodeShape.Frame || n.FrameId == null));
                 break;
             case Drag.EdgeEnd when _edge != null && _moved:
                 _vm.SetEdgeEnd(_edge, _edgeFrom, upWorld.X, upWorld.Y, NodeAtScreen(p));
@@ -632,6 +759,12 @@ public partial class CanvasView : UserControl
             case Key.O when mods == ModifierKeys.None:
                 _vm.Tool = CanvasTool.Ellipse;
                 break;
+            case Key.O when mods == ModifierKeys.Shift:
+                _vm.Tool = CanvasTool.Circle;
+                break;
+            case Key.K when mods == ModifierKeys.None:
+                _vm.AddLinkCommand.Execute(null);
+                break;
             case Key.D when mods == ModifierKeys.None:
                 _vm.Tool = CanvasTool.Diamond;
                 break;
@@ -728,4 +861,10 @@ public partial class CanvasView : UserControl
             _vm.RaiseSelection();
         }
     }
+
+    // ----- high-res screenshot -----
+    FrameworkElement Helpers.ICapturable.CaptureElement => World;
+    Rect? Helpers.ICapturable.CaptureArea => _vm is { IsEmpty: false } v ? v.ContentBounds(40) is var b ? new Rect(b.X, b.Y, b.W, b.H) : null : null;
+    System.Windows.Media.Brush? Helpers.ICapturable.CaptureBackground => Helpers.CaptureHelpers.DocWallpaper();
+    string Helpers.ICapturable.CaptureName => _vm?.Doc.Name ?? "Canvas";
 }

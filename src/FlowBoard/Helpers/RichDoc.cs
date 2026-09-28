@@ -4,6 +4,7 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using FlowBoard.Models;
 using FlowBoard.Services;
+using LinkTarget = FlowBoard.Models.LinkTarget;
 
 namespace FlowBoard.Helpers;
 
@@ -11,6 +12,28 @@ namespace FlowBoard.Helpers;
 public static class RichDoc
 {
     public static readonly FontFamily CodeFont = new("Cascadia Mono, Consolas");
+
+    /// <summary>Tag stored on inline link runs: "Kind|Guid".</summary>
+    public static string LinkTag(LinkTarget kind, Guid id) => $"{kind}|{id}";
+
+    public static bool TryParseLink(object? tag, out LinkTarget kind, out Guid id)
+    {
+        kind = default;
+        id = default;
+        return tag is string s && s.Split('|') is [var k, var g] && Enum.TryParse(k, out kind) && Guid.TryParse(g, out id);
+    }
+
+    /// <summary>An inline link: accent colored, hand cursor, remembers what it points to.</summary>
+    public static Run MakeLinkRun(string text, LinkTarget kind, Guid id, TextPointer? at = null)
+    {
+        var run = at == null ? new Run(text) : new Run(text, at);
+        run.Tag = LinkTag(kind, id);
+        run.SetResourceReference(TextElement.ForegroundProperty, "Fb.AccentTextBrush");
+        run.FontWeight = FontWeights.SemiBold;
+        run.Cursor = System.Windows.Input.Cursors.Hand;
+        run.ToolTip = "Click to open";
+        return run;
+    }
 
     /// <summary>Loads spans into the editor (one paragraph; line breaks for "\n").</summary>
     public static void Load(RichTextBox box, IEnumerable<TextSpan> spans)
@@ -33,6 +56,12 @@ public static class RichDoc
             {
                 if (i > 0) para.Inlines.Add(new LineBreak());
                 if (lines[i].Length == 0) continue;
+                if (s.LinkId is { } linkId && s.LinkKind is { } linkKind)
+                {
+                    para.Inlines.Add(MakeLinkRun(lines[i], linkKind, linkId));
+                    continue;
+                }
+
                 var run = new Run(lines[i]);
                 if (s.Bold) run.FontWeight = FontWeights.Bold;
                 if (s.Italic) run.FontStyle = FontStyles.Italic;
@@ -93,6 +122,8 @@ public static class RichDoc
 
     private static TextSpan Style(Run run, Paragraph para, string text)
     {
+        // Links keep only what they point to (their look comes from the theme).
+        if (TryParseLink(run.Tag, out var kind, out var id)) return new TextSpan { Text = text, LinkKind = kind, LinkId = id };
         var span = new TextSpan { Text = text };
         for (DependencyObject? d = run; d != null && d != para; d = (d as TextElement)?.Parent)
         {

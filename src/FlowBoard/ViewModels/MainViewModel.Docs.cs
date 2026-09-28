@@ -117,10 +117,29 @@ public sealed partial class MainViewModel
             case LinkTarget.Note when Workspace.Notes.FirstOrDefault(n => n.Id == id) is { } n:
                 OpenNote(n);
                 break;
+            case LinkTarget.Shot when Services.LinkResolver.FindShot(Workspace, id, out var owner) is { } shot && owner != null:
+                if (ActiveDocument is not StoryboardViewModel { } open || open.Board != owner) OpenStoryboard(owner);
+                (ActiveDocument as StoryboardViewModel)?.FocusShot(shot);
+                break;
             default:
                 ShowToast("That item no longer exists.", isError: true);
                 break;
         }
+    }
+
+    /// <summary>Raised to save ("save") or copy ("copy") a high-res screenshot of what's open.</summary>
+    public event EventHandler<string>? ScreenshotRequested;
+
+    [RelayCommand] private void Screenshot(string? mode) => ScreenshotRequested?.Invoke(this, mode ?? "save");
+
+    /// <summary>Theme and wallpaper for the open storyboard, canvas or page.</summary>
+    [RelayCommand]
+    private void OpenDocStyle()
+    {
+        if (ActiveDocument?.Model is not StyledDocument doc) return;
+        if (Dialogs.OfType<DocStyleViewModel>().FirstOrDefault() is { } open) CloseDialog(open);
+        var name = doc switch { Storyboard s => s.Name, CanvasDoc c => c.Name, NotePage n => n.Title, _ => string.Empty };
+        ShowDialog(new DocStyleViewModel(this, doc, name));
     }
 
     // ---------- create ----------

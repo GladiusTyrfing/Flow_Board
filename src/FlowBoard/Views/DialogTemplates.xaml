@@ -43,6 +43,9 @@
             </StackPanel>
         </Border>
     </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:DocStyleViewModel}">
+        <views:DocStyleView />
+    </DataTemplate>
     <DataTemplate DataType="{x:Type vm:ImageCropViewModel}">
         <views:ImageCropView />
     </DataTemplate>

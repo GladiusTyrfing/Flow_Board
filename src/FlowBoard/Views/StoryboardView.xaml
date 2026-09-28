@@ -99,6 +99,12 @@
                             <TextBlock Text="Play" Margin="6,0,0,0" Visibility="{Binding Main.IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
                         </StackPanel>
                     </Button>
+                    <Button Style="{StaticResource Fb.HeaderButton}" Focusable="False" Command="{Binding Main.OpenDocStyleCommand}" ToolTip="Theme and wallpaper">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="PaintBrush24" FontSize="16" />
+                            <TextBlock Text="Style" Margin="6,0,0,0" Visibility="{Binding Main.IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
+                        </StackPanel>
+                    </Button>
                     <ToggleButton Style="{StaticResource Fb.HeaderToggle}" IsChecked="{Binding Board.FramesOnly}" ToolTip="Show only the frames (hide the notes)">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="SlideMultiple24" FontSize="16" />
@@ -153,477 +159,484 @@
         </Border>
 
         <!-- ============ Shots ============ -->
-        <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Padding="12,14,12,6"
-                      PreviewMouseWheel="OnScrollerWheel">
-            <StackPanel x:Name="ExportRoot" Orientation="Horizontal" Background="Transparent">
-                <ItemsControl x:Name="ShotsHost" ItemsSource="{Binding Board.Shots}" Focusable="False"
-                              dd:DragDrop.IsDragSource="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding ElementName=Root, Path=ShotDropHandler}"
-                              dd:DragDrop.UseDefaultEffectDataTemplate="True">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type models:Shot}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="44" />
-                                    <ColumnDefinition Width="300" />
-                                </Grid.ColumnDefinitions>
-
-                                <!-- Curved connector from the previous shot -->
-                                <Path x:Name="Connector" Grid.Column="0" VerticalAlignment="Top" Margin="0,104,0,0" Stretch="None"
-                                      Stroke="{DynamicResource Fb.AccentBrush}" StrokeThickness="2" StrokeDashArray="3 2" Opacity="0.8"
-                                      Data="M 0,0 C 22,0 22,26 44,26" />
-                                <Ellipse x:Name="ConnectorDot" Grid.Column="0" Width="8" Height="8" Fill="{DynamicResource Fb.AccentBrush}"
-                                         HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,126,-4,0" />
-
-                                <!-- Shot column -->
-                                <Border Grid.Column="1" x:Name="Card" Background="{DynamicResource Fb.CardBrush}" BorderBrush="{DynamicResource Fb.CardBorderBrush}" BorderThickness="1"
-                                        CornerRadius="{DynamicResource Fb.RadiusLarge}" h:Behaviors.AnimateIn="rise">
-                                    <DockPanel>
-                                        <!-- Title row -->
-                                        <Grid DockPanel.Dock="Top" Margin="12,10,6,6">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{DynamicResource Fb.AccentGradientBrush}" Padding="8,3" VerticalAlignment="Center"
-                                                    ToolTip="Drag the column to reorder" Cursor="SizeAll">
-                                                <TextBlock Foreground="White" FontWeight="Bold" FontSize="12">
-                                                    <Run Text="{Binding DataContext.ShotWord, ElementName=Root, Mode=OneWay}" /> <Run Text="{Binding Number, Mode=OneWay}" />
-                                                </TextBlock>
-                                            </Border>
-                                            <TextBox Grid.Column="1" Style="{StaticResource Fb.LineField}" Tag="Title" FontWeight="SemiBold" FontSize="14" Margin="6,0,0,0"
-                                                     Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" />
-                                            <Button Grid.Column="2" Style="{StaticResource Fb.GhostButton}" Padding="7,2" Margin="4,0,0,0" VerticalAlignment="Center"
-                                                    h:Behaviors.ClickOpensContextMenu="True" ToolTip="Production status">
-                                                <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Padding="6,1" Background="{Binding Status, Converter={StaticResource StatusBrush}}">
-                                                    <TextBlock x:Name="StatusText" Text="{Binding Status}" FontSize="11" FontWeight="SemiBold" Foreground="White" />
+        <Grid >
+            <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Padding="12,14,12,6"
+                          PreviewMouseWheel="OnScrollerWheel">
+                <StackPanel x:Name="ExportRoot" Orientation="Horizontal" Background="Transparent">
+                    <ItemsControl x:Name="ShotsHost" ItemsSource="{Binding Board.Shots}" Focusable="False"
+                                  dd:DragDrop.IsDragSource="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding ElementName=Root, Path=ShotDropHandler}"
+                                  dd:DragDrop.UseDefaultEffectDataTemplate="True">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:Shot}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="44" />
+                                        <ColumnDefinition Width="300" />
+                                    </Grid.ColumnDefinitions>
+    
+                                    <!-- Curved connector from the previous shot -->
+                                    <Path x:Name="Connector" Grid.Column="0" VerticalAlignment="Top" Margin="0,104,0,0" Stretch="None"
+                                          Stroke="{DynamicResource Fb.AccentBrush}" StrokeThickness="2" StrokeDashArray="3 2" Opacity="0.8"
+                                          Data="M 0,0 C 22,0 22,26 44,26" />
+                                    <Ellipse x:Name="ConnectorDot" Grid.Column="0" Width="8" Height="8" Fill="{DynamicResource Fb.AccentBrush}"
+                                             HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,126,-4,0" />
+    
+                                    <!-- Shot column -->
+                                    <Border Grid.Column="1" x:Name="Card" Background="{DynamicResource Fb.CardBrush}" BorderBrush="{DynamicResource Fb.CardBorderBrush}" BorderThickness="1"
+                                            CornerRadius="{DynamicResource Fb.RadiusLarge}" h:Behaviors.AnimateIn="rise">
+                                        <DockPanel>
+                                            <!-- Title row -->
+                                            <Grid DockPanel.Dock="Top" Margin="12,10,6,6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{DynamicResource Fb.AccentGradientBrush}" Padding="8,3" VerticalAlignment="Center"
+                                                        ToolTip="Drag the column to reorder" Cursor="SizeAll">
+                                                    <TextBlock Foreground="White" FontWeight="Bold" FontSize="12">
+                                                        <Run Text="{Binding DataContext.ShotWord, ElementName=Root, Mode=OneWay}" /> <Run Text="{Binding Number, Mode=OneWay}" />
+                                                    </TextBlock>
                                                 </Border>
-                                                <Button.ContextMenu>
-                                                    <ContextMenu>
-                                                        <MenuItem Header="None" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
-                                                            <MenuItem.CommandParameter>
-                                                                <MultiBinding Converter="{StaticResource ToArray}">
-                                                                    <Binding />
-                                                                    <Binding Source="None" />
-                                                                </MultiBinding>
-                                                            </MenuItem.CommandParameter>
-                                                        </MenuItem>
-                                                        <MenuItem Header="Idea" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
-                                                            <MenuItem.CommandParameter>
-                                                                <MultiBinding Converter="{StaticResource ToArray}">
-                                                                    <Binding />
-                                                                    <Binding Source="Idea" />
-                                                                </MultiBinding>
-                                                            </MenuItem.CommandParameter>
-                                                        </MenuItem>
-                                                        <MenuItem Header="Planned" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
-                                                            <MenuItem.CommandParameter>
-                                                                <MultiBinding Converter="{StaticResource ToArray}">
-                                                                    <Binding />
-                                                                    <Binding Source="Planned" />
-                                                                </MultiBinding>
-                                                            </MenuItem.CommandParameter>
-                                                        </MenuItem>
-                                                        <MenuItem Header="In progress" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
-                                                            <MenuItem.CommandParameter>
-                                                                <MultiBinding Converter="{StaticResource ToArray}">
-                                                                    <Binding />
-                                                                    <Binding Source="In progress" />
-                                                                </MultiBinding>
-                                                            </MenuItem.CommandParameter>
-                                                        </MenuItem>
-                                                        <MenuItem Header="Needs changes" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
-                                                            <MenuItem.CommandParameter>
-                                                                <MultiBinding Converter="{StaticResource ToArray}">
-                                                                    <Binding />
-                                                                    <Binding Source="Needs changes" />
-                                                                </MultiBinding>
-                                                            </MenuItem.CommandParameter>
-                                                        </MenuItem>
-                                                        <MenuItem Header="Done" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
-                                                            <MenuItem.CommandParameter>
-                                                                <MultiBinding Converter="{StaticResource ToArray}">
-                                                                    <Binding />
-                                                                    <Binding Source="Done" />
-                                                                </MultiBinding>
-                                                            </MenuItem.CommandParameter>
-                                                        </MenuItem>
-                                                        <MenuItem Header="Approved" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
-                                                            <MenuItem.CommandParameter>
-                                                                <MultiBinding Converter="{StaticResource ToArray}">
-                                                                    <Binding />
-                                                                    <Binding Source="Approved" />
-                                                                </MultiBinding>
-                                                            </MenuItem.CommandParameter>
-                                                        </MenuItem>
-                                                    </ContextMenu>
-                                                </Button.ContextMenu>
-                                            </Button>
-                                            <Button Grid.Column="3" Style="{StaticResource Fb.IconButton}" Width="28" Height="28" h:Behaviors.ClickOpensContextMenu="True" ToolTip="Shot menu">
-                                                <ui:SymbolIcon Symbol="MoreVertical24" FontSize="15" />
-                                                <Button.ContextMenu>
-                                                    <ContextMenu>
-                                                        <MenuItem Header="Play from here" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.PlayAnimaticCommand}" CommandParameter="{Binding}">
-                                                            <MenuItem.Icon><ui:SymbolIcon Symbol="Play24" /></MenuItem.Icon>
-                                                        </MenuItem>
-                                                        <MenuItem Header="Insert after" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.AddShotCommand}" CommandParameter="{Binding}">
-                                                            <MenuItem.Icon><ui:SymbolIcon Symbol="Add24" /></MenuItem.Icon>
-                                                        </MenuItem>
-                                                        <MenuItem Header="Duplicate" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.DuplicateShotCommand}" CommandParameter="{Binding}">
-                                                            <MenuItem.Icon><ui:SymbolIcon Symbol="Copy24" /></MenuItem.Icon>
-                                                        </MenuItem>
-                                                        <MenuItem Header="Move left" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.MoveShotLeftCommand}" CommandParameter="{Binding}">
-                                                            <MenuItem.Icon><ui:SymbolIcon Symbol="ArrowLeft24" /></MenuItem.Icon>
-                                                        </MenuItem>
-                                                        <MenuItem Header="Move right" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.MoveShotRightCommand}" CommandParameter="{Binding}">
-                                                            <MenuItem.Icon><ui:SymbolIcon Symbol="ArrowRight24" /></MenuItem.Icon>
-                                                        </MenuItem>
-                                                        <Separator />
-                                                        <MenuItem Header="Delete" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.DeleteShotCommand}" CommandParameter="{Binding}">
-                                                            <MenuItem.Icon><ui:SymbolIcon Symbol="Delete24" /></MenuItem.Icon>
-                                                        </MenuItem>
-                                                    </ContextMenu>
-                                                </Button.ContextMenu>
-                                            </Button>
-                                        </Grid>
-
-                                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="12,0,12,12">
-                                            <StackPanel>
-                                                <!-- Frame -->
-                                                <Grid x:Name="Frame" Height="{Binding DataContext.FrameHeight, ElementName=Root}" AllowDrop="True" Drop="OnFrameDrop" DragOver="OnFrameDragOver" Tag="{Binding}"
-                                                      h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusValue}">
-                                                    <Border Background="{DynamicResource Fb.SubtleBrush}" BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="1"
-                                                            CornerRadius="{DynamicResource Fb.Radius}" />
-                                                    <Image x:Name="FrameImage" Source="{Binding ImageFullPath, Converter={StaticResource ImagePath}, ConverterParameter=640}" Stretch="UniformToFill"
-                                                           RenderOptions.BitmapScalingMode="HighQuality" />
-                                                    <!-- Empty frame -->
-                                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
-                                                                Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
-                                                        <ui:SymbolIcon Symbol="ImageAdd24" FontSize="26" Foreground="{DynamicResource Fb.MutedTextBrush}" HorizontalAlignment="Center" />
-                                                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                                            <Button Style="{StaticResource Fb.SubtleButton}" Padding="10,5" Margin="0,0,4,0" Command="{Binding DataContext.SketchCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <ui:SymbolIcon Symbol="Pen24" FontSize="14" />
-                                                                    <TextBlock Text="Sketch" Margin="5,0,0,0" FontSize="12" />
-                                                                </StackPanel>
-                                                            </Button>
-                                                            <Button Style="{StaticResource Fb.SubtleButton}" Padding="10,5" Margin="0,0,4,0" Command="{Binding DataContext.PickImageCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <ui:SymbolIcon Symbol="Image24" FontSize="14" />
-                                                                    <TextBlock Text="Image" Margin="5,0,0,0" FontSize="12" />
-                                                                </StackPanel>
-                                                            </Button>
-                                                            <Button Style="{StaticResource Fb.SubtleButton}" Padding="8,5" Command="{Binding DataContext.PasteImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Paste image">
-                                                                <ui:SymbolIcon Symbol="ClipboardPaste24" FontSize="14" />
-                                                            </Button>
-                                                        </StackPanel>
-                                                        <TextBlock Text="or drop an image here" Style="{StaticResource Fb.Muted}" FontSize="11" HorizontalAlignment="Center" Margin="0,6,0,0" />
-                                                    </StackPanel>
-                                                    <!-- Hover tools on a filled frame -->
-                                                    <StackPanel x:Name="FrameTools" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8" Opacity="0">
-                                                        <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.ViewImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="View">
-                                                            <ui:SymbolIcon Symbol="ZoomIn24" FontSize="15" />
-                                                        </Button>
-                                                        <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.CropImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Crop or show the whole image">
-                                                            <ui:SymbolIcon Symbol="Crop24" FontSize="15" />
-                                                        </Button>
-                                                        <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.ToggleFitCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Fill the frame / fit the whole image">
-                                                            <ui:SymbolIcon Symbol="ArrowFit24" FontSize="15" />
-                                                        </Button>
-                                                        <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.SketchCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Draw on this frame">
-                                                            <ui:SymbolIcon Symbol="Pen24" FontSize="15" />
-                                                        </Button>
-                                                        <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.PickImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Replace image">
-                                                            <ui:SymbolIcon Symbol="ImageEdit24" FontSize="15" />
-                                                        </Button>
-                                                        <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.PasteImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Paste image">
-                                                            <ui:SymbolIcon Symbol="ClipboardPaste24" FontSize="15" />
-                                                        </Button>
-                                                        <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.ClearImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Remove image">
-                                                            <ui:SymbolIcon Symbol="Delete24" FontSize="15" />
-                                                        </Button>
-                                                    </StackPanel>
-                                                    <!-- Duration badge -->
-                                                    <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8" Padding="7,2" CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="#B3101218">
-                                                        <TextBlock Text="{Binding DurationSeconds, Converter={StaticResource Seconds}}" Foreground="White" FontSize="11" FontWeight="SemiBold" />
+                                                <TextBox Grid.Column="1" Style="{StaticResource Fb.LineField}" Tag="Title" FontWeight="SemiBold" FontSize="14" Margin="6,0,0,0"
+                                                         Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" />
+                                                <Button Grid.Column="2" Style="{StaticResource Fb.GhostButton}" Padding="7,2" Margin="4,0,0,0" VerticalAlignment="Center"
+                                                        h:Behaviors.ClickOpensContextMenu="True" ToolTip="Production status">
+                                                    <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Padding="6,1" Background="{Binding Status, Converter={StaticResource StatusBrush}}">
+                                                        <TextBlock x:Name="StatusText" Text="{Binding Status}" FontSize="11" FontWeight="SemiBold" Foreground="White" />
                                                     </Border>
-                                                </Grid>
-
-                                                <StackPanel Visibility="{Binding DataContext.Board.FramesOnly, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
-                                                <!-- Scene + date -->
-                                                <Grid Margin="0,10,0,0">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{DynamicResource Fb.SubtleBrush}" Padding="2,0" HorizontalAlignment="Left" MinWidth="120">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <ui:SymbolIcon Symbol="MoviesAndTv24" FontSize="13" Margin="6,0,0,0" Foreground="{DynamicResource Fb.MutedTextBrush}" />
-                                                            <TextBox Style="{StaticResource Fb.LineField}" Tag="Scene" FontSize="12" FontWeight="SemiBold" MinWidth="80" MaxWidth="150"
-                                                                     Text="{Binding Scene, UpdateSourceTrigger=PropertyChanged}" />
-                                                        </StackPanel>
-                                                    </Border>
-                                                    <c:DateChip Grid.Column="1" Date="{Binding Date}" Placeholder="Shoot date" ToolTip="Shoot / due date" />
-                                                </Grid>
-
-                                                <!-- Film -->
-                                                <StackPanel Visibility="{Binding DataContext.IsAnimation, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
-                                                    <TextBlock Text="CAMERA" Style="{StaticResource SbLabel}" />
-                                                    <WrapPanel>
-                                                        <c:ChoiceBox Style="{StaticResource SbCombo}" Width="132" ToolTip="Shot type" Placeholder="Shot type" Options="{Binding DataContext.ShotTypes, ElementName=Root}" Value="{Binding ShotType}" />
-                                                        <c:ChoiceBox Style="{StaticResource SbCombo}" Width="132" ToolTip="Angle" Placeholder="Angle" Options="{Binding DataContext.Angles, ElementName=Root}" Value="{Binding Angle}" />
-                                                        <c:ChoiceBox Style="{StaticResource SbCombo}" Width="132" ToolTip="Movement" Placeholder="Movement" Options="{Binding DataContext.Movements, ElementName=Root}" Value="{Binding Movement}" />
-                                                        <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" Width="132" Height="30" Margin="0,0,6,6">
-                                                            <TextBox Style="{StaticResource Fb.LineField}" Tag="Lens (e.g. 35mm)" FontSize="12" VerticalAlignment="Center"
-                                                                     Text="{Binding Lens, UpdateSourceTrigger=PropertyChanged}" />
-                                                        </Border>
-                                                    </WrapPanel>
-                                                    <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}">
-                                                        <DockPanel>
-                                                            <ui:SymbolIcon Symbol="Location24" FontSize="14" Margin="8,0,0,0" Foreground="{DynamicResource Fb.MutedTextBrush}" />
-                                                            <TextBox Style="{StaticResource Fb.LineField}" Tag="Location" FontSize="12" Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}" />
-                                                        </DockPanel>
-                                                    </Border>
-                                                </StackPanel>
-
-                                                <!-- Animation -->
-                                                <StackPanel Visibility="{Binding DataContext.IsAnimation, ElementName=Root, Converter={StaticResource BoolToVis}}">
-                                                    <TextBlock Text="ACTION" Style="{StaticResource SbLabel}" />
-                                                    <TextBox Style="{StaticResource Fb.Field}" Tag="What happens in this frame…" Text="{Binding Action, UpdateSourceTrigger=PropertyChanged}" MinHeight="44" />
-                                                    <TextBlock Text="DIALOGUE" Style="{StaticResource SbLabel}" />
-                                                    <TextBox Style="{StaticResource Fb.Field}" Tag="Lines, sound effects…" FontStyle="Italic" Text="{Binding Dialogue, UpdateSourceTrigger=PropertyChanged}" />
-                                                    <TextBlock Text="TIMING" Style="{StaticResource SbLabel}" />
-                                                    <WrapPanel>
-                                                        <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" Margin="0,0,6,6" Height="30">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <Button Style="{StaticResource Fb.IconButton}" Width="28" Height="28" ToolTip="−0.5s" Command="{Binding DataContext.ChangeDurationCommand, ElementName=Root}">
-                                                                    <Button.CommandParameter>
-                                                                        <MultiBinding Converter="{StaticResource ToArray}">
-                                                                            <Binding />
-                                                                            <Binding Source="-0.5" />
-                                                                        </MultiBinding>
-                                                                    </Button.CommandParameter>
-                                                                    <ui:SymbolIcon Symbol="Subtract24" FontSize="12" />
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Header="None" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                                <MenuItem.CommandParameter>
+                                                                    <MultiBinding Converter="{StaticResource ToArray}">
+                                                                        <Binding />
+                                                                        <Binding Source="None" />
+                                                                    </MultiBinding>
+                                                                </MenuItem.CommandParameter>
+                                                            </MenuItem>
+                                                            <MenuItem Header="Idea" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                                <MenuItem.CommandParameter>
+                                                                    <MultiBinding Converter="{StaticResource ToArray}">
+                                                                        <Binding />
+                                                                        <Binding Source="Idea" />
+                                                                    </MultiBinding>
+                                                                </MenuItem.CommandParameter>
+                                                            </MenuItem>
+                                                            <MenuItem Header="Planned" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                                <MenuItem.CommandParameter>
+                                                                    <MultiBinding Converter="{StaticResource ToArray}">
+                                                                        <Binding />
+                                                                        <Binding Source="Planned" />
+                                                                    </MultiBinding>
+                                                                </MenuItem.CommandParameter>
+                                                            </MenuItem>
+                                                            <MenuItem Header="In progress" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                                <MenuItem.CommandParameter>
+                                                                    <MultiBinding Converter="{StaticResource ToArray}">
+                                                                        <Binding />
+                                                                        <Binding Source="In progress" />
+                                                                    </MultiBinding>
+                                                                </MenuItem.CommandParameter>
+                                                            </MenuItem>
+                                                            <MenuItem Header="Needs changes" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                                <MenuItem.CommandParameter>
+                                                                    <MultiBinding Converter="{StaticResource ToArray}">
+                                                                        <Binding />
+                                                                        <Binding Source="Needs changes" />
+                                                                    </MultiBinding>
+                                                                </MenuItem.CommandParameter>
+                                                            </MenuItem>
+                                                            <MenuItem Header="Done" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                                <MenuItem.CommandParameter>
+                                                                    <MultiBinding Converter="{StaticResource ToArray}">
+                                                                        <Binding />
+                                                                        <Binding Source="Done" />
+                                                                    </MultiBinding>
+                                                                </MenuItem.CommandParameter>
+                                                            </MenuItem>
+                                                            <MenuItem Header="Approved" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.SetStatusCommand}">
+                                                                <MenuItem.CommandParameter>
+                                                                    <MultiBinding Converter="{StaticResource ToArray}">
+                                                                        <Binding />
+                                                                        <Binding Source="Approved" />
+                                                                    </MultiBinding>
+                                                                </MenuItem.CommandParameter>
+                                                            </MenuItem>
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
+                                                </Button>
+                                                <Button Grid.Column="3" Style="{StaticResource Fb.IconButton}" Width="28" Height="28" h:Behaviors.ClickOpensContextMenu="True" ToolTip="Shot menu">
+                                                    <ui:SymbolIcon Symbol="MoreVertical24" FontSize="15" />
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu>
+                                                            <MenuItem Header="Play from here" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.PlayAnimaticCommand}" CommandParameter="{Binding}">
+                                                                <MenuItem.Icon><ui:SymbolIcon Symbol="Play24" /></MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <MenuItem Header="Insert after" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.AddShotCommand}" CommandParameter="{Binding}">
+                                                                <MenuItem.Icon><ui:SymbolIcon Symbol="Add24" /></MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <MenuItem Header="Duplicate" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.DuplicateShotCommand}" CommandParameter="{Binding}">
+                                                                <MenuItem.Icon><ui:SymbolIcon Symbol="Copy24" /></MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <MenuItem Header="Move left" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.MoveShotLeftCommand}" CommandParameter="{Binding}">
+                                                                <MenuItem.Icon><ui:SymbolIcon Symbol="ArrowLeft24" /></MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <MenuItem Header="Move right" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.MoveShotRightCommand}" CommandParameter="{Binding}">
+                                                                <MenuItem.Icon><ui:SymbolIcon Symbol="ArrowRight24" /></MenuItem.Icon>
+                                                            </MenuItem>
+                                                            <Separator />
+                                                            <MenuItem Header="Delete" Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=ActiveDocument.DeleteShotCommand}" CommandParameter="{Binding}">
+                                                                <MenuItem.Icon><ui:SymbolIcon Symbol="Delete24" /></MenuItem.Icon>
+                                                            </MenuItem>
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
+                                                </Button>
+                                            </Grid>
+    
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="12,0,12,12">
+                                                <StackPanel>
+                                                    <!-- Frame -->
+                                                    <Grid x:Name="Frame" Height="{Binding DataContext.FrameHeight, ElementName=Root}" AllowDrop="True" Drop="OnFrameDrop" DragOver="OnFrameDragOver" Tag="{Binding}"
+                                                          h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusValue}">
+                                                        <Border Background="{DynamicResource Fb.SubtleBrush}" BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="1"
+                                                                CornerRadius="{DynamicResource Fb.Radius}" />
+                                                        <Image x:Name="FrameImage" Source="{Binding ImageFullPath, Converter={StaticResource ImagePath}, ConverterParameter=640}" Stretch="UniformToFill"
+                                                               RenderOptions.BitmapScalingMode="HighQuality" />
+                                                        <!-- Empty frame -->
+                                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                                    Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+                                                            <ui:SymbolIcon Symbol="ImageAdd24" FontSize="26" Foreground="{DynamicResource Fb.MutedTextBrush}" HorizontalAlignment="Center" />
+                                                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                                                <Button Style="{StaticResource Fb.SubtleButton}" Padding="10,5" Margin="0,0,4,0" Command="{Binding DataContext.SketchCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <ui:SymbolIcon Symbol="Pen24" FontSize="14" />
+                                                                        <TextBlock Text="Sketch" Margin="5,0,0,0" FontSize="12" />
+                                                                    </StackPanel>
                                                                 </Button>
-                                                                <TextBlock Text="{Binding DurationSeconds, Converter={StaticResource Seconds}}" VerticalAlignment="Center" MinWidth="38" TextAlignment="Center" FontWeight="SemiBold" FontSize="12" />
-                                                                <Button Style="{StaticResource Fb.IconButton}" Width="28" Height="28" ToolTip="+0.5s" Command="{Binding DataContext.ChangeDurationCommand, ElementName=Root}">
-                                                                    <Button.CommandParameter>
-                                                                        <MultiBinding Converter="{StaticResource ToArray}">
-                                                                            <Binding />
-                                                                            <Binding Source="0.5" />
-                                                                        </MultiBinding>
-                                                                    </Button.CommandParameter>
-                                                                    <ui:SymbolIcon Symbol="Add24" FontSize="12" />
+                                                                <Button Style="{StaticResource Fb.SubtleButton}" Padding="10,5" Margin="0,0,4,0" Command="{Binding DataContext.PickImageCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <ui:SymbolIcon Symbol="Image24" FontSize="14" />
+                                                                        <TextBlock Text="Image" Margin="5,0,0,0" FontSize="12" />
+                                                                    </StackPanel>
+                                                                </Button>
+                                                                <Button Style="{StaticResource Fb.SubtleButton}" Padding="8,5" Command="{Binding DataContext.PasteImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Paste image">
+                                                                    <ui:SymbolIcon Symbol="ClipboardPaste24" FontSize="14" />
                                                                 </Button>
                                                             </StackPanel>
-                                                        </Border>
-                                                        <c:ChoiceBox Style="{StaticResource SbCombo}" Width="130" ToolTip="Transition into this frame" Placeholder="Transition" Options="{Binding DataContext.Transitions, ElementName=Root}" Value="{Binding Transition}" />
-                                                    </WrapPanel>
-                                                    <!-- Voice -->
-                                                    <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" Padding="4">
-                                                        <DockPanel>
-                                                            <Button DockPanel.Dock="Left" Style="{StaticResource Fb.IconButton}" Width="30" Height="30" ToolTip="Record voice / stop"
-                                                                    Command="{Binding DataContext.ToggleRecordCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                                <ui:SymbolIcon Symbol="Mic24" FontSize="15" Foreground="#F87168" />
-                                                            </Button>
-                                                            <Button DockPanel.Dock="Left" Style="{StaticResource Fb.IconButton}" Width="30" Height="30" ToolTip="Use an audio file from your PC"
-                                                                    Command="{Binding DataContext.ImportVoiceCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                                <ui:SymbolIcon Symbol="FolderOpen24" FontSize="15" />
-                                                            </Button>
-                                                            <Button DockPanel.Dock="Right" Style="{StaticResource Fb.IconButton}" Width="30" Height="30" ToolTip="Remove voice"
-                                                                    Visibility="{Binding HasVoice, Converter={StaticResource BoolToVis}}"
-                                                                    Command="{Binding DataContext.RemoveVoiceCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                                <ui:SymbolIcon Symbol="Dismiss24" FontSize="13" />
-                                                            </Button>
-                                                            <Grid>
-                                                                <TextBlock Text="Record or import a voice line" Style="{StaticResource Fb.Muted}" FontSize="12" VerticalAlignment="Center" Margin="6,0"
-                                                                           Visibility="{Binding HasVoice, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
-                                                                <Button Style="{StaticResource Fb.GhostButton}" Padding="6,3" HorizontalAlignment="Left"
-                                                                        Visibility="{Binding HasVoice, Converter={StaticResource BoolToVis}}"
-                                                                        Command="{Binding DataContext.PlayVoiceCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                                    <StackPanel Orientation="Horizontal">
-                                                                        <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="14" />
-                                                                        <TextBlock Text="{Binding VoiceNote.DurationText}" Margin="6,0,0,0" FontSize="12" FontWeight="SemiBold" />
-                                                                        <ProgressBar Style="{StaticResource Fb.ThinProgress}" Width="90" Margin="8,0,0,0" Maximum="1" VerticalAlignment="Center"
-                                                                                     Value="{Binding VoiceNote.PlaybackProgress, Mode=OneWay}" />
-                                                                    </StackPanel>
-                                                                </Button>
-                                                            </Grid>
-                                                        </DockPanel>
-                                                    </Border>
-                                                    <!-- Recording meter (only on the shot being recorded) -->
-                                                    <Border x:Name="RecBar" CornerRadius="{DynamicResource Fb.Radius}" Background="#33F87168" Padding="10,6" Margin="0,6,0,0" Visibility="Collapsed">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <Ellipse Width="8" Height="8" Fill="#F87168" VerticalAlignment="Center" />
-                                                            <TextBlock Text="{Binding DataContext.Recorder.ElapsedText, ElementName=Root}" Margin="8,0" FontWeight="SemiBold" FontSize="12" />
-                                                            <ProgressBar Style="{StaticResource Fb.ThinProgress}" Width="120" Maximum="1" VerticalAlignment="Center"
-                                                                         Value="{Binding DataContext.Recorder.Level, ElementName=Root, Mode=OneWay}" />
+                                                            <TextBlock Text="or drop an image here" Style="{StaticResource Fb.Muted}" FontSize="11" HorizontalAlignment="Center" Margin="0,6,0,0" />
                                                         </StackPanel>
-                                                    </Border>
-                                                </StackPanel>
-
-                                                <!-- Description -->
-                                                <TextBlock Text="DESCRIPTION" Style="{StaticResource SbLabel}" />
-                                                <TextBox Style="{StaticResource Fb.Field}" Tag="Describe the shot…" Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" MinHeight="44" />
-
-                                                <!-- Tags -->
-                                                <TextBlock Text="TAGS" Style="{StaticResource SbLabel}" />
-                                                <WrapPanel>
-                                                    <ItemsControl ItemsSource="{Binding Tags}" Focusable="False">
-                                                        <ItemsControl.ItemsPanel>
-                                                            <ItemsPanelTemplate>
-                                                                <WrapPanel />
-                                                            </ItemsPanelTemplate>
-                                                        </ItemsControl.ItemsPanel>
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate DataType="{x:Type models:TextItem}">
-                                                                <Border Style="{StaticResource SbChip}">
-                                                                    <StackPanel Orientation="Horizontal">
-                                                                        <TextBlock Text="{Binding Text, StringFormat='#{0}'}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource Fb.AccentTextBrush}" />
-                                                                        <Button Style="{StaticResource SbTinyButton}" Margin="2,0,0,0" Command="{Binding DataContext.RemoveItemCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                        <!-- Hover tools on a filled frame -->
+                                                        <StackPanel x:Name="FrameTools" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8" Opacity="0">
+                                                            <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.ViewImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="View">
+                                                                <ui:SymbolIcon Symbol="ZoomIn24" FontSize="15" />
+                                                            </Button>
+                                                            <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.CropImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Crop or show the whole image">
+                                                                <ui:SymbolIcon Symbol="Crop24" FontSize="15" />
+                                                            </Button>
+                                                            <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.ToggleFitCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Fill the frame / fit the whole image">
+                                                                <ui:SymbolIcon Symbol="ArrowFit24" FontSize="15" />
+                                                            </Button>
+                                                            <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.SketchCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Draw on this frame">
+                                                                <ui:SymbolIcon Symbol="Pen24" FontSize="15" />
+                                                            </Button>
+                                                            <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.PickImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Replace image">
+                                                                <ui:SymbolIcon Symbol="ImageEdit24" FontSize="15" />
+                                                            </Button>
+                                                            <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.PasteImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Paste image">
+                                                                <ui:SymbolIcon Symbol="ClipboardPaste24" FontSize="15" />
+                                                            </Button>
+                                                            <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.ClearImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Remove image">
+                                                                <ui:SymbolIcon Symbol="Delete24" FontSize="15" />
+                                                            </Button>
+                                                        </StackPanel>
+                                                        <!-- Duration badge -->
+                                                        <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8" Padding="7,2" CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="#B3101218">
+                                                            <TextBlock Text="{Binding DurationSeconds, Converter={StaticResource Seconds}}" Foreground="White" FontSize="11" FontWeight="SemiBold" />
+                                                        </Border>
+                                                    </Grid>
+    
+                                                    <StackPanel Visibility="{Binding DataContext.Board.FramesOnly, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+                                                    <!-- Scene + date -->
+                                                    <Grid Margin="0,10,0,0">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{DynamicResource Fb.SubtleBrush}" Padding="2,0" HorizontalAlignment="Left" MinWidth="120">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <ui:SymbolIcon Symbol="MoviesAndTv24" FontSize="13" Margin="6,0,0,0" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                                                <TextBox Style="{StaticResource Fb.LineField}" Tag="Scene" FontSize="12" FontWeight="SemiBold" MinWidth="80" MaxWidth="150"
+                                                                         Text="{Binding Scene, UpdateSourceTrigger=PropertyChanged}" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <c:DateChip Grid.Column="1" Date="{Binding Date}" Placeholder="Shoot date" ToolTip="Shoot / due date" />
+                                                    </Grid>
+    
+                                                    <!-- Film -->
+                                                    <StackPanel Visibility="{Binding DataContext.IsAnimation, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+                                                        <TextBlock Text="CAMERA" Style="{StaticResource SbLabel}" />
+                                                        <WrapPanel>
+                                                            <c:ChoiceBox Style="{StaticResource SbCombo}" Width="132" ToolTip="Shot type" Placeholder="Shot type" Options="{Binding DataContext.ShotTypes, ElementName=Root}" Value="{Binding ShotType}" />
+                                                            <c:ChoiceBox Style="{StaticResource SbCombo}" Width="132" ToolTip="Angle" Placeholder="Angle" Options="{Binding DataContext.Angles, ElementName=Root}" Value="{Binding Angle}" />
+                                                            <c:ChoiceBox Style="{StaticResource SbCombo}" Width="132" ToolTip="Movement" Placeholder="Movement" Options="{Binding DataContext.Movements, ElementName=Root}" Value="{Binding Movement}" />
+                                                            <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" Width="132" Height="30" Margin="0,0,6,6">
+                                                                <TextBox Style="{StaticResource Fb.LineField}" Tag="Lens (e.g. 35mm)" FontSize="12" VerticalAlignment="Center"
+                                                                         Text="{Binding Lens, UpdateSourceTrigger=PropertyChanged}" />
+                                                            </Border>
+                                                        </WrapPanel>
+                                                        <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}">
+                                                            <DockPanel>
+                                                                <ui:SymbolIcon Symbol="Location24" FontSize="14" Margin="8,0,0,0" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                                                <TextBox Style="{StaticResource Fb.LineField}" Tag="Location" FontSize="12" Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}" />
+                                                            </DockPanel>
+                                                        </Border>
+                                                    </StackPanel>
+    
+                                                    <!-- Animation -->
+                                                    <StackPanel Visibility="{Binding DataContext.IsAnimation, ElementName=Root, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="ACTION" Style="{StaticResource SbLabel}" />
+                                                        <TextBox Style="{StaticResource Fb.Field}" Tag="What happens in this frame…" Text="{Binding Action, UpdateSourceTrigger=PropertyChanged}" MinHeight="44" />
+                                                        <TextBlock Text="DIALOGUE" Style="{StaticResource SbLabel}" />
+                                                        <TextBox Style="{StaticResource Fb.Field}" Tag="Lines, sound effects…" FontStyle="Italic" Text="{Binding Dialogue, UpdateSourceTrigger=PropertyChanged}" />
+                                                        <TextBlock Text="TIMING" Style="{StaticResource SbLabel}" />
+                                                        <WrapPanel>
+                                                            <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" Margin="0,0,6,6" Height="30">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <Button Style="{StaticResource Fb.IconButton}" Width="28" Height="28" ToolTip="−0.5s" Command="{Binding DataContext.ChangeDurationCommand, ElementName=Root}">
+                                                                        <Button.CommandParameter>
+                                                                            <MultiBinding Converter="{StaticResource ToArray}">
+                                                                                <Binding />
+                                                                                <Binding Source="-0.5" />
+                                                                            </MultiBinding>
+                                                                        </Button.CommandParameter>
+                                                                        <ui:SymbolIcon Symbol="Subtract24" FontSize="12" />
+                                                                    </Button>
+                                                                    <TextBlock Text="{Binding DurationSeconds, Converter={StaticResource Seconds}}" VerticalAlignment="Center" MinWidth="38" TextAlignment="Center" FontWeight="SemiBold" FontSize="12" />
+                                                                    <Button Style="{StaticResource Fb.IconButton}" Width="28" Height="28" ToolTip="+0.5s" Command="{Binding DataContext.ChangeDurationCommand, ElementName=Root}">
+                                                                        <Button.CommandParameter>
+                                                                            <MultiBinding Converter="{StaticResource ToArray}">
+                                                                                <Binding />
+                                                                                <Binding Source="0.5" />
+                                                                            </MultiBinding>
+                                                                        </Button.CommandParameter>
+                                                                        <ui:SymbolIcon Symbol="Add24" FontSize="12" />
+                                                                    </Button>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <c:ChoiceBox Style="{StaticResource SbCombo}" Width="130" ToolTip="Transition into this frame" Placeholder="Transition" Options="{Binding DataContext.Transitions, ElementName=Root}" Value="{Binding Transition}" />
+                                                        </WrapPanel>
+                                                        <!-- Voice -->
+                                                        <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" Padding="4">
+                                                            <DockPanel>
+                                                                <Button DockPanel.Dock="Left" Style="{StaticResource Fb.IconButton}" Width="30" Height="30" ToolTip="Record voice / stop"
+                                                                        Command="{Binding DataContext.ToggleRecordCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                                    <ui:SymbolIcon Symbol="Mic24" FontSize="15" Foreground="#F87168" />
+                                                                </Button>
+                                                                <Button DockPanel.Dock="Left" Style="{StaticResource Fb.IconButton}" Width="30" Height="30" ToolTip="Use an audio file from your PC"
+                                                                        Command="{Binding DataContext.ImportVoiceCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                                    <ui:SymbolIcon Symbol="FolderOpen24" FontSize="15" />
+                                                                </Button>
+                                                                <Button DockPanel.Dock="Right" Style="{StaticResource Fb.IconButton}" Width="30" Height="30" ToolTip="Remove voice"
+                                                                        Visibility="{Binding HasVoice, Converter={StaticResource BoolToVis}}"
+                                                                        Command="{Binding DataContext.RemoveVoiceCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                                    <ui:SymbolIcon Symbol="Dismiss24" FontSize="13" />
+                                                                </Button>
+                                                                <Grid>
+                                                                    <TextBlock Text="Record or import a voice line" Style="{StaticResource Fb.Muted}" FontSize="12" VerticalAlignment="Center" Margin="6,0"
+                                                                               Visibility="{Binding HasVoice, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
+                                                                    <Button Style="{StaticResource Fb.GhostButton}" Padding="6,3" HorizontalAlignment="Left"
+                                                                            Visibility="{Binding HasVoice, Converter={StaticResource BoolToVis}}"
+                                                                            Command="{Binding DataContext.PlayVoiceCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="14" />
+                                                                            <TextBlock Text="{Binding VoiceNote.DurationText}" Margin="6,0,0,0" FontSize="12" FontWeight="SemiBold" />
+                                                                            <ProgressBar Style="{StaticResource Fb.ThinProgress}" Width="90" Margin="8,0,0,0" Maximum="1" VerticalAlignment="Center"
+                                                                                         Value="{Binding VoiceNote.PlaybackProgress, Mode=OneWay}" />
+                                                                        </StackPanel>
+                                                                    </Button>
+                                                                </Grid>
+                                                            </DockPanel>
+                                                        </Border>
+                                                        <!-- Recording meter (only on the shot being recorded) -->
+                                                        <Border x:Name="RecBar" CornerRadius="{DynamicResource Fb.Radius}" Background="#33F87168" Padding="10,6" Margin="0,6,0,0" Visibility="Collapsed">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <Ellipse Width="8" Height="8" Fill="#F87168" VerticalAlignment="Center" />
+                                                                <TextBlock Text="{Binding DataContext.Recorder.ElapsedText, ElementName=Root}" Margin="8,0" FontWeight="SemiBold" FontSize="12" />
+                                                                <ProgressBar Style="{StaticResource Fb.ThinProgress}" Width="120" Maximum="1" VerticalAlignment="Center"
+                                                                             Value="{Binding DataContext.Recorder.Level, ElementName=Root, Mode=OneWay}" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </StackPanel>
+    
+                                                    <!-- Description -->
+                                                    <TextBlock Text="DESCRIPTION" Style="{StaticResource SbLabel}" />
+                                                    <TextBox Style="{StaticResource Fb.Field}" Tag="Describe the shot…" Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" MinHeight="44" />
+    
+                                                    <!-- Tags -->
+                                                    <TextBlock Text="TAGS" Style="{StaticResource SbLabel}" />
+                                                    <WrapPanel>
+                                                        <ItemsControl ItemsSource="{Binding Tags}" Focusable="False">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <WrapPanel />
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate DataType="{x:Type models:TextItem}">
+                                                                    <Border Style="{StaticResource SbChip}">
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <TextBlock Text="{Binding Text, StringFormat='#{0}'}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource Fb.AccentTextBrush}" />
+                                                                            <Button Style="{StaticResource SbTinyButton}" Margin="2,0,0,0" Command="{Binding DataContext.RemoveItemCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                                                <ui:SymbolIcon Symbol="Dismiss24" FontSize="10" />
+                                                                            </Button>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                        <TextBox Style="{StaticResource Fb.LineField}" Tag="+ tag" FontSize="12" MinWidth="70" Margin="0,0,0,6"
+                                                                 Text="{Binding NewTag, UpdateSourceTrigger=PropertyChanged}"
+                                                                 h:Behaviors.EnterCommand="{Binding DataContext.AddTagCommand, ElementName=Root}" h:Behaviors.CommandParameter="{Binding}" />
+                                                    </WrapPanel>
+    
+                                                    <!-- Shots required (film) -->
+                                                    <StackPanel Visibility="{Binding DataContext.IsAnimation, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+                                                        <TextBlock Text="SHOTS REQUIRED" Style="{StaticResource SbLabel}" />
+                                                        <ItemsControl ItemsSource="{Binding ShotList}" Focusable="False">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate DataType="{x:Type models:ChecklistItem}">
+                                                                    <Grid x:Name="Row" Margin="0,1">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto" />
+                                                                            <ColumnDefinition Width="*" />
+                                                                            <ColumnDefinition Width="Auto" />
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <CheckBox Style="{StaticResource Fb.RoundCheck}" IsChecked="{Binding IsDone}" VerticalAlignment="Center" Margin="2,0,4,0" />
+                                                                        <TextBox Grid.Column="1" x:Name="Text" Style="{StaticResource Fb.LineField}" FontSize="12.5" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" />
+                                                                        <Button Grid.Column="2" x:Name="Del" Style="{StaticResource SbTinyButton}" Visibility="Hidden"
+                                                                                Command="{Binding DataContext.RemoveItemCommand, ElementName=Root}" CommandParameter="{Binding}">
                                                                             <ui:SymbolIcon Symbol="Dismiss24" FontSize="10" />
                                                                         </Button>
-                                                                    </StackPanel>
-                                                                </Border>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                    <TextBox Style="{StaticResource Fb.LineField}" Tag="+ tag" FontSize="12" MinWidth="70" Margin="0,0,0,6"
-                                                             Text="{Binding NewTag, UpdateSourceTrigger=PropertyChanged}"
-                                                             h:Behaviors.EnterCommand="{Binding DataContext.AddTagCommand, ElementName=Root}" h:Behaviors.CommandParameter="{Binding}" />
-                                                </WrapPanel>
-
-                                                <!-- Shots required (film) -->
-                                                <StackPanel Visibility="{Binding DataContext.IsAnimation, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
-                                                    <TextBlock Text="SHOTS REQUIRED" Style="{StaticResource SbLabel}" />
-                                                    <ItemsControl ItemsSource="{Binding ShotList}" Focusable="False">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate DataType="{x:Type models:ChecklistItem}">
-                                                                <Grid x:Name="Row" Margin="0,1">
-                                                                    <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="Auto" />
-                                                                        <ColumnDefinition Width="*" />
-                                                                        <ColumnDefinition Width="Auto" />
-                                                                    </Grid.ColumnDefinitions>
-                                                                    <CheckBox Style="{StaticResource Fb.RoundCheck}" IsChecked="{Binding IsDone}" VerticalAlignment="Center" Margin="2,0,4,0" />
-                                                                    <TextBox Grid.Column="1" x:Name="Text" Style="{StaticResource Fb.LineField}" FontSize="12.5" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" />
-                                                                    <Button Grid.Column="2" x:Name="Del" Style="{StaticResource SbTinyButton}" Visibility="Hidden"
-                                                                            Command="{Binding DataContext.RemoveItemCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                                        <ui:SymbolIcon Symbol="Dismiss24" FontSize="10" />
-                                                                    </Button>
-                                                                </Grid>
-                                                                <DataTemplate.Triggers>
-                                                                    <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
-                                                                        <Setter TargetName="Del" Property="Visibility" Value="Visible" />
-                                                                    </Trigger>
-                                                                    <DataTrigger Binding="{Binding IsDone}" Value="True">
-                                                                        <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource Fb.MutedTextBrush}" />
-                                                                        <Setter TargetName="Text" Property="TextDecorations" Value="Strikethrough" />
-                                                                    </DataTrigger>
-                                                                </DataTemplate.Triggers>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                    <DockPanel Margin="0,2,0,0">
-                                                        <ui:SymbolIcon Symbol="Add24" FontSize="13" Margin="4,0,4,0" Foreground="{DynamicResource Fb.MutedTextBrush}" />
-                                                        <TextBox Style="{StaticResource Fb.LineField}" Tag="Add a required shot" FontSize="12.5"
-                                                                 Text="{Binding NewShotItem, UpdateSourceTrigger=PropertyChanged}"
-                                                                 h:Behaviors.EnterCommand="{Binding DataContext.AddShotItemCommand, ElementName=Root}" h:Behaviors.CommandParameter="{Binding}" />
-                                                    </DockPanel>
+                                                                    </Grid>
+                                                                    <DataTemplate.Triggers>
+                                                                        <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
+                                                                            <Setter TargetName="Del" Property="Visibility" Value="Visible" />
+                                                                        </Trigger>
+                                                                        <DataTrigger Binding="{Binding IsDone}" Value="True">
+                                                                            <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource Fb.MutedTextBrush}" />
+                                                                            <Setter TargetName="Text" Property="TextDecorations" Value="Strikethrough" />
+                                                                        </DataTrigger>
+                                                                    </DataTemplate.Triggers>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                        <DockPanel Margin="0,2,0,0">
+                                                            <ui:SymbolIcon Symbol="Add24" FontSize="13" Margin="4,0,4,0" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                                            <TextBox Style="{StaticResource Fb.LineField}" Tag="Add a required shot" FontSize="12.5"
+                                                                     Text="{Binding NewShotItem, UpdateSourceTrigger=PropertyChanged}"
+                                                                     h:Behaviors.EnterCommand="{Binding DataContext.AddShotItemCommand, ElementName=Root}" h:Behaviors.CommandParameter="{Binding}" />
+                                                        </DockPanel>
+                                                    </StackPanel>
+    
+                                                    <!-- Scene notes -->
+                                                    <TextBlock Text="SCENE" Style="{StaticResource SbLabel}" />
+                                                    <TextBox Style="{StaticResource Fb.Field}" Tag="Mood, lighting, blocking, sound…" Text="{Binding SceneNotes, UpdateSourceTrigger=PropertyChanged}" />
+    
+                                                    <!-- Equipment (film) -->
+                                                    <StackPanel Visibility="{Binding DataContext.IsAnimation, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+                                                        <TextBlock Text="EQUIPMENT" Style="{StaticResource SbLabel}" />
+                                                        <ItemsControl ItemsSource="{Binding Equipment}" Focusable="False">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate DataType="{x:Type models:TextItem}">
+                                                                    <Grid x:Name="Row" Margin="0,1">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto" />
+                                                                            <ColumnDefinition Width="*" />
+                                                                            <ColumnDefinition Width="Auto" />
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <Ellipse Width="5" Height="5" Fill="{DynamicResource Fb.AccentBrush}" Margin="8,0,6,0" VerticalAlignment="Center" />
+                                                                        <TextBox Grid.Column="1" Style="{StaticResource Fb.LineField}" FontSize="12.5" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" />
+                                                                        <Button Grid.Column="2" x:Name="Del" Style="{StaticResource SbTinyButton}" Visibility="Hidden"
+                                                                                Command="{Binding DataContext.RemoveItemCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                                            <ui:SymbolIcon Symbol="Dismiss24" FontSize="10" />
+                                                                        </Button>
+                                                                    </Grid>
+                                                                    <DataTemplate.Triggers>
+                                                                        <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
+                                                                            <Setter TargetName="Del" Property="Visibility" Value="Visible" />
+                                                                        </Trigger>
+                                                                    </DataTemplate.Triggers>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                        <DockPanel Margin="0,2,0,0">
+                                                            <ui:SymbolIcon Symbol="Add24" FontSize="13" Margin="4,0,4,0" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                                            <TextBox Style="{StaticResource Fb.LineField}" Tag="Add equipment" FontSize="12.5"
+                                                                     Text="{Binding NewEquipment, UpdateSourceTrigger=PropertyChanged}"
+                                                                     h:Behaviors.EnterCommand="{Binding DataContext.AddEquipmentCommand, ElementName=Root}" h:Behaviors.CommandParameter="{Binding}" />
+                                                        </DockPanel>
+                                                    </StackPanel>
+                                                    </StackPanel>
                                                 </StackPanel>
-
-                                                <!-- Scene notes -->
-                                                <TextBlock Text="SCENE" Style="{StaticResource SbLabel}" />
-                                                <TextBox Style="{StaticResource Fb.Field}" Tag="Mood, lighting, blocking, sound…" Text="{Binding SceneNotes, UpdateSourceTrigger=PropertyChanged}" />
-
-                                                <!-- Equipment (film) -->
-                                                <StackPanel Visibility="{Binding DataContext.IsAnimation, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
-                                                    <TextBlock Text="EQUIPMENT" Style="{StaticResource SbLabel}" />
-                                                    <ItemsControl ItemsSource="{Binding Equipment}" Focusable="False">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate DataType="{x:Type models:TextItem}">
-                                                                <Grid x:Name="Row" Margin="0,1">
-                                                                    <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="Auto" />
-                                                                        <ColumnDefinition Width="*" />
-                                                                        <ColumnDefinition Width="Auto" />
-                                                                    </Grid.ColumnDefinitions>
-                                                                    <Ellipse Width="5" Height="5" Fill="{DynamicResource Fb.AccentBrush}" Margin="8,0,6,0" VerticalAlignment="Center" />
-                                                                    <TextBox Grid.Column="1" Style="{StaticResource Fb.LineField}" FontSize="12.5" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" />
-                                                                    <Button Grid.Column="2" x:Name="Del" Style="{StaticResource SbTinyButton}" Visibility="Hidden"
-                                                                            Command="{Binding DataContext.RemoveItemCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                                        <ui:SymbolIcon Symbol="Dismiss24" FontSize="10" />
-                                                                    </Button>
-                                                                </Grid>
-                                                                <DataTemplate.Triggers>
-                                                                    <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
-                                                                        <Setter TargetName="Del" Property="Visibility" Value="Visible" />
-                                                                    </Trigger>
-                                                                </DataTemplate.Triggers>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                    <DockPanel Margin="0,2,0,0">
-                                                        <ui:SymbolIcon Symbol="Add24" FontSize="13" Margin="4,0,4,0" Foreground="{DynamicResource Fb.MutedTextBrush}" />
-                                                        <TextBox Style="{StaticResource Fb.LineField}" Tag="Add equipment" FontSize="12.5"
-                                                                 Text="{Binding NewEquipment, UpdateSourceTrigger=PropertyChanged}"
-                                                                 h:Behaviors.EnterCommand="{Binding DataContext.AddEquipmentCommand, ElementName=Root}" h:Behaviors.CommandParameter="{Binding}" />
-                                                    </DockPanel>
-                                                </StackPanel>
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </ScrollViewer>
-                                    </DockPanel>
-                                </Border>
-                            </Grid>
-                            <DataTemplate.Triggers>
-                                <DataTrigger Binding="{Binding Number}" Value="1">
-                                    <Setter TargetName="Connector" Property="Visibility" Value="Hidden" />
-                                    <Setter TargetName="ConnectorDot" Property="Visibility" Value="Hidden" />
-                                </DataTrigger>
-                                <Trigger SourceName="Frame" Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="FrameTools" Property="Opacity" Value="1" />
-                                </Trigger>
-                                <DataTrigger Binding="{Binding HasImage}" Value="False">
-                                    <Setter TargetName="FrameTools" Property="Visibility" Value="Collapsed" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding ImageFit}" Value="True">
-                                    <Setter TargetName="FrameImage" Property="Stretch" Value="Uniform" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding Status}" Value="">
-                                    <Setter TargetName="StatusText" Property="Text" Value="Status" />
-                                    <Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource Fb.MutedTextBrush}" />
-                                </DataTrigger>
-                                <DataTrigger Value="True">
-                                    <DataTrigger.Binding>
-                                        <MultiBinding Converter="{StaticResource Same}">
-                                            <Binding />
-                                            <Binding Path="DataContext.RecordingShot" ElementName="Root" />
-                                        </MultiBinding>
-                                    </DataTrigger.Binding>
-                                    <Setter TargetName="RecBar" Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </DataTemplate.Triggers>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <!-- Add shot column -->
-                <Button Style="{StaticResource Fb.GhostButton}" Width="140" Margin="44,0,0,0" VerticalAlignment="Stretch" Command="{Binding AddShotCommand}"
-                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0"
-                        BorderBrush="{DynamicResource Fb.DividerBrush}" Foreground="{DynamicResource Fb.MutedTextBrush}">
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <ui:SymbolIcon Symbol="AddCircle24" FontSize="28" HorizontalAlignment="Center" />
-                        <TextBlock Text="{Binding ShotWord, StringFormat='Add {0}'}" Margin="0,8,0,0" HorizontalAlignment="Center" FontWeight="SemiBold" />
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-        </ScrollViewer>
+                                            </ScrollViewer>
+                                        </DockPanel>
+                                    </Border>
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding Number}" Value="1">
+                                        <Setter TargetName="Connector" Property="Visibility" Value="Hidden" />
+                                        <Setter TargetName="ConnectorDot" Property="Visibility" Value="Hidden" />
+                                    </DataTrigger>
+                                    <Trigger SourceName="Frame" Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="FrameTools" Property="Opacity" Value="1" />
+                                    </Trigger>
+                                    <DataTrigger Binding="{Binding HasImage}" Value="False">
+                                        <Setter TargetName="FrameTools" Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsFlashing}" Value="True">
+                                        <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource Fb.AccentBrush}" />
+                                        <Setter TargetName="Card" Property="BorderThickness" Value="2" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding ImageFit}" Value="True">
+                                        <Setter TargetName="FrameImage" Property="Stretch" Value="Uniform" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="">
+                                        <Setter TargetName="StatusText" Property="Text" Value="Status" />
+                                        <Setter TargetName="StatusText" Property="Foreground" Value="{DynamicResource Fb.MutedTextBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Value="True">
+                                        <DataTrigger.Binding>
+                                            <MultiBinding Converter="{StaticResource Same}">
+                                                <Binding />
+                                                <Binding Path="DataContext.RecordingShot" ElementName="Root" />
+                                            </MultiBinding>
+                                        </DataTrigger.Binding>
+                                        <Setter TargetName="RecBar" Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+    
+                    <!-- Add shot column -->
+                    <Button Style="{StaticResource Fb.GhostButton}" Width="140" Margin="44,0,0,0" VerticalAlignment="Stretch" Command="{Binding AddShotCommand}"
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0"
+                            BorderBrush="{DynamicResource Fb.DividerBrush}" Foreground="{DynamicResource Fb.MutedTextBrush}">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <ui:SymbolIcon Symbol="AddCircle24" FontSize="28" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding ShotWord, StringFormat='Add {0}'}" Margin="0,8,0,0" HorizontalAlignment="Center" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </ScrollViewer>
+            <c:ScrollMinimap Target="{Binding ElementName=Scroller}" />
+        </Grid>
     </DockPanel>
 </UserControl>

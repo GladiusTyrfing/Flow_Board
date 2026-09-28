@@ -39,7 +39,7 @@ public static class CanvasGeometry
         return (a.CenterX, t > 0 ? a.Bottom : a.Y, 0, t, b.CenterX, t > 0 ? b.Y : b.Bottom, 0, -t);
     }
 
-    public static EdgeShape Route(Box a, Box b, EdgeStyle style, bool arrow, bool startArrow = false, double thickness = 2)
+    public static EdgeShape Route(Box a, Box b, EdgeStyle style, bool arrow, bool startArrow = false, double thickness = 2, double bendX = 0, double bendY = 0)
     {
         var (x1, y1, nx1, ny1, x2, y2, nx2, ny2) = Anchors(a, b);
         // A free end (a 0-size box) is the exact point.
@@ -48,6 +48,19 @@ public static class CanvasGeometry
         var sb = new StringBuilder();
         sb.Append("M ").Append(F(x1)).Append(',').Append(F(y1)).Append(' ');
         double dirX, dirY, lx, ly, sdx, sdy;
+        var size = 8 + thickness * 1.6;
+
+        if (bendX != 0 || bendY != 0)
+        {
+            // Bent line: a smooth curve that passes through the handle (the middle point pulled by the bend).
+            double hx = (x1 + x2) / 2 + bendX, hy = (y1 + y2) / 2 + bendY;
+            double cx = 2 * hx - (x1 + x2) / 2, cy = 2 * hy - (y1 + y2) / 2;
+            sb.Append("Q ").Append(F(cx)).Append(',').Append(F(cy)).Append(' ').Append(F(x2)).Append(',').Append(F(y2));
+            var bentHeads = (arrow ? ArrowHead(x2, y2, x2 - cx, y2 - cy, size) : string.Empty)
+                            + (startArrow ? " " + ArrowHead(x1, y1, x1 - cx, y1 - cy, size) : string.Empty);
+            return new EdgeShape(sb.ToString(), bentHeads.Trim(), hx, hy, x1, y1, x2, y2);
+        }
+
         switch (style)
         {
             case EdgeStyle.Straight:
@@ -120,7 +133,6 @@ public static class CanvasGeometry
                 break;
         }
 
-        var size = 8 + thickness * 1.6;
         var heads = (arrow ? ArrowHead(x2, y2, dirX, dirY, size) : string.Empty)
                     + (startArrow ? " " + ArrowHead(x1, y1, sdx, sdy, size) : string.Empty);
         return new EdgeShape(sb.ToString(), heads.Trim(), lx, ly, x1, y1, x2, y2);

@@ -64,12 +64,27 @@ public static class BoardThemeService
         host.SetValue(CurrentDictionaryProperty, current);
     }
 
-    public static ResourceDictionary Build(Board board)
+    public static ResourceDictionary Build(Board board) => Build(board.Theme, board.ListOpacity, board.CardOpacity, board.CornerRadius);
+
+    // The dictionary applied to the storyboard / canvas / page area.
+    private static readonly DependencyProperty DocDictionaryProperty = DependencyProperty.RegisterAttached(
+        "DocDictionary", typeof(ResourceDictionary), typeof(BoardThemeService), new PropertyMetadata(null));
+
+    /// <summary>Applies a document's theme preset to the document area (null clears it).</summary>
+    public static void ApplyDoc(FrameworkElement host, StyledDocument? doc)
+    {
+        var current = (ResourceDictionary?)host.GetValue(DocDictionaryProperty);
+        var fresh = doc == null ? null : Build(doc.Theme, doc.PanelOpacity, Math.Min(1, doc.PanelOpacity + 0.08), -1);
+        ThemeService.SwapMerged(host.Resources, ref current, fresh);
+        host.SetValue(DocDictionaryProperty, current);
+    }
+
+    public static ResourceDictionary Build(string? theme, double listOpacity, double cardOpacity, double cornerRadius)
     {
         var d = new ResourceDictionary();
-        var p = Resolve(board.Theme);
-        var listA = (byte)Math.Round(255 * Math.Clamp(board.ListOpacity, 0, 1));
-        var cardA = (byte)Math.Round(255 * Math.Clamp(board.CardOpacity, 0.05, 1));
+        var p = Resolve(theme);
+        var listA = (byte)Math.Round(255 * Math.Clamp(listOpacity, 0, 1));
+        var cardA = (byte)Math.Round(255 * Math.Clamp(cardOpacity, 0.05, 1));
         var ink = p.IsDark ? Colors.White : Hex("#0B1220");
 
         Set(d, "Fb.ListBrush", WithAlpha(p.List, listA));
@@ -95,7 +110,9 @@ public static class BoardThemeService
         Set(d, "Fb.CalendarCellBrush", WithAlpha(p.Card, (byte)Math.Max(cardA * 0.55, 0x30)));
 
         // Board-specific corner roundness (negative = inherit the app setting).
-        if (board.CornerRadius >= 0) ApplyRadius(d, board.CornerRadius);
+        if (cornerRadius >= 0) ApplyRadius(d, cornerRadius);
+        // Page-like surfaces (notes, dashboard panels) follow the preset too.
+        Set(d, "Fb.PanelBrush", WithAlpha(p.List, (byte)Math.Max((int)listA, 0x40)));
         return d;
     }
 

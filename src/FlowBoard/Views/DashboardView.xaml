@@ -1,6 +1,7 @@
 <UserControl x:Class="FlowBoard.Views.DashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:FlowBoard.Controls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
@@ -43,224 +44,227 @@
             </Grid>
         </Border>
 
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="12,16,0,4">
-            <StackPanel>
-                <!-- Greeting -->
-                <StackPanel Margin="4,0,0,18" h:Behaviors.AnimateIn="rise">
-                    <TextBlock Text="{Binding Greeting}" Style="{StaticResource Fb.GradientTitle}" FontSize="30" />
-                    <TextBlock Text="{Binding DateText}" Style="{StaticResource Fb.Muted}" FontSize="14" Margin="0,2,0,0" />
-                </StackPanel>
-
-                <!-- Tiles -->
-                <ItemsControl ItemsSource="{Binding Tiles}" Focusable="False">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type vm:StatTile}">
-                            <Border Style="{StaticResource Panel}" Width="212" h:Behaviors.AnimateIn="pop">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding Title}" Style="{StaticResource Fb.Caption}" />
-                                        <TextBlock Text="{Binding Value}" FontSize="32" FontWeight="ExtraBold" Foreground="{DynamicResource Fb.TextBrush}" Margin="0,2,0,0" />
-                                        <TextBlock Text="{Binding Sub}" Style="{StaticResource Fb.Muted}" FontSize="12" TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                    <Border Grid.Column="1" Width="38" Height="38" CornerRadius="{DynamicResource Fb.Radius}" VerticalAlignment="Top"
-                                            Background="{Binding Color, Converter={StaticResource HexToBrush}}" Opacity="0.9">
-                                        <ui:SymbolIcon Symbol="{Binding Icon, Converter={StaticResource SymbolName}}" FontSize="18" Foreground="White" />
-                                    </Border>
-                                </Grid>
+        <Grid >
+            <ScrollViewer x:Name="DashScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="12,16,0,4">
+                <StackPanel x:Name="DashContent">
+                    <!-- Greeting -->
+                    <StackPanel Margin="4,0,0,18" h:Behaviors.AnimateIn="rise">
+                        <TextBlock Text="{Binding Greeting}" Style="{StaticResource Fb.GradientTitle}" FontSize="30" />
+                        <TextBlock Text="{Binding DateText}" Style="{StaticResource Fb.Muted}" FontSize="14" Margin="0,2,0,0" />
+                    </StackPanel>
+    
+                    <!-- Tiles -->
+                    <ItemsControl ItemsSource="{Binding Tiles}" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:StatTile}">
+                                <Border Style="{StaticResource Panel}" Width="212" h:Behaviors.AnimateIn="pop">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" Style="{StaticResource Fb.Caption}" />
+                                            <TextBlock Text="{Binding Value}" FontSize="32" FontWeight="ExtraBold" Foreground="{DynamicResource Fb.TextBrush}" Margin="0,2,0,0" />
+                                            <TextBlock Text="{Binding Sub}" Style="{StaticResource Fb.Muted}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Width="38" Height="38" CornerRadius="{DynamicResource Fb.Radius}" VerticalAlignment="Top"
+                                                Background="{Binding Color, Converter={StaticResource HexToBrush}}" Opacity="0.9">
+                                            <ui:SymbolIcon Symbol="{Binding Icon, Converter={StaticResource SymbolName}}" FontSize="18" Foreground="White" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="360" />
+                            <ColumnDefinition Width="340" />
+                        </Grid.ColumnDefinitions>
+    
+                        <StackPanel>
+                            <!-- Completed per day -->
+                            <Border Style="{StaticResource Panel}">
+                                <StackPanel>
+                                    <Grid>
+                                        <TextBlock Text="Completed per day" Style="{StaticResource PanelTitle}" />
+                                        <TextBlock Text="{Binding ChartSummary}" Style="{StaticResource Fb.Muted}" FontSize="12" HorizontalAlignment="Right" />
+                                    </Grid>
+                                    <Grid Height="170">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <!-- y axis: max and zero -->
+                                        <Grid Margin="0,0,8,20">
+                                            <TextBlock Text="{Binding ChartMax}" Style="{StaticResource Fb.Muted}" FontSize="11" VerticalAlignment="Top" />
+                                            <TextBlock Text="0" Style="{StaticResource Fb.Muted}" FontSize="11" VerticalAlignment="Bottom" />
+                                        </Grid>
+                                        <Grid Grid.Column="1">
+                                            <Border Height="1" VerticalAlignment="Top" Background="{DynamicResource Fb.DividerBrush}" Margin="0,7,0,0" />
+                                            <Border Height="1" VerticalAlignment="Center" Background="{DynamicResource Fb.DividerBrush}" Margin="0,0,0,20" />
+                                            <ItemsControl ItemsSource="{Binding Bars}" Focusable="False">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <UniformGrid Rows="1" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type vm:ChartBar}">
+                                                        <Grid ToolTip="{Binding Tooltip}" Background="Transparent">
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="*" />
+                                                                <RowDefinition Height="20" />
+                                                            </Grid.RowDefinitions>
+                                                            <Border x:Name="Bar" VerticalAlignment="Bottom" Margin="3,0" MinHeight="3" CornerRadius="4,4,1,1"
+                                                                    Height="{Binding Height, Converter={StaticResource Multiply}, ConverterParameter=140}"
+                                                                    Background="{DynamicResource Fb.AccentGradientBrush}" Opacity="0.75" h:Behaviors.AnimateIn="rise" />
+                                                            <TextBlock x:Name="Day" Grid.Row="1" Text="{Binding Label}" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="11"
+                                                                       Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                                        </Grid>
+                                                        <DataTemplate.Triggers>
+                                                            <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                                <Setter TargetName="Bar" Property="Opacity" Value="1" />
+                                                                <Setter TargetName="Day" Property="FontWeight" Value="Bold" />
+                                                                <Setter TargetName="Day" Property="Foreground" Value="{DynamicResource Fb.TextBrush}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Value}" Value="0">
+                                                                <Setter TargetName="Bar" Property="Background" Value="{DynamicResource Fb.SubtleHoverBrush}" />
+                                                            </DataTrigger>
+                                                        </DataTemplate.Triggers>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </Grid>
+                                    </Grid>
+                                </StackPanel>
                             </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" MinWidth="360" />
-                        <ColumnDefinition Width="340" />
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel>
-                        <!-- Completed per day -->
-                        <Border Style="{StaticResource Panel}">
-                            <StackPanel>
-                                <Grid>
-                                    <TextBlock Text="Completed per day" Style="{StaticResource PanelTitle}" />
-                                    <TextBlock Text="{Binding ChartSummary}" Style="{StaticResource Fb.Muted}" FontSize="12" HorizontalAlignment="Right" />
-                                </Grid>
-                                <Grid Height="170">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <!-- y axis: max and zero -->
-                                    <Grid Margin="0,0,8,20">
-                                        <TextBlock Text="{Binding ChartMax}" Style="{StaticResource Fb.Muted}" FontSize="11" VerticalAlignment="Top" />
-                                        <TextBlock Text="0" Style="{StaticResource Fb.Muted}" FontSize="11" VerticalAlignment="Bottom" />
-                                    </Grid>
-                                    <Grid Grid.Column="1">
-                                        <Border Height="1" VerticalAlignment="Top" Background="{DynamicResource Fb.DividerBrush}" Margin="0,7,0,0" />
-                                        <Border Height="1" VerticalAlignment="Center" Background="{DynamicResource Fb.DividerBrush}" Margin="0,0,0,20" />
-                                        <ItemsControl ItemsSource="{Binding Bars}" Focusable="False">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <UniformGrid Rows="1" />
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="{x:Type vm:ChartBar}">
-                                                    <Grid ToolTip="{Binding Tooltip}" Background="Transparent">
-                                                        <Grid.RowDefinitions>
-                                                            <RowDefinition Height="*" />
-                                                            <RowDefinition Height="20" />
-                                                        </Grid.RowDefinitions>
-                                                        <Border x:Name="Bar" VerticalAlignment="Bottom" Margin="3,0" MinHeight="3" CornerRadius="4,4,1,1"
-                                                                Height="{Binding Height, Converter={StaticResource Multiply}, ConverterParameter=140}"
-                                                                Background="{DynamicResource Fb.AccentGradientBrush}" Opacity="0.75" h:Behaviors.AnimateIn="rise" />
-                                                        <TextBlock x:Name="Day" Grid.Row="1" Text="{Binding Label}" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="11"
-                                                                   Foreground="{DynamicResource Fb.MutedTextBrush}" />
+    
+                            <!-- Up next -->
+                            <Border Style="{StaticResource Panel}">
+                                <StackPanel>
+                                    <TextBlock Text="Up next — overdue and the next 7 days" Style="{StaticResource PanelTitle}" />
+                                    <TextBlock Text="Nothing due this week. Enjoy the calm." Style="{StaticResource Fb.Muted}"
+                                               Visibility="{Binding Agenda, Converter={StaticResource HasValueToVis}, ConverterParameter=invert}" />
+                                    <ItemsControl ItemsSource="{Binding Agenda}" Focusable="False">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type services:AgendaEntry}">
+                                                <Button Style="{StaticResource Fb.GhostButton}" HorizontalContentAlignment="Stretch" Padding="8,6" Margin="0,1"
+                                                        Command="{Binding DataContext.OpenAgendaCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Width="4" Height="28" CornerRadius="2" Margin="0,0,10,0" Background="{Binding Card.Priority, Converter={StaticResource PriorityToBrush}}" />
+                                                        <StackPanel Grid.Column="1">
+                                                            <TextBlock Text="{Binding Card.Title}" FontWeight="SemiBold" FontSize="13.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Fb.TextBrush}" />
+                                                            <TextBlock Style="{StaticResource Fb.Muted}" FontSize="12" TextTrimming="CharacterEllipsis">
+                                                                <Run Text="{Binding Board.Name, Mode=OneWay}" /> › <Run Text="{Binding List.Name, Mode=OneWay}" />
+                                                            </TextBlock>
+                                                        </StackPanel>
+                                                        <Border Grid.Column="2" Style="{StaticResource Fb.Badge}" Background="{Binding Card.DueState, Converter={StaticResource DueStateToBrush}}">
+                                                            <TextBlock Text="{Binding Card.DueDate, Converter={StaticResource DateText}}" FontSize="11.5" FontWeight="SemiBold"
+                                                                       Foreground="{Binding Card.DueState, Converter={StaticResource DueStateToForeground}}" />
+                                                        </Border>
                                                     </Grid>
-                                                    <DataTemplate.Triggers>
-                                                        <DataTrigger Binding="{Binding IsToday}" Value="True">
-                                                            <Setter TargetName="Bar" Property="Opacity" Value="1" />
-                                                            <Setter TargetName="Day" Property="FontWeight" Value="Bold" />
-                                                            <Setter TargetName="Day" Property="Foreground" Value="{DynamicResource Fb.TextBrush}" />
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Value}" Value="0">
-                                                            <Setter TargetName="Bar" Property="Background" Value="{DynamicResource Fb.SubtleHoverBrush}" />
-                                                        </DataTrigger>
-                                                    </DataTemplate.Triggers>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </Grid>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Up next -->
-                        <Border Style="{StaticResource Panel}">
-                            <StackPanel>
-                                <TextBlock Text="Up next — overdue and the next 7 days" Style="{StaticResource PanelTitle}" />
-                                <TextBlock Text="Nothing due this week. Enjoy the calm." Style="{StaticResource Fb.Muted}"
-                                           Visibility="{Binding Agenda, Converter={StaticResource HasValueToVis}, ConverterParameter=invert}" />
-                                <ItemsControl ItemsSource="{Binding Agenda}" Focusable="False">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type services:AgendaEntry}">
-                                            <Button Style="{StaticResource Fb.GhostButton}" HorizontalContentAlignment="Stretch" Padding="8,6" Margin="0,1"
-                                                    Command="{Binding DataContext.OpenAgendaCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                <Grid>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+    
+                        <StackPanel Grid.Column="1">
+                            <!-- Open cards by priority -->
+                            <Border Style="{StaticResource Panel}">
+                                <StackPanel>
+                                    <TextBlock Text="Open cards by priority" Style="{StaticResource PanelTitle}" />
+                                    <ItemsControl ItemsSource="{Binding Priorities}" Focusable="False">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type vm:PrioritySlice}">
+                                                <Grid Margin="0,3">
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="64" />
                                                         <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="34" />
                                                     </Grid.ColumnDefinitions>
-                                                    <Border Width="4" Height="28" CornerRadius="2" Margin="0,0,10,0" Background="{Binding Card.Priority, Converter={StaticResource PriorityToBrush}}" />
-                                                    <StackPanel Grid.Column="1">
-                                                        <TextBlock Text="{Binding Card.Title}" FontWeight="SemiBold" FontSize="13.5" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Fb.TextBrush}" />
-                                                        <TextBlock Style="{StaticResource Fb.Muted}" FontSize="12" TextTrimming="CharacterEllipsis">
-                                                            <Run Text="{Binding Board.Name, Mode=OneWay}" /> › <Run Text="{Binding List.Name, Mode=OneWay}" />
-                                                        </TextBlock>
-                                                    </StackPanel>
-                                                    <Border Grid.Column="2" Style="{StaticResource Fb.Badge}" Background="{Binding Card.DueState, Converter={StaticResource DueStateToBrush}}">
-                                                        <TextBlock Text="{Binding Card.DueDate, Converter={StaticResource DateText}}" FontSize="11.5" FontWeight="SemiBold"
-                                                                   Foreground="{Binding Card.DueState, Converter={StaticResource DueStateToForeground}}" />
-                                                    </Border>
+                                                    <TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="{DynamicResource Fb.MutedTextBrush}" VerticalAlignment="Center" />
+                                                    <ProgressBar Grid.Column="1" Style="{StaticResource Fb.ThinProgress}" Maximum="1" Value="{Binding Fraction, Mode=OneWay}"
+                                                                 Foreground="{Binding Color, Converter={StaticResource HexToBrush}}" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding Count}" FontWeight="SemiBold" FontSize="12.5" HorizontalAlignment="Right" VerticalAlignment="Center" />
                                                 </Grid>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="1">
-                        <!-- Open cards by priority -->
-                        <Border Style="{StaticResource Panel}">
-                            <StackPanel>
-                                <TextBlock Text="Open cards by priority" Style="{StaticResource PanelTitle}" />
-                                <ItemsControl ItemsSource="{Binding Priorities}" Focusable="False">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type vm:PrioritySlice}">
-                                            <Grid Margin="0,3">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="64" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="34" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="{DynamicResource Fb.MutedTextBrush}" VerticalAlignment="Center" />
-                                                <ProgressBar Grid.Column="1" Style="{StaticResource Fb.ThinProgress}" Maximum="1" Value="{Binding Fraction, Mode=OneWay}"
-                                                             Foreground="{Binding Color, Converter={StaticResource HexToBrush}}" VerticalAlignment="Center" />
-                                                <TextBlock Grid.Column="2" Text="{Binding Count}" FontWeight="SemiBold" FontSize="12.5" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Time per board -->
-                        <Border Style="{StaticResource Panel}">
-                            <StackPanel>
-                                <TextBlock Text="Where your time went (7 days)" Style="{StaticResource PanelTitle}" />
-                                <TextBlock Text="Start a timer or a focus session on a card to see time here." Style="{StaticResource Fb.Muted}" TextWrapping="Wrap"
-                                           Visibility="{Binding TimeRows, Converter={StaticResource HasValueToVis}, ConverterParameter=invert}" />
-                                <ItemsControl ItemsSource="{Binding TimeRows}" Focusable="False">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type vm:MeterRow}">
-                                            <StackPanel Margin="0,4">
-                                                <Grid>
-                                                    <TextBlock Text="{Binding Name}" FontSize="12.5" TextTrimming="CharacterEllipsis" Margin="0,0,60,0" />
-                                                    <TextBlock Text="{Binding Value}" FontSize="12.5" FontWeight="SemiBold" HorizontalAlignment="Right" />
-                                                </Grid>
-                                                <ProgressBar Style="{StaticResource Fb.ThinProgress}" Maximum="1" Value="{Binding Fraction, Mode=OneWay}" Margin="0,4,0,0"
-                                                             Foreground="{Binding Color, Converter={StaticResource HexToBrush}}" />
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Jump back in -->
-                        <Border Style="{StaticResource Panel}">
-                            <StackPanel>
-                                <TextBlock Text="Jump back in" Style="{StaticResource PanelTitle}" />
-                                <ItemsControl ItemsSource="{Binding Recent}" Focusable="False">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type vm:RecentItem}">
-                                            <Button Style="{StaticResource Fb.GhostButton}" HorizontalContentAlignment="Stretch" Padding="6,5" Margin="0,1"
-                                                    Command="{Binding DataContext.OpenRecentCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Border Width="30" Height="30" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" Margin="0,0,10,0">
-                                                        <ui:SymbolIcon Symbol="{Binding Icon, Converter={StaticResource SymbolName}}" FontSize="15" />
-                                                    </Border>
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Fb.TextBrush}" />
-                                                        <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Fb.Muted}" FontSize="11.5" TextTrimming="CharacterEllipsis" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </Grid>
-            </StackPanel>
-        </ScrollViewer>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+    
+                            <!-- Time per board -->
+                            <Border Style="{StaticResource Panel}">
+                                <StackPanel>
+                                    <TextBlock Text="Where your time went (7 days)" Style="{StaticResource PanelTitle}" />
+                                    <TextBlock Text="Start a timer or a focus session on a card to see time here." Style="{StaticResource Fb.Muted}" TextWrapping="Wrap"
+                                               Visibility="{Binding TimeRows, Converter={StaticResource HasValueToVis}, ConverterParameter=invert}" />
+                                    <ItemsControl ItemsSource="{Binding TimeRows}" Focusable="False">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type vm:MeterRow}">
+                                                <StackPanel Margin="0,4">
+                                                    <Grid>
+                                                        <TextBlock Text="{Binding Name}" FontSize="12.5" TextTrimming="CharacterEllipsis" Margin="0,0,60,0" />
+                                                        <TextBlock Text="{Binding Value}" FontSize="12.5" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                                                    </Grid>
+                                                    <ProgressBar Style="{StaticResource Fb.ThinProgress}" Maximum="1" Value="{Binding Fraction, Mode=OneWay}" Margin="0,4,0,0"
+                                                                 Foreground="{Binding Color, Converter={StaticResource HexToBrush}}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+    
+                            <!-- Jump back in -->
+                            <Border Style="{StaticResource Panel}">
+                                <StackPanel>
+                                    <TextBlock Text="Jump back in" Style="{StaticResource PanelTitle}" />
+                                    <ItemsControl ItemsSource="{Binding Recent}" Focusable="False">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type vm:RecentItem}">
+                                                <Button Style="{StaticResource Fb.GhostButton}" HorizontalContentAlignment="Stretch" Padding="6,5" Margin="0,1"
+                                                        Command="{Binding DataContext.OpenRecentCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Width="30" Height="30" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" Margin="0,0,10,0">
+                                                            <ui:SymbolIcon Symbol="{Binding Icon, Converter={StaticResource SymbolName}}" FontSize="15" />
+                                                        </Border>
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Fb.TextBrush}" />
+                                                            <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Fb.Muted}" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+            <c:ScrollMinimap Target="{Binding ElementName=DashScroller}" MaxMapWidth="120" MaxMapHeight="200" />
+        </Grid>
     </DockPanel>
 </UserControl>
