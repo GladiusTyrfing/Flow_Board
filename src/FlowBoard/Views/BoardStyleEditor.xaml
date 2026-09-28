@@ -27,7 +27,8 @@
             </Border>
         </DataTemplate>
     </UserControl.Resources>
-    <StackPanel>
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
         <!-- ============ Live preview (always visible, even when a dialog covers the board) ============ -->
         <TextBlock Text="PREVIEW" Style="{StaticResource Fb.Caption}" Margin="0,0,0,8" />
         <Border x:Name="PreviewHost" Height="150" Margin="0,0,0,18" h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}">
@@ -65,6 +66,11 @@
             </Grid>
         </Border>
 
+        </StackPanel>
+
+        <!-- Controls scroll; the preview above stays in view. -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,10,0">
+        <StackPanel>
                         <TextBlock Text="QUICK LOOKS" Style="{StaticResource Fb.Caption}" Margin="0,0,0,8" />
                         <UniformGrid Columns="4" Margin="0,0,0,16">
                             <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,6,0" HorizontalContentAlignment="Center" Padding="4,8"
@@ -160,6 +166,82 @@
                         </StackPanel>
 
                         <TextBlock Text="BACKGROUND" Style="{StaticResource Fb.Caption}" Margin="0,4,0,10" />
+
+                        <TextBlock Text="Photo" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <WrapPanel>
+                            <Button Style="{StaticResource Fb.SubtleButton}" Width="104" Height="64" Margin="0,0,8,8" HorizontalContentAlignment="Center"
+                                    Command="{Binding ChooseImageCommand}">
+                                <StackPanel>
+                                    <ui:SymbolIcon Symbol="ImageAdd24" FontSize="20" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Choose photo…" FontSize="11" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </Button>
+                            <ItemsControl ItemsSource="{Binding RecentImages}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource Fb.SwatchButton}" Width="104" Height="64" Background="{Binding Converter={StaticResource BoardThumbnail}}"
+                                                Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                            <Button.Tag>
+                                                <MultiBinding Converter="{StaticResource SelectedTag}">
+                                                    <Binding />
+                                                    <Binding Path="DataContext.Board.Background" ElementName="Root" />
+                                                </MultiBinding>
+                                            </Button.Tag>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </WrapPanel>
+
+                        <TextBlock Text="Gradient · the checkered one is transparent" FontWeight="SemiBold" Margin="0,10,0,8" />
+                        <ItemsControl ItemsSource="{Binding Gradients}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource Fb.SwatchButton}" Width="76" Height="50" Background="{Binding Converter={StaticResource BoardThumbnail}}"
+                                            Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                        <Button.Tag>
+                                            <MultiBinding Converter="{StaticResource SelectedTag}">
+                                                <Binding />
+                                                <Binding Path="DataContext.Board.Background" ElementName="Root" />
+                                            </MultiBinding>
+                                        </Button.Tag>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="Color" FontWeight="SemiBold" Margin="0,10,0,8" />
+                        <ItemsControl ItemsSource="{Binding Solids}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource Fb.SwatchButton}" Width="50" Height="36" Background="{Binding Converter={StaticResource BoardThumbnail}}"
+                                            Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                        <Button.Tag>
+                                            <MultiBinding Converter="{StaticResource SelectedTag}">
+                                                <Binding />
+                                                <Binding Path="DataContext.Board.Background" ElementName="Root" />
+                                            </MultiBinding>
+                                        </Button.Tag>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Border Height="12" />
                         <StackPanel Style="{StaticResource SliderRow}">
                             <Grid>
                                 <TextBlock Text="Background blur" FontWeight="SemiBold" />
@@ -175,6 +257,14 @@
                             <Slider Minimum="0" Maximum="0.8" Value="{Binding Board.BackgroundDim}" SmallChange="0.05" LargeChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.05" Margin="0,6,0,0" />
                         </StackPanel>
                         <TextBlock Style="{StaticResource Fb.Muted}" TextWrapping="Wrap"
-                                   Text="Tip: pick the Transparent background (Background tab) and lower the list slider to see the app's glow right through your board." />
-                    </StackPanel>
+                                   Text="Tip: pick the checkered (transparent) background and lower the list slider to see the app's glow right through your board." />
+                            <Button Style="{StaticResource Fb.SubtleButton}" HorizontalAlignment="Left" Margin="0,6,0,4" Command="{Binding ApplyStyleToAllBoardsCommand}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Copy24" FontSize="14" />
+                    <TextBlock Text="Apply this style to all boards" Margin="6,0,0,0" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
 </UserControl>

@@ -38,12 +38,6 @@
                             <TextBlock Text="Style" Margin="6,0,0,0" />
                         </StackPanel>
                     </RadioButton>
-                    <RadioButton Style="{StaticResource Fb.Segment}" GroupName="BsTab" IsChecked="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=background}">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Image24" FontSize="14" />
-                            <TextBlock Text="Background" Margin="6,0,0,0" />
-                        </StackPanel>
-                    </RadioButton>
                     <RadioButton Style="{StaticResource Fb.Segment}" GroupName="BsTab" IsChecked="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=labels}">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="Tag24" FontSize="14" />
@@ -53,97 +47,11 @@
                 </StackPanel>
             </Border>
 
+            <Grid>
+            <!-- Style tab: preview pinned on top, controls scroll inside the editor -->
+            <views:BoardStyleEditor Margin="22,0,12,16" Panel.ZIndex="1" Visibility="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=style}" />
             <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="22,0,16,20">
                 <Grid>
-                    <!-- ============ Style ============ -->
-                    <StackPanel Visibility="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=style}">
-                        <views:BoardStyleEditor />
-                        <Button Style="{StaticResource Fb.SubtleButton}" HorizontalAlignment="Left" Margin="0,6,0,0" Command="{Binding ApplyStyleToAllBoardsCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Copy24" FontSize="14" />
-                                <TextBlock Text="Apply this style to all boards" Margin="6,0,0,0" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-
-                    <!-- ============ Background ============ -->
-                    <StackPanel Visibility="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=background}">
-                        <TextBlock Text="PHOTOS" Style="{StaticResource Fb.Caption}" Margin="0,0,0,8" />
-                        <WrapPanel>
-                            <Button Style="{StaticResource Fb.SubtleButton}" Width="104" Height="64" Margin="0,0,8,8" HorizontalContentAlignment="Center"
-                                    Command="{Binding ChooseImageCommand}">
-                                <StackPanel>
-                                    <ui:SymbolIcon Symbol="ImageAdd24" FontSize="20" HorizontalAlignment="Center" />
-                                    <TextBlock Text="Choose photo…" FontSize="11" Margin="0,4,0,0" />
-                                </StackPanel>
-                            </Button>
-                            <ItemsControl ItemsSource="{Binding RecentImages}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Button Style="{StaticResource Fb.SwatchButton}" Width="104" Height="64" Background="{Binding Converter={StaticResource BoardThumbnail}}"
-                                                Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                            <Button.Tag>
-                                                <MultiBinding Converter="{StaticResource SelectedTag}">
-                                                    <Binding />
-                                                    <Binding Path="DataContext.Board.Background" ElementName="Root" />
-                                                </MultiBinding>
-                                            </Button.Tag>
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </WrapPanel>
-
-                        <TextBlock Text="GRADIENTS · the checkered one is transparent" Style="{StaticResource Fb.Caption}" Margin="0,10,0,8" />
-                        <ItemsControl ItemsSource="{Binding Gradients}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Button Style="{StaticResource Fb.SwatchButton}" Width="76" Height="50" Background="{Binding Converter={StaticResource BoardThumbnail}}"
-                                            Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                        <Button.Tag>
-                                            <MultiBinding Converter="{StaticResource SelectedTag}">
-                                                <Binding />
-                                                <Binding Path="DataContext.Board.Background" ElementName="Root" />
-                                            </MultiBinding>
-                                        </Button.Tag>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <TextBlock Text="COLORS" Style="{StaticResource Fb.Caption}" Margin="0,10,0,8" />
-                        <ItemsControl ItemsSource="{Binding Solids}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Button Style="{StaticResource Fb.SwatchButton}" Width="50" Height="36" Background="{Binding Converter={StaticResource BoardThumbnail}}"
-                                            Command="{Binding DataContext.SetBackgroundCommand, ElementName=Root}" CommandParameter="{Binding}">
-                                        <Button.Tag>
-                                            <MultiBinding Converter="{StaticResource SelectedTag}">
-                                                <Binding />
-                                                <Binding Path="DataContext.Board.Background" ElementName="Root" />
-                                            </MultiBinding>
-                                        </Button.Tag>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-
                     <!-- ============ Labels ============ -->
                     <StackPanel Visibility="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=labels}">
                         <TextBlock Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,0,12" TextWrapping="Wrap"
@@ -207,6 +115,7 @@
                     </StackPanel>
                 </Grid>
             </ScrollViewer>
+            </Grid>
         </DockPanel>
     </Border>
 </UserControl>

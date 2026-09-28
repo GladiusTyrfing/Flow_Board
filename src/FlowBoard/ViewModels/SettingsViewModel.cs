@@ -76,7 +76,7 @@ public sealed partial class BoardSettingsViewModel : DialogViewModel
     {
         _main = main;
         Board = board;
-        _tab = tab;
+        _tab = tab == "background" ? "style" : tab; // background now lives on the Style tab
         _snapshot = Json.SerializeBoard(board);
         _index = main.Workspace.Boards.IndexOf(board);
     }

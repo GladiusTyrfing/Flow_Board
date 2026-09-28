@@ -58,30 +58,22 @@ public static class ThemeService
         };
     }
 
-    private static System.Windows.Threading.DispatcherTimer? _radiusTimer;
+    private static bool _radiusPending;
     private static double _appliedRadius = double.NaN;
-    private static ResourceDictionary? _radiusDictionary;
 
     /// <summary>
-    /// Cheap path for the corner slider: only the corner resources change (no palette/theme swap).
-    /// Updates are applied at most every 40 ms while dragging, so the preview follows the thumb smoothly.
+    /// Corner slider path: only the corner resources change (no palette/theme swap). Many slider ticks
+    /// are coalesced into one update that runs after input and rendering, so dragging stays smooth.
     /// </summary>
     public static void QueueRadiusUpdate()
     {
-        if (_radiusTimer == null)
+        if (_radiusPending) return;
+        _radiusPending = true;
+        Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
         {
-            _radiusTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render)
-            {
-                Interval = TimeSpan.FromMilliseconds(40),
-            };
-            _radiusTimer.Tick += (_, _) =>
-            {
-                _radiusTimer.Stop();
-                SetAppRadius(_settings?.CornerRadius ?? 8);
-            };
-        }
-
-        if (!_radiusTimer.IsEnabled) _radiusTimer.Start();
+            _radiusPending = false;
+            SetAppRadius(_settings?.CornerRadius ?? 8);
+        });
     }
 
     private static void SetAppRadius(double value)
@@ -89,7 +81,7 @@ public static class ThemeService
         var r = Math.Round(Math.Clamp(value, 0, 24));
         if (r.Equals(_appliedRadius)) return;
         _appliedRadius = r;
-        SwapMerged(Application.Current.Resources, ref _radiusDictionary, BuildRadius(r));
+        ApplyRadius(Application.Current.Resources, r);
     }
 
     /// <summary>Replaces one merged dictionary in a single step (one resource refresh instead of one per key).</summary>

@@ -77,25 +77,21 @@ public partial class MainWindow : FluentWindow
         BoardThemeService.Apply(BoardArea, _themedBoard);
     }
 
-    private DispatcherTimer? _boardThemeTimer;
+    private bool _boardThemePending;
 
     private void OnBoardPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is not (nameof(Models.Board.Theme) or nameof(Models.Board.ListOpacity) or nameof(Models.Board.CardOpacity)
             or nameof(Models.Board.CornerRadius))) return;
 
-        // Sliders fire many changes per second: batch them so dragging stays smooth.
-        if (_boardThemeTimer == null)
+        // Sliders fire many changes per second: coalesce them into one restyle after rendering.
+        if (_boardThemePending) return;
+        _boardThemePending = true;
+        Dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
         {
-            _boardThemeTimer = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(40) };
-            _boardThemeTimer.Tick += (_, _) =>
-            {
-                _boardThemeTimer.Stop();
-                BoardThemeService.Apply(BoardArea, _themedBoard);
-            };
-        }
-
-        if (!_boardThemeTimer.IsEnabled) _boardThemeTimer.Start();
+            _boardThemePending = false;
+            BoardThemeService.Apply(BoardArea, _themedBoard);
+        });
     }
 
     /// <summary>Routes hotkeys that plain KeyBindings can't express (single letters, hover-card actions).</summary>

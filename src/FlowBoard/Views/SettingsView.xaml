@@ -142,6 +142,21 @@
                     Panel.ZIndex="2" Command="{Binding CloseCommand}" ToolTip="Close (Esc)">
                 <ui:SymbolIcon Symbol="Dismiss24" FontSize="16" />
             </Button>
+            <!-- Board style page: not inside the page scroller so its preview stays visible while adjusting sliders -->
+            <DockPanel Grid.Column="1" Margin="30,24,20,20" Panel.ZIndex="1"
+                       Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=boardstyle}">
+                <StackPanel DockPanel.Dock="Top" Margin="0,0,40,14">
+                    <TextBlock Text="Board style" Style="{StaticResource PageTitle}" Margin="0,0,0,4" />
+                    <TextBlock Style="{StaticResource RowHint}" Visibility="{Binding HasBoard, Converter={StaticResource BoolToVis}}">
+                        <Run Text="Theme, transparency and corners of lists and cards on" />
+                        <Run Text="{Binding BoardStyle.Board.Name, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource Fb.TextBrush}" /><Run Text="." />
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource RowHint}" Text="Open a board first to change its style."
+                               Visibility="{Binding HasBoard, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
+                </StackPanel>
+                <views:BoardStyleEditor DataContext="{Binding BoardStyle}" Visibility="{Binding DataContext.HasBoard, ElementName=Root, Converter={StaticResource BoolToVis}}" />
+            </DockPanel>
+
             <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="30,24,30,24">
                 <Grid>
                     <!-- Appearance -->
@@ -268,27 +283,6 @@
                                 </TextBlock>
                             </DockPanel>
                         </Border>
-                    </StackPanel>
-
-                    <!-- Board style (same editor as the board's Style panel) -->
-                    <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=boardstyle}">
-                        <TextBlock Text="Board style" Style="{StaticResource PageTitle}" Margin="0,0,0,4" />
-                        <TextBlock Style="{StaticResource RowHint}" Margin="0,0,0,18"
-                                   Visibility="{Binding HasBoard, Converter={StaticResource BoolToVis}}">
-                            <Run Text="Theme, transparency and corners of lists and cards on" />
-                            <Run Text="{Binding BoardStyle.Board.Name, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource Fb.TextBrush}" /><Run Text="." />
-                            <Run Text="Changes preview live behind this window." />
-                        </TextBlock>
-                        <TextBlock Style="{StaticResource RowHint}" Text="Open a board first to change its style."
-                                   Visibility="{Binding HasBoard, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
-                        <views:BoardStyleEditor DataContext="{Binding BoardStyle}" Visibility="{Binding DataContext.HasBoard, ElementName=Root, Converter={StaticResource BoolToVis}}" />
-                        <Button Style="{StaticResource Fb.SubtleButton}" HorizontalAlignment="Left" Margin="0,6,0,0"
-                                Command="{Binding BoardStyle.ApplyStyleToAllBoardsCommand}" Visibility="{Binding HasBoard, Converter={StaticResource BoolToVis}}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Copy24" FontSize="14" />
-                                <TextBlock Text="Apply this style to all boards" Margin="6,0,0,0" />
-                            </StackPanel>
-                        </Button>
                     </StackPanel>
 
                     <!-- General -->
