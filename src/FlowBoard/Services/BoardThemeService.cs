@@ -39,15 +39,6 @@ public static class BoardThemeService
         new("Lilac", false, Hex("#ECE6FB"), Hex("#FFFFFF"), Hex("#1F1535"), Hex("#6A5F85")),
     ];
 
-    private static readonly string[] Keys =
-    [
-        "Fb.ListBrush", "Fb.ListBorderBrush", "Fb.CardBrush", "Fb.CardHoverBrush", "Fb.CardBorderBrush",
-        "Fb.ListHeaderTextBrush", "Fb.TextBrush", "Fb.MutedTextBrush", "Fb.FaintTextBrush",
-        "Fb.SubtleBrush", "Fb.SubtleHoverBrush", "Fb.SubtlePressedBrush", "Fb.InputBrush", "Fb.InputBorderBrush",
-        "Fb.HeaderBarBrush", "Fb.HeaderTextBrush", "Fb.SurfaceBrush", "Fb.SurfaceAltBrush", "Fb.SurfaceRaisedBrush",
-        "Fb.DividerBrush", "Fb.CalendarCellBrush",
-    ];
-
     public static BoardThemePreset Resolve(string? name)
     {
         var preset = Presets.FirstOrDefault(p => p.Name == name) ?? Presets[0];
@@ -57,46 +48,56 @@ public static class BoardThemeService
             : new BoardThemePreset("Auto", false, Hex("#F6F7FB"), Hex("#FFFFFF"), Hex("#111827"), Hex("#5B6475"));
     }
 
-    /// <summary>Overrides board-area resources on <paramref name="host"/> for <paramref name="board"/> (or clears them).</summary>
+    // The board dictionary currently merged into a host (board area or a preview).
+    private static readonly DependencyProperty CurrentDictionaryProperty = DependencyProperty.RegisterAttached(
+        "CurrentDictionary", typeof(ResourceDictionary), typeof(BoardThemeService), new PropertyMetadata(null));
+
+    /// <summary>
+    /// Applies <paramref name="board"/>'s look to everything inside <paramref name="host"/> by swapping in one
+    /// merged dictionary (a single resource refresh, so sliders stay smooth). Null clears it.
+    /// </summary>
     public static void Apply(FrameworkElement host, Board? board)
     {
-        if (board == null)
-        {
-            foreach (var k in Keys.Concat(RadiusKeys)) host.Resources.Remove(k);
-            return;
-        }
+        var current = (ResourceDictionary?)host.GetValue(CurrentDictionaryProperty);
+        var fresh = board == null ? null : Build(board);
+        ThemeService.SwapMerged(host.Resources, ref current, fresh);
+        host.SetValue(CurrentDictionaryProperty, current);
+    }
 
-        // Board-specific corner roundness (negative = inherit the app setting).
-        if (board.CornerRadius >= 0) ApplyRadius(host.Resources, board.CornerRadius);
-        else foreach (var k in RadiusKeys) host.Resources.Remove(k);
-
+    public static ResourceDictionary Build(Board board)
+    {
+        var d = new ResourceDictionary();
         var p = Resolve(board.Theme);
         var listA = (byte)Math.Round(255 * Math.Clamp(board.ListOpacity, 0, 1));
         var cardA = (byte)Math.Round(255 * Math.Clamp(board.CardOpacity, 0.05, 1));
         var ink = p.IsDark ? Colors.White : Hex("#0B1220");
 
-        Set(host, "Fb.ListBrush", WithAlpha(p.List, listA));
-        Set(host, "Fb.ListBorderBrush", WithAlpha(ink, p.IsDark ? (byte)0x1A : (byte)0x14));
-        Set(host, "Fb.CardBrush", WithAlpha(p.Card, cardA));
-        Set(host, "Fb.CardHoverBrush", WithAlpha(Mix(p.Card, ink, p.IsDark ? 0.07 : 0.03), (byte)Math.Max((int)cardA, 0xE6)));
-        Set(host, "Fb.CardBorderBrush", WithAlpha(ink, p.IsDark ? (byte)0x14 : (byte)0x12));
-        Set(host, "Fb.ListHeaderTextBrush", p.Text);
-        Set(host, "Fb.TextBrush", p.Text);
-        Set(host, "Fb.MutedTextBrush", p.Muted);
-        Set(host, "Fb.FaintTextBrush", WithAlpha(p.Muted, 0xB0));
-        Set(host, "Fb.SubtleBrush", WithAlpha(ink, 0x10));
-        Set(host, "Fb.SubtleHoverBrush", WithAlpha(ink, 0x1E));
-        Set(host, "Fb.SubtlePressedBrush", WithAlpha(ink, 0x2B));
-        Set(host, "Fb.InputBrush", WithAlpha(p.Card, 0xFF));
-        Set(host, "Fb.InputBorderBrush", WithAlpha(ink, 0x33));
-        Set(host, "Fb.DividerBrush", WithAlpha(ink, 0x18));
-        Set(host, "Fb.HeaderBarBrush", p.IsDark ? WithAlpha(p.List, 0x80) : WithAlpha(Colors.White, 0xA6));
-        Set(host, "Fb.HeaderTextBrush", p.Text);
-        Set(host, "Fb.SurfaceBrush", WithAlpha(p.List, (byte)Math.Max((int)listA, 0xD9)));
-        Set(host, "Fb.SurfaceAltBrush", WithAlpha(ink, 0x0A));
-        Set(host, "Fb.SurfaceRaisedBrush", WithAlpha(ink, 0x14));
-        Set(host, "Fb.CalendarCellBrush", WithAlpha(p.Card, (byte)Math.Max(cardA * 0.55, 0x30)));
+        Set(d, "Fb.ListBrush", WithAlpha(p.List, listA));
+        Set(d, "Fb.ListBorderBrush", WithAlpha(ink, p.IsDark ? (byte)0x1A : (byte)0x14));
+        Set(d, "Fb.CardBrush", WithAlpha(p.Card, cardA));
+        Set(d, "Fb.CardHoverBrush", WithAlpha(Mix(p.Card, ink, p.IsDark ? 0.07 : 0.03), (byte)Math.Max((int)cardA, 0xE6)));
+        Set(d, "Fb.CardBorderBrush", WithAlpha(ink, p.IsDark ? (byte)0x14 : (byte)0x12));
+        Set(d, "Fb.ListHeaderTextBrush", p.Text);
+        Set(d, "Fb.TextBrush", p.Text);
+        Set(d, "Fb.MutedTextBrush", p.Muted);
+        Set(d, "Fb.FaintTextBrush", WithAlpha(p.Muted, 0xB0));
+        Set(d, "Fb.SubtleBrush", WithAlpha(ink, 0x10));
+        Set(d, "Fb.SubtleHoverBrush", WithAlpha(ink, 0x1E));
+        Set(d, "Fb.SubtlePressedBrush", WithAlpha(ink, 0x2B));
+        Set(d, "Fb.InputBrush", WithAlpha(p.Card, 0xFF));
+        Set(d, "Fb.InputBorderBrush", WithAlpha(ink, 0x33));
+        Set(d, "Fb.DividerBrush", WithAlpha(ink, 0x18));
+        Set(d, "Fb.HeaderBarBrush", p.IsDark ? WithAlpha(p.List, 0x80) : WithAlpha(Colors.White, 0xA6));
+        Set(d, "Fb.HeaderTextBrush", p.Text);
+        Set(d, "Fb.SurfaceBrush", WithAlpha(p.List, (byte)Math.Max((int)listA, 0xD9)));
+        Set(d, "Fb.SurfaceAltBrush", WithAlpha(ink, 0x0A));
+        Set(d, "Fb.SurfaceRaisedBrush", WithAlpha(ink, 0x14));
+        Set(d, "Fb.CalendarCellBrush", WithAlpha(p.Card, (byte)Math.Max(cardA * 0.55, 0x30)));
+
+        // Board-specific corner roundness (negative = inherit the app setting).
+        if (board.CornerRadius >= 0) ApplyRadius(d, board.CornerRadius);
+        return d;
     }
 
-    private static void Set(FrameworkElement host, string key, Color c) => host.Resources[key] = Frozen(new SolidColorBrush(c));
+    private static void Set(ResourceDictionary d, string key, Color c) => d[key] = Frozen(new SolidColorBrush(c));
 }

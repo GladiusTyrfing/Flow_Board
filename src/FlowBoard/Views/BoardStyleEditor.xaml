@@ -6,6 +6,7 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:FlowBoard.ViewModels"
              xmlns:services="clr-namespace:FlowBoard.Services"
+             xmlns:h="clr-namespace:FlowBoard.Helpers"
              mc:Ignorable="d"
              x:Name="Root"
              d:DataContext="{d:DesignInstance vm:BoardSettingsViewModel}">
@@ -14,8 +15,56 @@
         <Style x:Key="SliderRow" TargetType="StackPanel">
             <Setter Property="Margin" Value="0,0,0,14" />
         </Style>
+        <!-- Mini card used by the live preview -->
+        <DataTemplate x:Key="MiniCard">
+            <Border Background="{DynamicResource Fb.CardBrush}" BorderBrush="{DynamicResource Fb.CardBorderBrush}" BorderThickness="1"
+                    CornerRadius="{DynamicResource Fb.Radius}" Padding="7,5" Margin="0,6,0,0">
+                <StackPanel>
+                    <Border Width="26" Height="6" HorizontalAlignment="Left" CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{Binding}" />
+                    <Border Width="70" Height="5" HorizontalAlignment="Left" Margin="0,6,0,0" CornerRadius="2" Background="{DynamicResource Fb.TextBrush}" Opacity="0.85" />
+                    <Border Width="44" Height="5" HorizontalAlignment="Left" Margin="0,4,0,0" CornerRadius="2" Background="{DynamicResource Fb.MutedTextBrush}" Opacity="0.7" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
     </UserControl.Resources>
     <StackPanel>
+        <!-- ============ Live preview (always visible, even when a dialog covers the board) ============ -->
+        <TextBlock Text="PREVIEW" Style="{StaticResource Fb.Caption}" Margin="0,0,0,8" />
+        <Border x:Name="PreviewHost" Height="150" Margin="0,0,0,18" h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}">
+            <Grid>
+                <Border Margin="-30" Background="{Binding Board.Background, Converter={StaticResource BoardBackground}}">
+                    <Border.Effect>
+                        <BlurEffect Radius="{Binding Board.BackgroundBlur}" RenderingBias="Performance" />
+                    </Border.Effect>
+                </Border>
+                <Border Background="Black" Opacity="{Binding Board.BackgroundDim}" />
+                <StackPanel Orientation="Horizontal" Margin="12">
+                    <Border Width="120" Margin="0,0,8,0" VerticalAlignment="Top" Background="{DynamicResource Fb.ListBrush}" BorderBrush="{DynamicResource Fb.ListBorderBrush}"
+                            BorderThickness="1" CornerRadius="{DynamicResource Fb.RadiusLarge}" Padding="7">
+                        <StackPanel>
+                            <TextBlock Text="To Do" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Fb.ListHeaderTextBrush}" />
+                            <ContentPresenter Content="#4BCE97" ContentTemplate="{StaticResource MiniCard}" />
+                            <ContentPresenter Content="#579DFF" ContentTemplate="{StaticResource MiniCard}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Width="120" Margin="0,0,8,0" VerticalAlignment="Top" Background="{DynamicResource Fb.ListBrush}" BorderBrush="{DynamicResource Fb.ListBorderBrush}"
+                            BorderThickness="1" CornerRadius="{DynamicResource Fb.RadiusLarge}" Padding="7">
+                        <StackPanel>
+                            <TextBlock Text="Doing" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Fb.ListHeaderTextBrush}" />
+                            <ContentPresenter Content="#F87168" ContentTemplate="{StaticResource MiniCard}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Width="120" VerticalAlignment="Top" Background="{DynamicResource Fb.ListBrush}" BorderBrush="{DynamicResource Fb.ListBorderBrush}"
+                            BorderThickness="1" CornerRadius="{DynamicResource Fb.RadiusLarge}" Padding="7">
+                        <StackPanel>
+                            <TextBlock Text="Done" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Fb.ListHeaderTextBrush}" />
+                            <ContentPresenter Content="#9F8FEF" ContentTemplate="{StaticResource MiniCard}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
                         <TextBlock Text="QUICK LOOKS" Style="{StaticResource Fb.Caption}" Margin="0,0,0,8" />
                         <UniformGrid Columns="4" Margin="0,0,0,16">
                             <Button Style="{StaticResource Fb.SubtleButton}" Margin="0,0,6,0" HorizontalContentAlignment="Center" Padding="4,8"

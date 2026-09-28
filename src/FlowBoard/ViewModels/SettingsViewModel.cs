@@ -16,7 +16,23 @@ public sealed partial class SettingsViewModel : DialogViewModel
     public SettingsViewModel(MainViewModel main)
     {
         Main = main;
-        if (main.CurrentBoard != null) BoardStyle = new BoardSettingsViewModel(main, main.CurrentBoard, "style");
+        if (main.CurrentBoard != null)
+        {
+            BoardStyle = new BoardSettingsViewModel(main, main.CurrentBoard, "style");
+            main.CurrentBoard.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(Models.Board.CornerRadius)) OnPropertyChanged(nameof(BoardOverridesRadius));
+            };
+        }
+    }
+
+    /// <summary>True when the open board has its own roundness, so the app slider doesn't change it.</summary>
+    public bool BoardOverridesRadius => Main.CurrentBoard is { CornerRadius: >= 0 };
+
+    [RelayCommand]
+    private void FollowAppRadius()
+    {
+        if (Main.CurrentBoard != null) Main.CurrentBoard.CornerRadius = -1;
     }
 
     /// <summary>Style editor for the board that is open (null when no board is open).</summary>

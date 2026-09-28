@@ -213,6 +213,16 @@
                             </StackPanel>
                         </DockPanel>
 
+                        <Border Style="{StaticResource Fb.Section}" Visibility="{Binding BoardOverridesRadius, Converter={StaticResource BoolToVis}}">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource Fb.SubtleButton}" Content="Use app setting" VerticalAlignment="Center"
+                                        Command="{Binding FollowAppRadiusCommand}" />
+                                <TextBlock Style="{StaticResource Fb.Text}" FontSize="13" VerticalAlignment="Center" Margin="0,0,12,0">
+                                    <Run Text="“" /><Run Text="{Binding Main.CurrentBoard.Name, Mode=OneWay}" FontWeight="Bold" /><Run Text="” has its own roundness, so this slider doesn't change its lists and cards." />
+                                </TextBlock>
+                            </DockPanel>
+                        </Border>
+
                         <DockPanel Style="{StaticResource Row}">
                             <ui:ToggleSwitch DockPanel.Dock="Right" VerticalAlignment="Center" IsChecked="{Binding Settings.AuroraBackground}" />
                             <StackPanel Style="{StaticResource RowText}">

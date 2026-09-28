@@ -95,8 +95,7 @@ public partial class MainWindow : FluentWindow
             };
         }
 
-        _boardThemeTimer.Stop();
-        _boardThemeTimer.Start();
+        if (!_boardThemeTimer.IsEnabled) _boardThemeTimer.Start();
     }
 
     /// <summary>Routes hotkeys that plain KeyBindings can't express (single letters, hover-card actions).</summary>

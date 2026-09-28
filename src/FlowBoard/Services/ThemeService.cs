@@ -60,10 +60,11 @@ public static class ThemeService
 
     private static System.Windows.Threading.DispatcherTimer? _radiusTimer;
     private static double _appliedRadius = double.NaN;
+    private static ResourceDictionary? _radiusDictionary;
 
     /// <summary>
-    /// Cheap path for the corner slider: only the corner resources change (no palette/theme swap),
-    /// and updates are batched so dragging the slider stays smooth.
+    /// Cheap path for the corner slider: only the corner resources change (no palette/theme swap).
+    /// Updates are applied at most every 40 ms while dragging, so the preview follows the thumb smoothly.
     /// </summary>
     public static void QueueRadiusUpdate()
     {
@@ -71,20 +72,45 @@ public static class ThemeService
         {
             _radiusTimer = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Render)
             {
-                Interval = TimeSpan.FromMilliseconds(50),
+                Interval = TimeSpan.FromMilliseconds(40),
             };
             _radiusTimer.Tick += (_, _) =>
             {
                 _radiusTimer.Stop();
-                var r = Math.Round(_settings?.CornerRadius ?? 8);
-                if (r.Equals(_appliedRadius)) return;
-                _appliedRadius = r;
-                ApplyRadius(Application.Current.Resources, r);
+                SetAppRadius(_settings?.CornerRadius ?? 8);
             };
         }
 
-        _radiusTimer.Stop();
-        _radiusTimer.Start();
+        if (!_radiusTimer.IsEnabled) _radiusTimer.Start();
+    }
+
+    private static void SetAppRadius(double value)
+    {
+        var r = Math.Round(Math.Clamp(value, 0, 24));
+        if (r.Equals(_appliedRadius)) return;
+        _appliedRadius = r;
+        SwapMerged(Application.Current.Resources, ref _radiusDictionary, BuildRadius(r));
+    }
+
+    /// <summary>Replaces one merged dictionary in a single step (one resource refresh instead of one per key).</summary>
+    public static void SwapMerged(ResourceDictionary target, ref ResourceDictionary? current, ResourceDictionary? fresh)
+    {
+        var list = target.MergedDictionaries;
+        var index = current != null ? list.IndexOf(current) : -1;
+        if (fresh == null)
+        {
+            if (index >= 0) list.RemoveAt(index);
+        }
+        else if (index >= 0)
+        {
+            list[index] = fresh;
+        }
+        else
+        {
+            list.Add(fresh);
+        }
+
+        current = fresh;
     }
 
     public static void Attach(Window window)
@@ -112,8 +138,8 @@ public static class ThemeService
         var accent = CurrentAccent;
         ApplicationAccentColorManager.Apply(accent.Primary, theme);
         SetAccentResources(accent);
-        _appliedRadius = Math.Round(s.CornerRadius);
-        ApplyRadius(Application.Current.Resources, _appliedRadius);
+        _appliedRadius = double.NaN;
+        SetAppRadius(s.CornerRadius);
 
         if (_window is FluentWindow fw)
         {
@@ -128,6 +154,13 @@ public static class ThemeService
     /// One roundness value drives every corner: small chips, controls, grouped pills and large panels.
     /// Also feeds WPF-UI's own corner keys so its text boxes, check boxes and menus match.
     /// </summary>
+    public static ResourceDictionary BuildRadius(double r)
+    {
+        var res = new ResourceDictionary();
+        ApplyRadius(res, r);
+        return res;
+    }
+
     public static void ApplyRadius(ResourceDictionary res, double r)
     {
         r = Math.Clamp(r, 0, 24);

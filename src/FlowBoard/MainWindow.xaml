@@ -594,7 +594,7 @@
             </Grid>
 
             <!-- ================= Dialog stack ================= -->
-            <ItemsControl Grid.ColumnSpan="2" ItemsSource="{Binding Dialogs}" Focusable="False"
+            <ItemsControl Grid.ColumnSpan="2" ItemsSource="{Binding Dialogs}" Focusable="False" Margin="-10,-2,-10,-10"
                           Visibility="{Binding HasDialog, Converter={StaticResource BoolToVis}}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>

@@ -33,6 +33,10 @@
 
     <CubicEase x:Key="EaseOut" EasingMode="EaseOut" />
 
+    <!-- No white "focus rectangle" around sliders, buttons and other controls. -->
+    <Style x:Key="DefaultControlFocusVisualStyle" />
+    <Style x:Key="{x:Static SystemParameters.FocusVisualStyleKey}" />
+
     <!-- Corner radius tokens (defaults; replaced at runtime from Settings → Appearance → Corner roundness) -->
     <CornerRadius x:Key="Fb.RadiusSmall">6</CornerRadius>
     <CornerRadius x:Key="Fb.Radius">8</CornerRadius>
@@ -241,6 +245,7 @@
     <Style x:Key="Fb.Segment" TargetType="RadioButton">
         <Setter Property="Foreground" Value="{DynamicResource Fb.TextBrush}" />
         <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Margin" Value="2,0" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="FontSize" Value="13" />
@@ -287,7 +292,7 @@
     <!-- Container for a group of Fb.Segment items -->
     <Style x:Key="Fb.SegmentGroup" TargetType="Border">
         <Setter Property="CornerRadius" Value="{DynamicResource Fb.RadiusGroup}" />
-        <Setter Property="Padding" Value="3" />
+        <Setter Property="Padding" Value="3,4" />
         <Setter Property="Background" Value="{DynamicResource Fb.SubtleBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Fb.DividerBrush}" />
         <Setter Property="BorderThickness" Value="1" />
