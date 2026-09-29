@@ -473,79 +473,84 @@
                     </StackPanel>
 
                     <!-- About -->
-                    <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=about}">
-                        <Grid Margin="0,4,0,20">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Image Source="pack://application:,,,/Assets/app.png" Width="84" Height="84" RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Top" />
-                            <StackPanel Grid.Column="1" Margin="18,2,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="FlowBoard" Style="{StaticResource Fb.GradientTitle}" FontSize="30" />
+                    <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=about}" MaxWidth="640" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,18">
+                            <Image Source="pack://application:,,,/Assets/app.png" Width="64" Height="64" RenderOptions.BitmapScalingMode="HighQuality" />
+                            <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="FlowBoard" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource Fb.TextBrush}" />
                                 <TextBlock Style="{StaticResource Fb.Muted}" FontSize="13">
-                                    <Run Text="Version" /> <Run Text="{Binding Version, Mode=OneWay}" FontWeight="SemiBold" /> <Run Text="· Windows 10 &amp; 11 · 64-bit" />
-                                </TextBlock>
-                                <TextBlock Text="Plan, storyboard and think visually — all in one place, all on your PC." Style="{StaticResource Fb.Text}" FontSize="14" Margin="0,6,0,0" TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Grid>
-
-                        <Border Style="{StaticResource Fb.Section}">
-                            <StackPanel>
-                                <TextBlock Text="Created by" Style="{StaticResource Fb.Caption}" />
-                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                    <Border Width="40" Height="40" CornerRadius="20" Background="{DynamicResource Fb.AccentGradientBrush}">
-                                        <TextBlock Text="GT" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="14" Foreground="White" />
-                                    </Border>
-                                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Gladius_Tyrfing" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource Fb.TextBrush}" />
-                                        <TextBlock Text="Designer &amp; developer of FlowBoard" Style="{StaticResource Fb.Muted}" FontSize="12.5" />
-                                    </StackPanel>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Style="{StaticResource Fb.Section}">
-                            <StackPanel>
-                                <TextBlock Text="What FlowBoard is" Style="{StaticResource Fb.Caption}" />
-                                <TextBlock Style="{StaticResource Fb.Text}" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0" LineHeight="20"
-                                           Text="FlowBoard is a local-first workspace for Windows that brings task management, pre-production and visual thinking together. Everything lives in project files on your own computer, and every part links to every other part — a card can point to a storyboard shot, a page can mention a canvas, and marking a shot done completes its card." />
-                                <Grid Margin="0,12,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource Fb.Text}" FontSize="12.5" Margin="0,2"><Run Text="Boards" FontWeight="Bold" /><Run Text=" — Kanban, table, calendar and timeline views" /></TextBlock>
-                                        <TextBlock Style="{StaticResource Fb.Text}" FontSize="12.5" Margin="0,2"><Run Text="Storyboards" FontWeight="Bold" /><Run Text=" — film and animation, animatic player" /></TextBlock>
-                                        <TextBlock Style="{StaticResource Fb.Text}" FontSize="12.5" Margin="0,2"><Run Text="Canvas" FontWeight="Bold" /><Run Text=" — flowcharts, mind maps, sections, ink" /></TextBlock>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Style="{StaticResource Fb.Text}" FontSize="12.5" Margin="0,2"><Run Text="Pages" FontWeight="Bold" /><Run Text=" — rich-text docs with inline links" /></TextBlock>
-                                        <TextBlock Style="{StaticResource Fb.Text}" FontSize="12.5" Margin="0,2"><Run Text="Home" FontWeight="Bold" /><Run Text=" — projects and stats for every section" /></TextBlock>
-                                        <TextBlock Style="{StaticResource Fb.Text}" FontSize="12.5" Margin="0,2"><Run Text="Export" FontWeight="Bold" /><Run Text=" — PNG, SVG, draw.io, Mermaid, JSON, CSV, text" /></TextBlock>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Style="{StaticResource Fb.Section}">
-                            <StackPanel>
-                                <TextBlock Text="Privacy" Style="{StaticResource Fb.Caption}" />
-                                <TextBlock Style="{StaticResource Fb.Text}" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"
-                                           Text="FlowBoard works fully offline. There is no account, no cloud sync, no telemetry and no network access — your projects never leave your computer unless you copy them yourself." />
-                            </StackPanel>
-                        </Border>
-
-                        <Border Style="{StaticResource Fb.Section}">
-                            <StackPanel>
-                                <TextBlock Text="Open-source components" Style="{StaticResource Fb.Caption}" />
-                                <TextBlock Style="{StaticResource Fb.Muted}" FontSize="12.5" TextWrapping="Wrap" Margin="0,8,0,0" LineHeight="19">
-                                    <Run Text="WPF-UI (MIT) · CommunityToolkit.Mvvm (MIT) · gong-wpf-dragdrop (BSD-3-Clause) · NAudio (MIT) · Fluent System Icons (MIT) · .NET 8 (MIT)" />
+                                    <Run Text="Version" /> <Run Text="{Binding Version, Mode=OneWay}" />
                                 </TextBlock>
                             </StackPanel>
+                        </StackPanel>
+
+                        <TextBlock Style="{StaticResource Fb.Text}" FontSize="13.5" TextWrapping="Wrap" LineHeight="21" Margin="0,0,0,20"
+                                   Text="FlowBoard is a desktop application for planning projects. Task boards, storyboards, canvases and pages are kept together in one project file on your computer, and items in different sections can be linked to each other." />
+
+                        <Border Style="{StaticResource Fb.Section}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="Developer" Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,24,8" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="Gladius_Tyrfing" Style="{StaticResource Fb.Text}" FontSize="13" Margin="0,0,0,8" TextWrapping="Wrap" />
+                                <TextBlock Grid.Row="1" Text="Version" Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,24,8" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Version}" Style="{StaticResource Fb.Text}" FontSize="13" Margin="0,0,0,8" TextWrapping="Wrap" />
+                                <TextBlock Grid.Row="2" Text="Build date" Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,24,8" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding BuildDate}" Style="{StaticResource Fb.Text}" FontSize="13" Margin="0,0,0,8" TextWrapping="Wrap" />
+                                <TextBlock Grid.Row="3" Text="Runtime" Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,24,8" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding RuntimeText}" Style="{StaticResource Fb.Text}" FontSize="13" Margin="0,0,0,8" TextWrapping="Wrap" />
+                                <TextBlock Grid.Row="4" Text="System" Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,24,8" />
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SystemText}" Style="{StaticResource Fb.Text}" FontSize="13" Margin="0,0,0,8" TextWrapping="Wrap" />
+                                <TextBlock Grid.Row="5" Text="Data" Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,24,8" />
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="Stored on this computer only. FlowBoard does not connect to the internet." Style="{StaticResource Fb.Text}" FontSize="13" Margin="0,0,0,8" TextWrapping="Wrap" />
+                            </Grid>
                         </Border>
 
-                        <TextBlock Text="{Binding Copyright}" Style="{StaticResource Fb.Muted}" FontSize="12" Margin="2,4,0,0" />
+                        <TextBlock Text="Third-party software" Style="{StaticResource Fb.Caption}" Margin="2,6,0,10" />
+                        <Border Style="{StaticResource Fb.Section}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="WPF-UI" Style="{StaticResource Fb.Text}" FontSize="13" Margin="0,0,24,6" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="MIT License" Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,0,6" />
+                                <TextBlock Grid.Row="1" Text="CommunityToolkit.Mvvm" Style="{StaticResource Fb.Text}" FontSize="13" Margin="0,0,24,6" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="MIT License" Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,0,6" />
+                                <TextBlock Grid.Row="2" Text="gong-wpf-dragdrop" Style="{StaticResource Fb.Text}" FontSize="13" Margin="0,0,24,6" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="BSD 3-Clause License" Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,0,6" />
+                                <TextBlock Grid.Row="3" Text="NAudio" Style="{StaticResource Fb.Text}" FontSize="13" Margin="0,0,24,6" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="MIT License" Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,0,6" />
+                                <TextBlock Grid.Row="4" Text="Fluent System Icons" Style="{StaticResource Fb.Text}" FontSize="13" Margin="0,0,24,6" />
+                                <TextBlock Grid.Row="4" Grid.Column="1" Text="MIT License" Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,0,6" />
+                                <TextBlock Grid.Row="5" Text=".NET" Style="{StaticResource Fb.Text}" FontSize="13" Margin="0,0,24,6" />
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="MIT License" Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,0,6" />
+                            </Grid>
+                        </Border>
+
+                        <DockPanel Margin="2,6,0,0">
+                            <Button DockPanel.Dock="Right" Style="{StaticResource Fb.SubtleButton}" Content="Copy details" Command="{Binding CopyAboutCommand}"
+                                    ToolTip="Copy the version and system details (useful when reporting a problem)" />
+                            <TextBlock Text="{Binding Copyright}" Style="{StaticResource Fb.Muted}" FontSize="12" VerticalAlignment="Center" />
+                        </DockPanel>
                     </StackPanel>
 
                     <!-- Data -->

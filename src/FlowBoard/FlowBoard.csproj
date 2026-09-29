@@ -14,7 +14,7 @@
     <Version>1.0.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <Product>FlowBoard</Product>
-    <Description>FlowBoard — a local-first workspace for boards, storyboards, canvases and pages.</Description>
+    <Description>FlowBoard: project planning with boards, storyboards, canvases and pages.</Description>
     <Authors>Gladius_Tyrfing</Authors>
     <Company>Gladius_Tyrfing</Company>
     <Copyright>© 2026 Gladius_Tyrfing. All rights reserved.</Copyright>

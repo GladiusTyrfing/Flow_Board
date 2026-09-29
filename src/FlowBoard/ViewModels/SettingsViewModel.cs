@@ -49,7 +49,43 @@ public sealed partial class SettingsViewModel : DialogViewModel
     public string ProjectsDir => AppPaths.DefaultProjectsDir;
     public bool HasCustomProjectsDir => !string.IsNullOrWhiteSpace(Settings.ProjectsFolder);
     public string WindowsUserName => Environment.UserName;
-    public string Copyright => $"© {Math.Max(2026, DateTime.Now.Year)} Gladius_Tyrfing. All rights reserved.";
+    public string Copyright => $"© {BuildYear} Gladius_Tyrfing. All rights reserved.";
+
+    private static DateTime BuildTime
+    {
+        get
+        {
+            try
+            {
+                return Environment.ProcessPath is { } exe ? System.IO.File.GetLastWriteTime(exe) : DateTime.Now;
+            }
+            catch
+            {
+                return DateTime.Now;
+            }
+        }
+    }
+
+    private static int BuildYear => Math.Max(2026, BuildTime.Year);
+    public string BuildDate => BuildTime.ToString("d MMMM yyyy");
+    public string RuntimeText => System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
+    public string SystemText =>
+        $"{System.Runtime.InteropServices.RuntimeInformation.OSDescription} ({System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()})";
+
+    [RelayCommand]
+    private void CopyAbout()
+    {
+        var text = $"FlowBoard {Version}\nBuild date: {BuildDate}\nRuntime: {RuntimeText}\nSystem: {SystemText}\nDeveloper: Gladius_Tyrfing";
+        try
+        {
+            System.Windows.Clipboard.SetText(text);
+            Main.ShowToast("Details copied");
+        }
+        catch (Exception ex)
+        {
+            Main.ShowToast(ex.Message, isError: true);
+        }
+    }
 
     [RelayCommand]
     private void BrowseProjectsFolder()

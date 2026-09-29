@@ -17,6 +17,13 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         Board.Shots.CollectionChanged += OnShotsChanged;
         Renumber();
         RefreshCardLinks();
+
+        // "Frames only" was replaced by collapsing shots: a storyboard saved with it on opens collapsed.
+        if (Board.FramesOnly)
+        {
+            foreach (var s in Board.Shots) s.IsCollapsed = true;
+            Board.FramesOnly = false;
+        }
     }
 
     // ---------- expand / collapse ----------
@@ -274,8 +281,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         OnPropertyChanged(nameof(FrameHeight));
     }
 
-    [RelayCommand]
-    private void ToggleFramesOnly() => Board.FramesOnly = !Board.FramesOnly;
 
     [RelayCommand]
     private void PickImage(Shot shot)

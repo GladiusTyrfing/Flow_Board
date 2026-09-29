@@ -39,7 +39,7 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 
 **Storyboards** (switch between **Film** and **Animation**)
 - A row of shot columns joined by connectors: frame image (pick, paste, drop, or **sketch** with pen/tablet — also over a photo), scene, date, description, tags
-- **Crop** each frame (16:9, 4:3, 2.39:1, 1:1, 9:16 … or free) or show the whole image; choose the storyboard's frame shape; import a folder of images as shots; production status per shot; "frames only" overview
+- **Crop** each frame (16:9, 4:3, 2.39:1, 1:1, 9:16 … or free) or show the whole image; choose the storyboard's frame shape; import a folder of images as shots; production status per shot; collapse one shot or all of them to just their title and picture
 - Film: shot type, angle, movement, lens, location, a "shots required" checklist and an equipment list
 - Animation: action, dialogue, timing per frame, transition (cut, fade, dissolve, wipe) and a **voice line** — record it or use an audio file from your PC
 - **Animatic player**: plays the frames with their timing and voice lines; export the storyboard as PNG, print it, or turn every shot into a card

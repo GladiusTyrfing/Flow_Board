@@ -117,12 +117,6 @@
                             </StackPanel>
                         </Grid>
                     </Button>
-                    <ToggleButton Style="{StaticResource Fb.HeaderToggle}" IsChecked="{Binding Board.FramesOnly}" ToolTip="Show only the frames (hide the notes)">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="SlideMultiple24" FontSize="16" />
-                            <TextBlock Text="Frames only" Margin="6,0,0,0" Visibility="{Binding Main.IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
-                        </StackPanel>
-                    </ToggleButton>
                     <Button Style="{StaticResource Fb.HeaderButton}" Command="{Binding AddShotCommand}" ToolTip="Add a shot at the end">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="Add24" FontSize="16" />
@@ -399,7 +393,7 @@
                                                     </Grid>
     
                                                     <Grid x:Name="Details">
-                                                    <StackPanel Visibility="{Binding DataContext.Board.FramesOnly, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+                                                    <StackPanel>
                                                     <!-- Scene + date -->
                                                     <Grid Margin="0,10,0,0">
                                                         <Grid.ColumnDefinitions>
