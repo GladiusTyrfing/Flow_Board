@@ -342,7 +342,10 @@ public static class ModelEvents
     public static event Action<Shot>? ShotStatusChanged;
     public static event Action<NoteBlock>? TodoChanged;
 
-    public static void RaiseCardCompletion(Card c) => CardCompletionChanged?.Invoke(c);
-    public static void RaiseShotStatus(Shot s) => ShotStatusChanged?.Invoke(s);
-    public static void RaiseTodo(NoteBlock b) => TodoChanged?.Invoke(b);
+    /// <summary>True while changes from another copy of the project are applied (they are already in sync).</summary>
+    public static bool Suspended { get; set; }
+
+    public static void RaiseCardCompletion(Card c) { if (!Suspended) CardCompletionChanged?.Invoke(c); }
+    public static void RaiseShotStatus(Shot s) { if (!Suspended) ShotStatusChanged?.Invoke(s); }
+    public static void RaiseTodo(NoteBlock b) { if (!Suspended) TodoChanged?.Invoke(b); }
 }

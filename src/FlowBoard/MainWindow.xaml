@@ -479,6 +479,11 @@
                                 <StackPanel>
                                     <TextBlock Text="PROJECT" Style="{StaticResource Fb.Caption}" FontSize="10" />
                                     <TextBlock Text="{Binding ProjectName}" FontSize="18" Style="{StaticResource Fb.GradientTitle}" TextTrimming="CharacterEllipsis" />
+                                    <!-- Who else has this project open (shared folder) -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,3,0,0" Visibility="{Binding HasCollaborators, Converter={StaticResource BoolToVis}}">
+                                        <Ellipse Width="7" Height="7" Fill="#22C55E" VerticalAlignment="Center" Margin="1,0,6,0" />
+                                        <TextBlock Text="{Binding CollaboratorsText}" FontSize="11.5" Foreground="{DynamicResource Fb.MutedTextBrush}" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
                                 </StackPanel>
                                 <ui:SymbolIcon Grid.Column="1" Symbol="ChevronDown16" FontSize="12" Margin="6,12,0,0" Foreground="{DynamicResource Fb.MutedTextBrush}" />
                             </Grid>

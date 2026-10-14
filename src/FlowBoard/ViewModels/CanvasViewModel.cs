@@ -28,6 +28,16 @@ public enum CanvasTool
 /// <summary>Infinite canvas for flowcharts, mind maps and mood boards.</summary>
 public sealed partial class CanvasViewModel : DocumentViewModel
 {
+    /// <summary>Someone else changed the project: re-link card shapes and redraw lines.</summary>
+    public override void OnExternalChange()
+    {
+        foreach (var n in Doc.Nodes) HookNode(n);
+        ResolveCards();
+        UpdateAllEdges();
+        RaiseSelection();
+        OnPropertyChanged(nameof(IsEmpty));
+    }
+
     public const double Grid = 20;
     private static List<CanvasNode>? _clipboard;
     private static List<CanvasEdge>? _clipboardEdges;

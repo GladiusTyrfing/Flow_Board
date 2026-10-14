@@ -318,6 +318,7 @@ public partial class App : Application
             _vm?.Timer.Stop();
             _vm?.Pomodoro.Pause();
             if (!_skipSave) _store?.SaveIfChanged();
+            _store?.LeaveProject();
             _vm?.PurgeDeletedAttachments();
             _vm?.Player.Dispose();
             _vm?.Recorder.Dispose();

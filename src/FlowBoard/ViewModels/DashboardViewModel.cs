@@ -27,6 +27,8 @@ public sealed record SectionCard(string Title, string Icon, string Color, int Co
 /// </summary>
 public sealed partial class DashboardViewModel : DocumentViewModel
 {
+    public override void OnExternalChange() => Refresh();
+
     public DashboardViewModel(MainViewModel main) : base(main) => Refresh();
 
     public override object? Model => null;

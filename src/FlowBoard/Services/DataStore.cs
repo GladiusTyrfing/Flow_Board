@@ -13,7 +13,7 @@ namespace FlowBoard.Services;
 /// The <see cref="Workspace"/> instance never changes: opening a project swaps its contents,
 /// so everything bound to its collections keeps working.
 /// </summary>
-public sealed class DataStore
+public sealed partial class DataStore
 {
     private readonly DispatcherTimer _timer;
     private string _lastWorkspaceJson = string.Empty;
@@ -34,6 +34,7 @@ public sealed class DataStore
     {
         _timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(2) };
         _timer.Tick += (_, _) => SaveIfChanged();
+        InitSync();
     }
 
     /// <summary>Reads app settings. No project is opened: the app always starts on the home screen.</summary>
@@ -92,8 +93,10 @@ public sealed class DataStore
         }
 
         SaveIfChanged();
+        StopSync();
         AppPaths.SetProject(path, ProjectPackage.MediaDirFor(path, ws.MediaFolder));
         Replace(ws);
+        StartSync(path);
         LoadWarning = warning;
         AddRecent(path);
         CreateBackupIfDue();
@@ -165,6 +168,7 @@ public sealed class DataStore
     {
         if (!HasProject) return;
         SaveIfChanged();
+        StopSync();
         AppPaths.SetProject(null);
         Replace(new Workspace());
         LoadWarning = null;
@@ -212,13 +216,25 @@ public sealed class DataStore
         {
             if (HasProject)
             {
+                // Someone else may have saved the shared project: bring their changes in before writing ours.
+                CheckForExternalChanges();
                 var ws = JsonSerializer.Serialize(Workspace, Json.Options);
-                if (ws != _lastWorkspaceJson)
+                if (ws != _lastWorkspaceJson && TryLockForSave(out var saveLock))
                 {
-                    ProjectPackage.Write(AppPaths.DataFile, ws);
+                    using (saveLock)
+                    {
+                        // Check once more while holding the lock, so nobody's save slips in between.
+                        CheckForExternalChanges();
+                        ws = JsonSerializer.Serialize(Workspace, Json.Options);
+                        ProjectPackage.Write(AppPaths.DataFile, ws, Settings.DisplayName);
+                    }
+
                     _lastWorkspaceJson = ws;
+                    RememberDisk(ws);
                     Saved?.Invoke(this, EventArgs.Empty);
                 }
+
+                SyncTick();
             }
 
             var st = JsonSerializer.Serialize(Settings, Json.Options);

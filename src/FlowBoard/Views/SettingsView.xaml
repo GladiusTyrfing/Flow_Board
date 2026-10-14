@@ -564,10 +564,19 @@
                                 <Run Text="New projects go to" />
                                 <Run Text="{Binding ProjectsDir, Mode=OneWay}" FontFamily="Consolas" FontWeight="Bold" />
                                 <LineBreak />
-                                <Run Text="Each project is a .flowboard file with its attachments, wallpapers and rolling backups in folders next to it, so a project folder can be copied or moved as a whole. FlowBoard saves every couple of seconds. App settings live in" Foreground="{DynamicResource Fb.MutedTextBrush}" />
+                                <Run Text="Each project is a .flowboard file with a &quot;files&quot; folder next to it (pictures, recordings, wallpapers, backups). Keep the two together when copying or moving a project. FlowBoard saves every couple of seconds. App settings live in" Foreground="{DynamicResource Fb.MutedTextBrush}" />
                                 <Run Text="{Binding AppDir, Mode=OneWay}" FontFamily="Consolas" Foreground="{DynamicResource Fb.MutedTextBrush}" /><Run Text=". Put an empty portable.txt next to FlowBoard.exe to keep settings and new projects beside the app instead."
                                      Foreground="{DynamicResource Fb.MutedTextBrush}" />
                             </TextBlock>
+                        </Border>
+                        <TextBlock Text="Working together" Style="{StaticResource Fb.Caption}" Margin="2,4,0,8" />
+                        <Border Style="{StaticResource Fb.Section}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource Fb.Text}" FontSize="13" TextWrapping="Wrap" LineHeight="20"
+                                           Text="Several people can work on the same project. Put the project file and its files folder in a shared folder: a network drive, a folder synced with Syncthing (works between computers on your own network, no internet or account needed), or OneDrive, Dropbox or Google Drive." />
+                                <TextBlock Style="{StaticResource Fb.Muted}" FontSize="12.5" TextWrapping="Wrap" LineHeight="19" Margin="0,8,0,0"
+                                           Text="FlowBoard notices when someone else saves and merges their changes into what you have open, item by item, so both people's work is kept. If two people change the same thing at the same time, your version is kept and you are told. Conflict copies made by sync apps are merged automatically. The sidebar shows who else has the project open." />
+                            </StackPanel>
                         </Border>
                         <WrapPanel>
                             <Button Style="{StaticResource Fb.AccentButton}" Margin="0,0,8,8" Content="Back up project to zip…" Command="{Binding Main.BackupNowCommand}" />

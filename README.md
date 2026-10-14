@@ -31,6 +31,11 @@ A fast, good-looking **Kanban task manager and creative workspace for Windows**,
 - **Board** (Kanban), **Table** (sortable spreadsheet, all boards optionally), **Calendar** (month grid; drag cards to reschedule, "no date" tray)
 - **Timeline / Gantt**: cards as bars from start to due date, grouped by list — drag a bar to move it, drag its edges to change dates, zoom, "today" line, dependency arrows (red when a card starts before its blocker ends)
 
+**Working together** (no server, no account)
+- Put a project (the `.flowboard` file and its `files` folder) in a shared folder: a network drive, a folder synced with **Syncthing** (direct between computers on your own network, no internet needed), or OneDrive / Dropbox / Google Drive
+- When someone else saves, FlowBoard merges their changes into what you have open **item by item** — both people's cards, shots, shapes and pages are kept, moves follow, deletes apply. If two people change the same thing at the same moment, your version is kept and you're told
+- Conflict copies made by sync apps are merged in automatically; the sidebar shows who else has the project open
+
 **Everything is connected**
 - Link a card to a **board, storyboard, single shot, canvas or page** (card → Relate → Link item…), or add a card *for* one straight from a list's "Add card" box (Link… button)
 - **Done follows the links, both ways:** mark a shot *Done* or *Approved* and its cards complete (and move to Done); complete a card and its shots are marked Done and its page to-dos get ticked; tick the to-do and the card completes. "Turn shots into cards" and "turn to-dos into cards" link them automatically
@@ -142,8 +147,9 @@ src/FlowBoard/
   Services/      Project files, JSON storage & backups, undo, templates, audio record/playback, reminders,
                  Pomodoro, time tracking, tray, theme, global hotkeys, start-with-Windows,
                  smart quick-add parser, connector routing & auto-layout, Markdown, dashboard stats,
-                 .flowboard packages, link sync, exporters (SVG, draw.io, Mermaid, CSV, JSON)
-  ViewModels/    MainViewModel (+ Cards, App, Hotkeys, Projects, Links partials), card details, calendar, table,
+                 .flowboard packages, link sync, shared-folder teamwork (3-way merge, in-place apply,
+                 presence), exporters (SVG, draw.io, Mermaid, CSV, JSON)
+  ViewModels/    MainViewModel (+ Cards, App, Hotkeys, Projects, Links, Team partials), card details, calendar, table,
                  timeline, command palette, quick add, settings, drag & drop handlers,
                  storyboard (+ sketch pad, animatic), canvas, notes, home/dashboard, link picker
   Views/         Board (Kanban), Table, Calendar, Timeline, card details, storyboard, canvas,

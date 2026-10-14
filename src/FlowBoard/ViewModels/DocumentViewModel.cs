@@ -59,6 +59,20 @@ public abstract partial class DocumentViewModel : ObservableObject
         return true;
     }
 
+    /// <summary>Forget undo steps (they would bring back someone else's overwritten work).</summary>
+    public void ClearHistory()
+    {
+        _undo.Clear();
+        _redo.Clear();
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
+    }
+
+    /// <summary>Someone else's changes were merged into the project: refresh anything derived from the model.</summary>
+    public virtual void OnExternalChange()
+    {
+    }
+
     /// <summary>F2: start renaming the document (if it has a name).</summary>
     public virtual void BeginRename()
     {

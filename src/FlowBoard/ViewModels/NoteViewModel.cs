@@ -16,6 +16,14 @@ public sealed record SlashOption(string Title, string Hint, string Icon, BlockTy
 /// <summary>A note page edited as blocks (Notion-style): Markdown shortcuts, "/" menu, to-dos, images and links.</summary>
 public sealed partial class NoteViewModel : DocumentViewModel
 {
+    /// <summary>Someone else changed the project: refresh link previews, numbering and the word count.</summary>
+    public override void OnExternalChange()
+    {
+        Renumber();
+        RefreshLinks();
+        OnPropertyChanged(nameof(Stats));
+    }
+
     private bool _converting;
 
     public NoteViewModel(MainViewModel main, NotePage page) : base(main)

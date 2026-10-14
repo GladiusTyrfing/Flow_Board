@@ -41,11 +41,30 @@ public static class ProjectPackage
         return reader.ReadToEnd();
     }
 
+    /// <summary>Who saved the file last (from the manifest), or null.</summary>
+    public static string? ReadSavedBy(string path)
+    {
+        try
+        {
+            if (!IsPackage(path)) return null;
+            using var zip = ZipFile.OpenRead(path);
+            var entry = zip.GetEntry(ManifestEntry);
+            if (entry == null) return null;
+            using var s = entry.Open();
+            using var doc = JsonDocument.Parse(s);
+            return doc.RootElement.TryGetProperty("savedBy", out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public static Workspace Read(string path) =>
         JsonSerializer.Deserialize<Workspace>(ReadJson(path), Json.Options) ?? throw new InvalidDataException("The project file is empty.");
 
     /// <summary>Writes the project. .flowboard files become packages; anything else (the old data.json) stays plain JSON.</summary>
-    public static void Write(string path, string json)
+    public static void Write(string path, string json, string? savedBy = null)
     {
         var tmp = path + ".tmp";
         if (string.Equals(Path.GetExtension(path), AppPaths.ProjectExtension, StringComparison.OrdinalIgnoreCase))
@@ -62,6 +81,8 @@ public static class ProjectPackage
                         format = FormatVersion,
                         savedWith = typeof(ProjectPackage).Assembly.GetName().Version?.ToString(3),
                         saved = DateTime.Now,
+                        savedBy,
+                        machine = Environment.MachineName,
                     }));
                 }
 

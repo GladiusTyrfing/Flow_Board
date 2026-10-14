@@ -78,6 +78,9 @@ public sealed partial class MainViewModel
         OnPropertyChanged(nameof(RecentProjects));
         OnPropertyChanged(nameof(HasRecentProjects));
         OnPropertyChanged(nameof(WindowTitle));
+        _knownCollaborators = _store.Collaborators;
+        OnPropertyChanged(nameof(HasCollaborators));
+        OnPropertyChanged(nameof(CollaboratorsText));
         OpenDashboard();
         ShowStartupWarning();
         if (_store.IsLegacyWorkspace)

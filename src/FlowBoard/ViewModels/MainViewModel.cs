@@ -58,6 +58,7 @@ public sealed partial class MainViewModel : ObservableObject
         Settings.PropertyChanged += OnSettingsChanged;
         Undo.PropertyChanged += (_, _) => RaiseUndoState();
         HookLinkSync();
+        HookTeamwork();
 
         // The app always starts with no project open, on the home screen.
         OpenDashboard();

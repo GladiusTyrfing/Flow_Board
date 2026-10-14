@@ -11,6 +11,15 @@ namespace FlowBoard.ViewModels;
 /// <summary>A storyboard: a row of shots (film) or frames (animation) with notes, sketches and an animatic player.</summary>
 public sealed partial class StoryboardViewModel : DocumentViewModel
 {
+    /// <summary>Someone else changed the project: renumber shots and refresh their card links.</summary>
+    public override void OnExternalChange()
+    {
+        Renumber();
+        RefreshCardLinks();
+        OnPropertyChanged(nameof(Summary));
+        OnPropertyChanged(nameof(AllCollapsed));
+    }
+
     public StoryboardViewModel(MainViewModel main, Storyboard board) : base(main)
     {
         Board = board;

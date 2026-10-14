@@ -29,6 +29,8 @@
     <Compile Include="..\..\src\FlowBoard\Services\ProjectPackage.cs" Link="Core\Services\ProjectPackage.cs" />
     <Compile Include="..\..\src\FlowBoard\Services\LinkSync.cs" Link="Core\Services\LinkSync.cs" />
     <Compile Include="..\..\src\FlowBoard\Services\Exporters.cs" Link="Core\Services\Exporters.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\JsonMerge.cs" Link="Core\Services\JsonMerge.cs" />
+    <Compile Include="..\..\src\FlowBoard\Services\ModelReconciler.cs" Link="Core\Services\ModelReconciler.cs" />
   </ItemGroup>
 
   <ItemGroup>
