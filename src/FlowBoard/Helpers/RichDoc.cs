@@ -8,12 +8,10 @@ using LinkTarget = FlowBoard.Models.LinkTarget;
 
 namespace FlowBoard.Helpers;
 
-/// <summary>Converts between note <see cref="TextSpan"/>s and a RichTextBox document, and maps caret positions to text offsets.</summary>
 public static class RichDoc
 {
     public static readonly FontFamily CodeFont = new("Cascadia Mono, Consolas");
 
-    /// <summary>Tag stored on inline link runs: "Kind|Guid".</summary>
     public static string LinkTag(LinkTarget kind, Guid id) => $"{kind}|{id}";
 
     public static bool TryParseLink(object? tag, out LinkTarget kind, out Guid id)
@@ -23,7 +21,6 @@ public static class RichDoc
         return tag is string s && s.Split('|') is [var k, var g] && Enum.TryParse(k, out kind) && Guid.TryParse(g, out id);
     }
 
-    /// <summary>An inline link: accent colored, hand cursor, remembers what it points to.</summary>
     public static Run MakeLinkRun(string text, LinkTarget kind, Guid id, TextPointer? at = null)
     {
         var run = at == null ? new Run(text) : new Run(text, at);
@@ -35,12 +32,10 @@ public static class RichDoc
         return run;
     }
 
-    /// <summary>Loads spans into the editor (one paragraph; line breaks for "\n").</summary>
     public static void Load(RichTextBox box, IEnumerable<TextSpan> spans)
     {
         var doc = box.Document;
         doc.PagePadding = new Thickness(0);
-        // The document follows the editor's font, so block styles (headings, quotes, code) apply to it.
         if (!System.Windows.Data.BindingOperations.IsDataBound(doc, TextElement.FontSizeProperty))
         {
             foreach (var dp in new[] { TextElement.FontSizeProperty, TextElement.FontWeightProperty, TextElement.FontStyleProperty, TextElement.FontFamilyProperty, TextElement.ForegroundProperty })
@@ -83,7 +78,6 @@ public static class RichDoc
         doc.Blocks.Add(para);
     }
 
-    /// <summary>Reads the editor back into spans. Only formatting set on the text itself counts (not the block's heading style).</summary>
     public static List<TextSpan> Read(RichTextBox box)
     {
         var list = new List<TextSpan>();
@@ -122,7 +116,6 @@ public static class RichDoc
 
     private static TextSpan Style(Run run, Paragraph para, string text)
     {
-        // Links keep only what they point to (their look comes from the theme).
         if (TryParseLink(run.Tag, out var kind, out var id)) return new TextSpan { Text = text, LinkKind = kind, LinkId = id };
         var span = new TextSpan { Text = text };
         for (DependencyObject? d = run; d != null && d != para; d = (d as TextElement)?.Parent)
@@ -150,9 +143,6 @@ public static class RichDoc
 
     private static string Hex(Color c) => c.A == 255 ? $"#{c.R:X2}{c.G:X2}{c.B:X2}" : $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
 
-    // ---------- caret offsets ----------
-
-    /// <summary>Character offset of a position ("\n" counts 1 for line breaks and paragraph breaks).</summary>
     public static int OffsetOf(RichTextBox box, TextPointer p)
     {
         var off = 0;
@@ -220,7 +210,6 @@ public static class RichDoc
         return n;
     }
 
-    /// <summary>Position at a character offset (clamped to the end).</summary>
     public static TextPointer PointerAt(RichTextBox box, int offset)
     {
         if (offset < 0) return box.Document.ContentEnd;

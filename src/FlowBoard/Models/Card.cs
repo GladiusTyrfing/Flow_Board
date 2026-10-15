@@ -5,7 +5,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace FlowBoard.Models;
 
-/// <summary>A task card. Serialized as-is; runtime-only state is marked <see cref="JsonIgnoreAttribute"/>.</summary>
 public partial class Card : ObservableObject
 {
     [ObservableProperty] private Guid _id = Guid.NewGuid();
@@ -16,42 +15,33 @@ public partial class Card : ObservableObject
     [ObservableProperty] private DateTime _createdAt = DateTime.Now;
     [ObservableProperty] private DateTime? _startDate;
     [ObservableProperty] private DateTime? _dueDate;
-    /// <summary>Minutes before the due date to remind. Negative means no reminder.</summary>
     [ObservableProperty] private int _reminderMinutes = -1;
     [ObservableProperty] private bool _reminderSent;
     [ObservableProperty] private Priority _priority;
     [ObservableProperty] private string? _coverColor;
     [ObservableProperty] private Guid? _coverAttachmentId;
     [ObservableProperty] private Guid? _archivedFromListId;
-    /// <summary>The list a card was in before being auto-moved to the Done list (so un-completing can send it back).</summary>
     [ObservableProperty] private Guid? _completedFromListId;
     [ObservableProperty] private DateTime? _archivedAt;
-    /// <summary>Shows details (description, checklists, files, voice notes…) right on the board.</summary>
     [ObservableProperty] private bool _isExpanded;
     [ObservableProperty] private ObservableCollection<Guid> _labelIds = [];
-    /// <summary>Related cards (any board). Shown as curved lines on the board when "Links" is on.</summary>
     [ObservableProperty] private ObservableCollection<Guid> _linkedCardIds = [];
-    /// <summary>Cards that must be finished before this one (dependencies, drawn on the timeline).</summary>
     [ObservableProperty] private ObservableCollection<Guid> _blockedByIds = [];
-    /// <summary>Things in other sections this card is about: boards, storyboards, single shots, canvases, pages.</summary>
     [ObservableProperty] private ObservableCollection<ItemLink> _links = [];
     [ObservableProperty] private ObservableCollection<Checklist> _checklists = [];
     [ObservableProperty] private ObservableCollection<Attachment> _attachments = [];
     [ObservableProperty] private ObservableCollection<Comment> _comments = [];
     [ObservableProperty] private ObservableCollection<TimeEntry> _timeEntries = [];
 
-    // ---- runtime-only state ----
     [ObservableProperty][property: JsonIgnore] private bool _isFilteredOut;
     [ObservableProperty][property: JsonIgnore] private bool _isTimerRunning;
     [ObservableProperty][property: JsonIgnore] private bool _isHighlighted;
-    /// <summary>Waiting on at least one unfinished "blocked by" card (set by the app when the board is shown).</summary>
     [ObservableProperty][property: JsonIgnore] private bool _isBlocked;
 
     [JsonIgnore] public int RelationCount => LinkedCardIds.Count + BlockedByIds.Count + Links.Count;
 
     private Board? _board;
 
-    /// <summary>The board that owns this card. Set by <see cref="Board.Hydrate"/> and whenever a card is created or moved.</summary>
     [JsonIgnore]
     public Board? Board
     {
@@ -66,8 +56,6 @@ public partial class Card : ObservableObject
     {
         HookAll();
     }
-
-    // ---------- Derived display properties ----------
 
     [JsonIgnore]
     public IReadOnlyList<Label> ResolvedLabels =>
@@ -136,7 +124,6 @@ public partial class Card : ObservableObject
         }
     }
 
-    /// <summary>A due date with no time component means "end of that day".</summary>
     public static DateTime EffectiveDue(DateTime due) => due.TimeOfDay == TimeSpan.Zero ? due.Date.AddDays(1).AddTicks(-1) : due;
 
     public static string FormatDate(DateTime d, bool includeTime = true)
@@ -165,7 +152,6 @@ public partial class Card : ObservableObject
         OnPropertyChanged(nameof(HasLabels));
     }
 
-    /// <summary>Re-evaluates time-dependent properties (called periodically).</summary>
     public void RefreshTimeState()
     {
         OnPropertyChanged(nameof(DueState));
@@ -176,8 +162,6 @@ public partial class Card : ObservableObject
     {
         Comments.Add(new Comment { Author = author, Text = text, IsActivity = true });
     }
-
-    // ---------- change hooks ----------
 
     partial void OnTitleChanged(string value) => OnPropertyChanged(nameof(HasDescription));
     partial void OnDescriptionChanged(string value) => OnPropertyChanged(nameof(HasDescription));
@@ -322,7 +306,6 @@ public partial class Card : ObservableObject
     }
 }
 
-/// <summary>A card's link to something in another section.</summary>
 public sealed class ItemLink
 {
     public LinkTarget Kind { get; set; }
@@ -332,17 +315,12 @@ public sealed class ItemLink
     public ItemLink(LinkTarget kind, Guid id) { Kind = kind; Id = id; }
 }
 
-/// <summary>
-/// Completion changes anywhere in the model, so linked items can follow each other
-/// (a shot marked Done completes its card, a completed card ticks its to-do on a page, and back).
-/// </summary>
 public static class ModelEvents
 {
     public static event Action<Card>? CardCompletionChanged;
     public static event Action<Shot>? ShotStatusChanged;
     public static event Action<NoteBlock>? TodoChanged;
 
-    /// <summary>True while changes from another copy of the project are applied (they are already in sync).</summary>
     public static bool Suspended { get; set; }
 
     public static void RaiseCardCompletion(Card c) { if (!Suspended) CardCompletionChanged?.Invoke(c); }

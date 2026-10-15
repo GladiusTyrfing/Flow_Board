@@ -4,11 +4,6 @@ using FlowBoard.Services;
 
 namespace FlowBoard.ViewModels;
 
-/// <summary>
-/// Everything is connected: cards link to boards, storyboards, shots, canvases and pages, and "done"
-/// follows the links — a shot marked Done (or Approved) completes its cards, a ticked to-do completes its card,
-/// and completing or reopening a card updates its shots and to-dos.
-/// </summary>
 public sealed partial class MainViewModel
 {
     private bool _syncing;
@@ -22,7 +17,6 @@ public sealed partial class MainViewModel
 
     private void OnCardCompletionChanged(Card card)
     {
-        // Ignore cards that aren't part of the open project (loading, undo snapshots...).
         if (_syncing || !HasProject || Workspace.FindCard(card.Id, out _, out _) != card) return;
         RunSync(() => PushCardState(card));
     }
@@ -70,7 +64,6 @@ public sealed partial class MainViewModel
         if (ActiveView == ActiveView.Board && ViewMode != BoardViewMode.Board) RefreshViews();
     }
 
-    /// <summary>Makes a card's linked shots and to-dos match its completion.</summary>
     private void PushCardState(Card card)
     {
         foreach (var shot in LinkSync.ShotsOf(Workspace, card))
@@ -86,11 +79,8 @@ public sealed partial class MainViewModel
         MoveForCompletion(card);
     }
 
-    // ---------- links from cards ----------
-
     public static readonly LinkTarget[] CardLinkKinds = [LinkTarget.Board, LinkTarget.Storyboard, LinkTarget.Shot, LinkTarget.Canvas, LinkTarget.Note];
 
-    /// <summary>Links a card to something in another section (and syncs its state right away).</summary>
     public void AddCardLink(Card card, LinkTarget kind, Guid id)
     {
         if (card.Links.Any(l => l.Kind == kind && l.Id == id)) return;
@@ -98,13 +88,11 @@ public sealed partial class MainViewModel
         card.NotifyRelationsChanged();
         if (kind == LinkTarget.Shot && LinkResolver.FindShot(Workspace, id, out _) is { } shot)
         {
-            // Whichever side is already done wins.
             if (LinkSync.IsDoneStatus(shot.Status) && !card.IsCompleted) SetCardCompleted(card, true, $"shot \"{shot.Title}\" is done");
             else RunSync(() => PushCardState(card));
         }
     }
 
-    /// <summary>"Add card" footer: a new card in the list that links to a storyboard, shot, canvas, page or board.</summary>
     [RelayCommand]
     private async Task AddLinkedCard(BoardList? list)
     {

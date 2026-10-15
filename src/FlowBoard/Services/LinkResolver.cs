@@ -2,10 +2,8 @@ using FlowBoard.Models;
 
 namespace FlowBoard.Services;
 
-/// <summary>A search hit for linking.</summary>
 public sealed record LinkHit(LinkTarget Kind, Guid Id, string Title, string Subtitle, string Icon, int Score);
 
-/// <summary>Finds and describes anything that can be linked: cards, boards, storyboards, shots, canvases and pages.</summary>
 public static class LinkResolver
 {
     public static readonly LinkTarget[] All =
@@ -34,7 +32,6 @@ public static class LinkResolver
         return null;
     }
 
-    /// <summary>Current title of a link target (null when it was deleted).</summary>
     public static string? TitleOf(Workspace ws, LinkTarget kind, Guid id) => kind switch
     {
         LinkTarget.Card => ws.FindCard(id, out _, out _)?.Title,
@@ -46,7 +43,6 @@ public static class LinkResolver
         _ => null,
     };
 
-    /// <summary>Preview card content for a link target.</summary>
     public static LinkPreview Describe(Workspace ws, LinkTarget kind, Guid id, string fallbackTitle = "")
     {
         switch (kind)
@@ -101,7 +97,6 @@ public static class LinkResolver
         }
     }
 
-    /// <summary>Fuzzy search over everything linkable (best matches first).</summary>
     public static List<LinkHit> Search(Workspace ws, string query, IEnumerable<LinkTarget> kinds, ICollection<Guid>? exclude = null, Board? current = null, int limit = 80)
     {
         var q = query.Trim();
@@ -132,7 +127,6 @@ public static class LinkResolver
         return items.OrderByDescending(i => i.Score).Take(limit).ToList();
     }
 
-    /// <summary>Simple fuzzy score: substring beats in-order character match; 0 = no match.</summary>
     public static int Score(string text, string q)
     {
         if (q.Length == 0) return 1;

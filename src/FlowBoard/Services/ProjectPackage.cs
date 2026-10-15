@@ -6,18 +6,12 @@ using FlowBoard.Models;
 
 namespace FlowBoard.Services;
 
-/// <summary>
-/// The .flowboard file format: a small package (zip container) holding the project as compressed JSON
-/// plus a manifest, so it is one real file rather than a text file. Plain JSON files (data.json and
-/// early .flowboard files) are still read.
-/// </summary>
 public static class ProjectPackage
 {
     public const string ContentEntry = "project.json";
     public const string ManifestEntry = "manifest.json";
     public const int FormatVersion = 1;
 
-    /// <summary>True for files written as a package (starts with the zip signature "PK").</summary>
     public static bool IsPackage(string path)
     {
         try
@@ -31,7 +25,6 @@ public static class ProjectPackage
         }
     }
 
-    /// <summary>Returns the project JSON from a package or a plain JSON file.</summary>
     public static string ReadJson(string path)
     {
         if (!IsPackage(path)) return File.ReadAllText(path);
@@ -41,7 +34,6 @@ public static class ProjectPackage
         return reader.ReadToEnd();
     }
 
-    /// <summary>Who saved the file last (from the manifest), or null.</summary>
     public static string? ReadSavedBy(string path)
     {
         try
@@ -63,7 +55,6 @@ public static class ProjectPackage
     public static Workspace Read(string path) =>
         JsonSerializer.Deserialize<Workspace>(ReadJson(path), Json.Options) ?? throw new InvalidDataException("The project file is empty.");
 
-    /// <summary>Writes the project. .flowboard files become packages; anything else (the old data.json) stays plain JSON.</summary>
     public static void Write(string path, string json, string? savedBy = null)
     {
         var tmp = path + ".tmp";
@@ -99,11 +90,6 @@ public static class ProjectPackage
         File.Move(tmp, path, overwrite: true);
     }
 
-    /// <summary>
-    /// Folder that holds a project's pictures, recordings, wallpapers and backups:
-    /// "&lt;name&gt; files" next to the project file (remembered inside the project, so renaming the file is fine).
-    /// Older layouts (data.json, or a project folder with attachments beside the file) keep using the file's folder.
-    /// </summary>
     public static string MediaDirFor(string file, string? rememberedFolder)
     {
         var full = Path.GetFullPath(file);

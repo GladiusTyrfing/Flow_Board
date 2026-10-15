@@ -13,7 +13,6 @@
              d:DataContext="{d:DesignInstance vm:MainViewModel}">
 
     <UserControl.Resources>
-        <!-- ================= Card (front) ================= -->
         <DataTemplate x:Key="CardTemplate" DataType="{x:Type models:Card}">
             <Border x:Name="CardRoot" Margin="2,0,2,10" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.CardBrush}"
                     BorderThickness="1" BorderBrush="{DynamicResource Fb.CardBorderBrush}" Cursor="Hand"
@@ -92,23 +91,19 @@
                 </Border.ContextMenu>
 
                 <StackPanel h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusValue}">
-                    <!-- Image cover -->
                     <Border Height="150" CornerRadius="0"
                             Visibility="{Binding CoverImagePath, Converter={StaticResource HasValueToVis}}">
                         <Border.Background>
                             <ImageBrush Stretch="UniformToFill" ImageSource="{Binding CoverImagePath, Converter={StaticResource ImagePath}, ConverterParameter=600}" />
                         </Border.Background>
                     </Border>
-                    <!-- Color cover -->
                     <Border Height="34" CornerRadius="0" Background="{Binding CoverColor, Converter={StaticResource HexToBrush}}"
                             Visibility="{Binding HasCoverColor, Converter={StaticResource BoolToVis}}" />
 
                     <Grid>
-                    <!-- Priority edge -->
                     <Border Width="3" HorizontalAlignment="Left" Margin="0,12" CornerRadius="0,3,3,0"
                             Background="{Binding Priority, Converter={StaticResource PriorityToBrush}}" />
                     <StackPanel Margin="12,10,12,10">
-                        <!-- Labels -->
                         <ItemsControl ItemsSource="{Binding ResolvedLabels}" Visibility="{Binding HasLabels, Converter={StaticResource BoolToVis}}" Margin="0,0,0,4">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -126,7 +121,6 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <!-- Complete + title -->
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -145,7 +139,6 @@
                                        Foreground="{DynamicResource Fb.TextBrush}" />
                         </Grid>
 
-                        <!-- Badges -->
                         <WrapPanel Margin="0,2,0,0">
                             <Border x:Name="PrioBadge" Style="{StaticResource Fb.Badge}" Background="{Binding Priority, Converter={StaticResource PriorityToBrush}}"
                                     ToolTip="Priority">
@@ -217,7 +210,6 @@
                             </Border>
                         </WrapPanel>
 
-                        <!-- ============ Expanded details (toggle with the arrow or V) ============ -->
                         <StackPanel Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}" Margin="0,8,0,0" h:Behaviors.AnimateIn="fade">
                             <Border Height="1" Background="{DynamicResource Fb.DividerBrush}" Margin="0,0,0,8" />
 
@@ -232,7 +224,6 @@
                                                Visibility="{Binding HasReminder, Converter={StaticResource BoolToVis}}" />
                             </StackPanel>
 
-                            <!-- Checklists: tick items right here -->
                             <ItemsControl ItemsSource="{Binding Checklists}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type models:Checklist}">
@@ -262,7 +253,6 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <!-- Image thumbnails -->
                             <ItemsControl ItemsSource="{Binding ImageAttachments}" Margin="0,0,0,4">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -282,7 +272,6 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <!-- Files & links -->
                             <ItemsControl ItemsSource="{Binding OtherFiles}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type models:Attachment}">
@@ -297,7 +286,6 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <!-- Voice notes: play right on the board -->
                             <ItemsControl ItemsSource="{Binding VoiceNotes}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type models:Attachment}">
@@ -323,7 +311,6 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <!-- Latest comment -->
                             <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="{DynamicResource Fb.SubtleBrush}" Padding="8,6" Margin="0,4,0,0"
                                     Visibility="{Binding LatestComment, Converter={StaticResource HasValueToVis}}">
                                 <TextBlock TextWrapping="Wrap" FontSize="12" MaxHeight="60" TextTrimming="WordEllipsis">
@@ -367,20 +354,16 @@
             </DataTemplate.Triggers>
         </DataTemplate>
 
-        <!-- ================= List (column) ================= -->
         <DataTemplate x:Key="ListTemplate" DataType="{x:Type models:BoardList}">
             <Grid Margin="0,0,12,0" VerticalAlignment="Top">
-                <!-- Expanded -->
                 <Border x:Name="Expanded" Width="284" Background="{DynamicResource Fb.ListBrush}" CornerRadius="{DynamicResource Fb.RadiusLarge}" Padding="8,10,8,8"
                         BorderThickness="1" BorderBrush="{DynamicResource Fb.ListBorderBrush}"
                         VerticalAlignment="Top" h:Behaviors.AnimateIn="rise">
                     <DockPanel>
-                        <!-- Colored accent strip -->
                         <Border DockPanel.Dock="Top" Height="4" CornerRadius="2" Margin="6,0,6,6"
                                 Background="{Binding Color, Converter={StaticResource HexToBrush}}"
                                 Visibility="{Binding HasColor, Converter={StaticResource BoolToVis}}" />
 
-                        <!-- Header -->
                         <Grid DockPanel.Dock="Top" Margin="0,0,0,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -573,7 +556,6 @@
                             </Button>
                         </Grid>
 
-                        <!-- Footer: add card -->
                         <Grid DockPanel.Dock="Bottom" Margin="0,2,0,0">
                             <Grid Visibility="{Binding IsAddingCard, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
                                 <Grid.ColumnDefinitions>
@@ -617,7 +599,6 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- Cards -->
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False" Padding="0,2,4,0">
                             <ItemsControl ItemsSource="{Binding Cards}" MinHeight="14" Background="Transparent"
                                           ItemTemplate="{StaticResource CardTemplate}"
@@ -629,7 +610,6 @@
                     </DockPanel>
                 </Border>
 
-                <!-- Collapsed -->
                 <Border x:Name="Collapsed" Width="48" MinHeight="200" Background="{DynamicResource Fb.ListBrush}" CornerRadius="{DynamicResource Fb.RadiusLarge}"
                         VerticalAlignment="Top" Visibility="Collapsed" BorderThickness="1" BorderBrush="{DynamicResource Fb.ListBorderBrush}">
                     <Button Style="{StaticResource Fb.GhostButton}" Padding="0,10" VerticalContentAlignment="Top" HorizontalContentAlignment="Center"
@@ -680,7 +660,6 @@
                     </ItemsControl.ItemsPanel>
                 </ItemsControl>
     
-                <!-- Add another list -->
                 <Grid Width="280" VerticalAlignment="Top">
                     <Button Style="{StaticResource Fb.GhostButton}" Background="{DynamicResource Fb.HeaderBarBrush}" Foreground="{DynamicResource Fb.HeaderTextBrush}"
                             BorderBrush="{DynamicResource Fb.ListBorderBrush}" BorderThickness="1" Padding="16,13" h:Behaviors.CornerRadius="{DynamicResource Fb.RadiusLarge}"

@@ -12,13 +12,11 @@ public partial class SettingsView : UserControl
         InitializeComponent();
     }
 
-    /// <summary>Records a key combination for a global hotkey.</summary>
     private void HotkeyBox_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (sender is not TextBox box || DataContext is not SettingsViewModel vm) return;
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
 
-        // Let Tab move focus and Esc close the dialog as usual.
         if (key is Key.Tab || (key is Key.Escape && Keyboard.Modifiers == ModifierKeys.None)) return;
         e.Handled = true;
 
@@ -30,7 +28,7 @@ public partial class SettingsView : UserControl
         else
         {
             text = GlobalHotkeyService.Format(Keyboard.Modifiers, key);
-            if (text == null) return; // only modifiers pressed so far
+            if (text == null) return;
             if (Keyboard.Modifiers == ModifierKeys.None || Keyboard.Modifiers == ModifierKeys.Shift)
             {
                 vm.Main.ShowToast("Global hotkeys need Ctrl, Alt or Win (e.g. Ctrl+Alt+Space).", isError: true);

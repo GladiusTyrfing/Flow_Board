@@ -12,10 +12,6 @@ using FlowBoard.ViewModels;
 
 namespace FlowBoard.Views;
 
-/// <summary>
-/// Keyboard flow of the block editor (Enter splits, Backspace merges, arrows move between blocks, "/" menu)
-/// and rich text: every block is a RichTextBox kept in sync with the block's formatted spans.
-/// </summary>
 public partial class NoteView : UserControl, Helpers.ICapturable
 {
     private static readonly string[] TextColors = ["#9CA3AF", "#EF4444", "#F97316", "#EAB308", "#22C55E", "#14B8A6", "#3B82F6", "#8B5CF6", "#EC4899", "#A16207"];
@@ -28,7 +24,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
     private bool _highlightMode;
     private string _lastHighlight = HighlightColors[0];
 
-    // "@" link search state
     private RichTextBox? _mentionBox;
     private int _mentionStart = -1;
 
@@ -50,7 +45,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         };
         Loaded += (_, _) =>
         {
-            // New pages start in the title.
             if (_vm == null) return;
             if (_vm.Page.Title.StartsWith("Untitled page", StringComparison.Ordinal) && _vm.Page.Blocks.All(b => b.Text.Length == 0))
             {
@@ -66,8 +60,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         };
         Scroller.ScrollChanged += (_, _) => HideFormatBar();
     }
-
-    // ================= editor <-> block sync =================
 
     private void OnEditorLoaded(object sender, RoutedEventArgs e)
     {
@@ -97,14 +89,12 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         if (sender is not NoteBlock block) return;
         if (e.PropertyName is nameof(NoteBlock.ContentVersion) or nameof(NoteBlock.IsChecked) && EditorFor(block) is { } box)
         {
-            // Reload after the current input event finishes (the change may come from inside TextChanged).
             Dispatcher.BeginInvoke(DispatcherPriority.Send, () => LoadInto(box, block));
         }
     }
 
     private void LoadInto(RichTextBox box, NoteBlock block)
     {
-        // Skip if the editor already shows exactly this content.
         if (!_loading.Add(box)) return;
         try
         {
@@ -121,7 +111,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
                 if (caret >= 0) box.CaretPosition = RichDoc.PointerAt(box, Math.Min(caret, block.Text.Length));
             }
 
-            // Ticked to-dos are struck through.
             if (box.Document.Blocks.FirstBlock is Paragraph p)
                 p.TextDecorations = block.Type == BlockType.Todo && block.IsChecked ? TextDecorations.Strikethrough : null;
         }
@@ -147,8 +136,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         UpdateMention(box, block);
     }
 
-    // ================= "@" links inside text =================
-
     private void UpdateMention(RichTextBox box, NoteBlock block)
     {
         if (block.Type == BlockType.Code) return;
@@ -156,7 +143,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         var text = block.Text;
         if (_mentionBox == box && _mentionStart >= 0)
         {
-            // Still typing the search after "@"?
             if (caret <= _mentionStart || _mentionStart >= text.Length || text[_mentionStart] != '@' || caret - _mentionStart > 40
                 || text[(_mentionStart + 1)..Math.Min(caret, text.Length)].Contains('\n'))
             {
@@ -168,7 +154,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
             return;
         }
 
-        // A fresh "@" at the start of a word opens the search.
         if (caret >= 1 && caret <= text.Length && text[caret - 1] == '@' && (caret == 1 || char.IsWhiteSpace(text[caret - 2])))
         {
             _mentionBox = box;
@@ -203,7 +188,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         if (_mentionBox is not { } box || box.DataContext is not NoteBlock block || _mentionStart < 0) return;
         _vm?.Checkpoint();
         var start = RichDoc.PointerAt(box, _mentionStart);
-        // Replace "@query" with the link, followed by a space so typing continues as normal text.
         new TextRange(start, box.CaretPosition).Text = string.Empty;
         var at = RichDoc.PointerAt(box, _mentionStart);
         var run = RichDoc.MakeLinkRun(option.Title, option.Kind, option.Id, at);
@@ -223,7 +207,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         }
     }
 
-    /// <summary>Links behave as one piece: typing next to one never extends it.</summary>
     private void OnEditorTextInput(object sender, TextCompositionEventArgs e)
     {
         if (sender is not RichTextBox box || !box.Selection.IsEmpty || e.Text.Length == 0) return;
@@ -234,7 +217,7 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         else if (pos.CompareTo(run.ContentStart) <= 0) insertAt = run.ElementStart;
         else
         {
-            e.Handled = true; // no typing inside a link
+            e.Handled = true;
             return;
         }
 
@@ -243,7 +226,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         e.Handled = true;
     }
 
-    /// <summary>Clicking a link opens what it points to.</summary>
     private void OnEditorClick(object sender, MouseButtonEventArgs e)
     {
         if (_vm == null || sender is not RichTextBox box || !box.Selection.IsEmpty) return;
@@ -255,7 +237,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         }
     }
 
-    /// <summary>Pasted text arrives as plain text (formatting from web pages or Word would clash with the theme).</summary>
     private static void OnPasting(object sender, DataObjectPastingEventArgs e)
     {
         if (!e.DataObject.GetDataPresent(DataFormats.UnicodeText)) return;
@@ -271,8 +252,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         if (_vm != null && sender is RichTextBox { DataContext: NoteBlock b }) _vm.LastFocused = b;
     }
 
-    // ================= focus & slash menu =================
-
     private void OnVmChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(NoteViewModel.IsSlashOpen) || _vm == null) return;
@@ -282,7 +261,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
             return;
         }
 
-        // A block that was just added has no editor yet: wait for layout.
         Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
         {
             if (_vm is { IsSlashOpen: true, SlashBlock: { } b } && EditorFor(b) is { } box)
@@ -298,9 +276,8 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         if (!MentionPopup.IsMouseOver && e.NewFocus != _mentionBox) CloseMention();
         if (!FormatBar.IsMouseOver && !ColorMenu.IsMouseOver && !_pickerOpen && e.NewFocus is not RichTextBox) HideFormatBar();
 
-        // Clicking an entry in the "/" menu must not close it first.
         if (_vm is not { IsSlashOpen: true } || SlashPopup.IsMouseOver) return;
-        if ((e.NewFocus as FrameworkElement)?.DataContext == _vm.SlashBlock) return; // focus is moving into the "/" block
+        if ((e.NewFocus as FrameworkElement)?.DataContext == _vm.SlashBlock) return;
         _vm.CloseSlash();
     }
 
@@ -348,8 +325,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         return null;
     }
 
-    // ================= keyboard =================
-
     private void OnBlockKey(object sender, KeyEventArgs e)
     {
         if (_vm == null) return;
@@ -359,7 +334,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         var alt = mods.HasFlag(ModifierKeys.Alt);
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
 
-        // Image captions are plain text boxes.
         if (e.OriginalSource is TextBox { Name: "Caption", DataContext: NoteBlock cap } tb)
         {
             if (key == Key.Enter)
@@ -378,7 +352,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
 
         if (e.OriginalSource is not RichTextBox { DataContext: NoteBlock block } box) return;
 
-        // ----- "@" link search -----
         if (MentionPopup.IsOpen && _mentionBox == box)
         {
             var list = MentionList.ItemsSource as IList<LinkOption>;
@@ -405,7 +378,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
             }
         }
 
-        // ----- "/" menu -----
         if (_vm.IsSlashOpen && _vm.SlashBlock == block)
         {
             switch (key)
@@ -443,7 +415,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
                 _vm.Enter(block, ctrl ? block.Text.Length : RichDoc.OffsetOf(box, box.CaretPosition));
                 break;
             case Key.Enter when shift || block.Type == BlockType.Code:
-                // New line inside the block.
                 box.CaretPosition = box.CaretPosition.InsertLineBreak();
                 break;
             case Key.Back when caret == 0 && noSelection:
@@ -476,7 +447,7 @@ public partial class NoteView : UserControl, Helpers.ICapturable
                 _vm.FocusSibling(block, 1, 0);
                 break;
             case Key.V when ctrl && !shift:
-                if (!_vm.PasteImage(block)) return; // not an image: normal (plain text) paste
+                if (!_vm.PasteImage(block)) return;
                 break;
             case Key.D when ctrl:
                 _vm.DuplicateBlockCommand.Execute(block);
@@ -500,7 +471,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
                 ApplyHighlight(box, _lastHighlight);
                 break;
             case Key.U when ctrl:
-                // The built-in toggle replaces strikethrough; keep both.
                 ToggleDecoration(box, TextDecorationLocation.Underline);
                 break;
             default:
@@ -511,8 +481,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
     }
 
     private static void Sync(RichTextBox box, NoteBlock block) => block.SetSpans(RichDoc.Read(box), fromEditor: true);
-
-    // ================= formatting bar =================
 
     private void OnEditorSelectionChanged(object sender, RoutedEventArgs e)
     {
@@ -633,7 +601,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
 
     private void OnCustomColor(object? sender, string hex)
     {
-        // Custom highlights are made see-through so text stays readable in both themes.
         ApplyColor(_highlightMode ? "#66" + hex.TrimStart('#') : hex);
     }
 
@@ -679,8 +646,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
 
     private void OnPickerClosed(object? sender, EventArgs e) => _pickerOpen = false;
 
-    // ================= misc =================
-
     private void OnSlashClick(object sender, MouseButtonEventArgs e)
     {
         if (_vm == null) return;
@@ -709,7 +674,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
 
     private void OnDragOver(object sender, DragEventArgs e)
     {
-        // Only take over file drags; text drags between blocks keep working.
         if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
         e.Effects = DragDropEffects.Copy;
         e.Handled = true;
@@ -724,7 +688,6 @@ public partial class NoteView : UserControl, Helpers.ICapturable
         e.Handled = true;
     }
 
-    // ----- high-res screenshot -----
     FrameworkElement Helpers.ICapturable.CaptureElement => PageContent;
     Rect? Helpers.ICapturable.CaptureArea => null;
     System.Windows.Media.Brush? Helpers.ICapturable.CaptureBackground => Helpers.CaptureHelpers.DocWallpaper();

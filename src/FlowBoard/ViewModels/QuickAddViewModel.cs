@@ -5,10 +5,6 @@ using FlowBoard.Models;
 
 namespace FlowBoard.ViewModels;
 
-/// <summary>
-/// Quick capture box opened by the global hotkey (Ctrl+Alt+Space by default) from any app.
-/// When FlowBoard was hidden before, it hides again after the card is added.
-/// </summary>
 public sealed partial class QuickAddViewModel : DialogViewModel
 {
     private readonly MainViewModel _main;
@@ -63,7 +59,6 @@ public sealed partial class QuickAddViewModel : DialogViewModel
         _main.Undo.Checkpoint(_main.Workspace, Board, "Quick add card");
         foreach (var line in title.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0))
         {
-            // Typed hints ("fri 3pm #video !high") win; the pickers fill in whatever wasn't typed.
             var card = _main.CreateCardFromText(line, Board, List);
             if (card.DueDate == null && due != null)
             {

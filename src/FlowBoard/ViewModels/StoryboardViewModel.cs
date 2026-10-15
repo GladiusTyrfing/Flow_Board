@@ -8,10 +8,8 @@ using FlowBoard.Services;
 
 namespace FlowBoard.ViewModels;
 
-/// <summary>A storyboard: a row of shots (film) or frames (animation) with notes, sketches and an animatic player.</summary>
 public sealed partial class StoryboardViewModel : DocumentViewModel
 {
-    /// <summary>Someone else changed the project: renumber shots and refresh their card links.</summary>
     public override void OnExternalChange()
     {
         Renumber();
@@ -27,7 +25,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         Renumber();
         RefreshCardLinks();
 
-        // "Frames only" was replaced by collapsing shots: a storyboard saved with it on opens collapsed.
         if (Board.FramesOnly)
         {
             foreach (var s in Board.Shots) s.IsCollapsed = true;
@@ -35,9 +32,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         }
     }
 
-    // ---------- expand / collapse ----------
-
-    /// <summary>True when every shot is collapsed (the header button then offers "Expand all").</summary>
     public bool AllCollapsed => Board.Shots.Count > 0 && Board.Shots.All(s => s.IsCollapsed);
 
     [RelayCommand]
@@ -55,8 +49,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         foreach (var s in Board.Shots) s.IsCollapsed = collapse;
         OnPropertyChanged(nameof(AllCollapsed));
     }
-
-    // ---------- links to cards (Done follows both ways) ----------
 
     public void RefreshCardLinks()
     {
@@ -115,7 +107,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
     public string[] Transitions => Shot.Transitions;
     public AudioRecorder Recorder => Main.Recorder;
 
-    /// <summary>Shot currently being voice-recorded (animation mode).</summary>
     [ObservableProperty] private Shot? _recordingShot;
     [ObservableProperty] private bool _isEditingName;
 
@@ -182,8 +173,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         OnPropertyChanged(nameof(FrameHeight));
     }
 
-    // ---------- name ----------
-
     [RelayCommand] private void StartRename() => IsEditingName = true;
 
     public override void BeginRename() => IsEditingName = true;
@@ -195,8 +184,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         if (string.IsNullOrWhiteSpace(Board.Name)) Board.Name = "Untitled storyboard";
         Main.RefreshDocSidebar();
     }
-
-    // ---------- shots ----------
 
     [RelayCommand]
     private void AddShot(Shot? after)
@@ -252,7 +239,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         Board.Shots.Move(i, i + 1);
     }
 
-    /// <summary>Asks the view to scroll to a shot; the shot flashes briefly.</summary>
     public event EventHandler<Shot>? ShotFocusRequested;
 
     public void FocusShot(Shot shot)
@@ -268,14 +254,10 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         timer.Start();
     }
 
-    /// <summary>Called by the drag &amp; drop handler before it reorders.</summary>
     public void BeforeReorder() => Checkpoint();
-
-    // ---------- frame image ----------
 
     public double AspectRatio => Storyboard.ParseAspect(Board.Aspect);
 
-    /// <summary>Frame height for the 276 px wide shot columns.</summary>
     public double FrameHeight => Math.Clamp(276 / AspectRatio, 110, 420);
 
     public string[] AspectChoices => Storyboard.AspectChoices;
@@ -331,7 +313,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         }
     }
 
-    /// <summary>A new picture goes in straight away, then the crop dialog opens (crop, or keep the whole image).</summary>
     private void SetNewImage(Shot shot, string rel)
     {
         Checkpoint();
@@ -380,7 +361,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         shot.ImageFit = false;
     }
 
-    /// <summary>Pick several images at once: one new shot per image, in file order.</summary>
     [RelayCommand]
     private void ImportImagesAsShots()
     {
@@ -429,8 +409,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         shot.SketchBackgroundPath = backgroundRelative;
     }
 
-    // ---------- tags / shot list / equipment ----------
-
     [RelayCommand]
     private void AddTag(Shot shot)
     {
@@ -458,7 +436,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         shot.NewEquipment = string.Empty;
     }
 
-    /// <summary>Removes a tag, equipment row or shot-list item from whichever shot holds it.</summary>
     [RelayCommand]
     private void RemoveItem(object item)
     {
@@ -478,8 +455,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
     {
         if (args is [Shot s, string v]) set(s, v);
     }
-
-    // ---------- voice (animation) ----------
 
     [RelayCommand]
     private async Task ToggleRecord(Shot shot)
@@ -506,7 +481,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
             }
             catch
             {
-                // keep wall-clock duration
             }
 
             Checkpoint();
@@ -538,7 +512,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         }
     }
 
-    /// <summary>Uses an audio file from the PC as the frame's voice line.</summary>
     [RelayCommand]
     private void ImportVoice(Shot shot)
     {
@@ -590,8 +563,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         }
     }
 
-    // ---------- play / export ----------
-
     [RelayCommand]
     private void PlayAnimatic(Shot? from)
     {
@@ -600,7 +571,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         Main.ShowDialog(new AnimaticViewModel(this, from == null ? 0 : Math.Max(0, Board.Shots.IndexOf(from))));
     }
 
-    /// <summary>Raised when the view should render itself to PNG ("export") or print ("print").</summary>
     public event EventHandler<string>? RenderRequested;
 
     [RelayCommand] private void ExportImage() => RenderRequested?.Invoke(this, "export");
@@ -621,7 +591,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
             return;
         }
 
-        // Shots that already have a card keep it.
         var shots = Board.Shots.Where(s => !LinkSync.CardsLinkedTo(Main.Workspace, LinkTarget.Shot, s.Id).Any()).ToList();
         if (shots.Count == 0)
         {
@@ -633,7 +602,6 @@ public sealed partial class StoryboardViewModel : DocumentViewModel
         {
             var title = string.IsNullOrWhiteSpace(s.Title) ? $"{Board.Name} — {ShotWord} {s.Number}" : $"{ShotWord} {s.Number}: {s.Title}";
             var card = new Card { Title = title, Description = s.Description, DueDate = s.Date, IsCompleted = LinkSync.IsDoneStatus(s.Status) };
-            // Linked both ways: marking the shot Done completes the card, and completing the card marks the shot Done.
             card.Links.Add(new ItemLink(LinkTarget.Shot, s.Id));
             if (s.ShotList.Count > 0)
             {

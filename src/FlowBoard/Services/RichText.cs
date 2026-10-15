@@ -3,12 +3,10 @@ using FlowBoard.Models;
 
 namespace FlowBoard.Services;
 
-/// <summary>Operations on formatted text (lists of <see cref="TextSpan"/>), used by the note editor. Pure, so it's tested.</summary>
 public static class RichText
 {
     public static string PlainText(IEnumerable<TextSpan> spans) => string.Concat(spans.Select(s => s.Text));
 
-    /// <summary>Drops empty spans and merges neighbours with the same formatting.</summary>
     public static List<TextSpan> Normalize(IEnumerable<TextSpan> spans)
     {
         var result = new List<TextSpan>();
@@ -22,7 +20,6 @@ public static class RichText
         return result;
     }
 
-    /// <summary>Splits formatted text at a character offset.</summary>
     public static (List<TextSpan> Left, List<TextSpan> Right) Split(IEnumerable<TextSpan> spans, int offset)
     {
         var left = new List<TextSpan>();
@@ -49,7 +46,6 @@ public static class RichText
 
     public static List<TextSpan> RemovePrefix(IEnumerable<TextSpan> spans, int count) => Split(spans, count).Right;
 
-    /// <summary>Markdown with the common inline marks (colors have no Markdown equivalent and are dropped).</summary>
     public static string ToMarkdown(IEnumerable<TextSpan> spans)
     {
         var sb = new StringBuilder();
@@ -62,7 +58,6 @@ public static class RichText
                 continue;
             }
 
-            // Keep surrounding spaces outside the markers so "**bold** text" stays valid Markdown.
             var core = s.Text.Trim();
             if (core.Length == 0 || s.IsPlain)
             {

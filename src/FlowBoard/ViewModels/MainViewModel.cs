@@ -9,9 +9,6 @@ using GongSolutions.Wpf.DragDrop;
 
 namespace FlowBoard.ViewModels;
 
-/// <summary>
-/// Root view model. Split into partial files: boards (this file), lists &amp; cards, and app-level features.
-/// </summary>
 public sealed partial class MainViewModel : ObservableObject
 {
     public static MainViewModel Instance { get; private set; } = null!;
@@ -60,7 +57,6 @@ public sealed partial class MainViewModel : ObservableObject
         HookLinkSync();
         HookTeamwork();
 
-        // The app always starts with no project open, on the home screen.
         OpenDashboard();
     }
 
@@ -79,7 +75,6 @@ public sealed partial class MainViewModel : ObservableObject
     public IDropTarget CardDropHandler { get; }
     public IDropTarget ListDropHandler { get; }
 
-    /// <summary>Overlay dialog stack (card details, settings, prompts...). Last item is on top.</summary>
     public ObservableCollection<DialogViewModel> Dialogs { get; } = [];
     public ObservableCollection<ToastMessage> Toasts { get; } = [];
 
@@ -94,10 +89,8 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _newListName = string.Empty;
     [ObservableProperty] private string _sidebarQuery = string.Empty;
 
-    /// <summary>Narrow window: header and title bar show icons only so nothing gets cut off.</summary>
     [ObservableProperty] private bool _isCompact;
 
-    /// <summary>Window is too narrow for the sidebar: it hides automatically unless opened on purpose.</summary>
     [ObservableProperty] private bool _isNarrow;
     [ObservableProperty] private bool _narrowSidebarOpen;
 
@@ -164,8 +157,6 @@ public sealed partial class MainViewModel : ObservableObject
                 break;
         }
     }
-
-    // ================= Boards =================
 
     public void SelectBoard(Board? board)
     {
@@ -266,7 +257,6 @@ public sealed partial class MainViewModel : ObservableObject
         var copy = Json.CloneWithNewIds(board, includeCards: true);
         foreach (var card in copy.AllActiveCards)
         {
-            // Copies must not share attachment files with the original.
             card.Attachments.Clear();
             card.CoverAttachmentId = null;
         }
@@ -322,8 +312,6 @@ public sealed partial class MainViewModel : ObservableObject
         ShowToast($"Template \"{name}\" saved — find it under New board");
     }
 
-    // ================= Filter =================
-
     [RelayCommand]
     private void OpenFilter()
     {
@@ -348,7 +336,6 @@ public sealed partial class MainViewModel : ObservableObject
         RefreshViews();
     }
 
-    /// <summary>Marks cards on the current board that wait on unfinished "blocked by" cards (which may live on other boards).</summary>
     public void RefreshBlocked()
     {
         if (CurrentBoard == null) return;

@@ -7,23 +7,15 @@ using System.Text.Json.Serialization;
 
 namespace FlowBoard.Services;
 
-/// <summary>
-/// Updates live model objects from JSON <em>in place</em>: objects keep their identity (open dialogs, views and
-/// timers stay attached), only values that differ are set, and lists of things with an <c>Id</c> are matched by id —
-/// existing items are updated, new ones inserted, removed ones taken out, and the order fixed with moves.
-/// </summary>
 public static class ModelReconciler
 {
-    /// <summary>Applies <paramref name="source"/> to <paramref name="target"/>. Returns the objects whose own values changed.</summary>
     public static HashSet<object> Apply(object target, JsonObject source)
     {
         var changed = new HashSet<object>(ReferenceEqualityComparer.Instance);
-        // Every existing item by id, so something moved to another list (a card to another column) stays the same object.
         _pool = new Dictionary<(Type, Guid), object>();
         try
         {
             Collect(target, new HashSet<object>(ReferenceEqualityComparer.Instance));
-            // Two passes: some setters adjust other values (e.g. new text drops old formatting), the second pass settles them.
             ApplyObject(target, source, changed);
             ApplyObject(target, source, new HashSet<object>(ReferenceEqualityComparer.Instance));
         }
@@ -77,7 +69,6 @@ public static class ModelReconciler
 
             if (node == null)
             {
-                // Nulls are left out of the file: a missing value means "empty".
                 if (current != null && prop.CanWrite && (!type.IsValueType || Nullable.GetUnderlyingType(type) != null))
                 {
                     prop.SetValue(target, null);
@@ -92,7 +83,6 @@ public static class ModelReconciler
                 if (IdProperty(elem) is { } idProp) ReconcileList(list, arr, elem, idProp, changed);
                 else if (!JsonNode.DeepEquals(ToNode(current, type), arr))
                 {
-                    // Plain lists (label ids, tags without ids…): refill in place.
                     var fresh = (IList?)arr.Deserialize(type, Json.Options);
                     list.Clear();
                     if (fresh != null) foreach (var x in fresh) list.Add(x);
@@ -131,13 +121,12 @@ public static class ModelReconciler
             var id = o.TryGetPropertyValue(idProp.Name, out var idNode) && idNode is JsonValue v && v.TryGetValue<Guid>(out var g) ? g : Guid.Empty;
             if (id != Guid.Empty && existing.Remove(id, out var match))
             {
-                _pool?.Remove((elem, id)); // stays in this list: not available to others
+                _pool?.Remove((elem, id));
                 ApplyObject(match, o, changed);
                 desired.Add(match);
             }
             else if (id != Guid.Empty && _pool != null && _pool.Remove((elem, id), out var moved))
             {
-                // Moved here from another list: keep the same object.
                 ApplyObject(moved, o, changed);
                 desired.Add(moved);
                 changed.Add(moved);
@@ -151,7 +140,6 @@ public static class ModelReconciler
 
         if (SameSequence(list, desired)) return;
 
-        // Take out what's gone, then put every item in its place (moves keep the objects and their views).
         var keep = new HashSet<object>(desired, ReferenceEqualityComparer.Instance);
         for (int i = list.Count - 1; i >= 0; i--)
             if (!keep.Contains(list[i]!)) list.RemoveAt(i);
@@ -203,7 +191,7 @@ public static class ModelReconciler
     private static bool SameId(object current, JsonObject obj)
     {
         var idProp = current.GetType().GetProperty("Id");
-        if (idProp == null || idProp.PropertyType != typeof(Guid)) return true; // no id: same slot, same object
+        if (idProp == null || idProp.PropertyType != typeof(Guid)) return true;
         return obj.TryGetPropertyValue("Id", out var n) && n is JsonValue v && v.TryGetValue<Guid>(out var g) && g == (Guid)idProp.GetValue(current)!;
     }
 }

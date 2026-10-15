@@ -26,10 +26,8 @@ public partial class App : Application
     private const int ShowHideHotkeyId = 0xB002;
     private bool _trayHintShown;
 
-    /// <summary>True while the app is really shutting down (vs. hiding to the tray).</summary>
     public static bool IsExiting { get; private set; }
 
-    /// <summary>Set when a backup was restored: don't overwrite the restored files on exit.</summary>
     private static bool _skipSave;
 
     public static new App Current => (App)Application.Current;
@@ -41,7 +39,6 @@ public partial class App : Application
         _mutex = new Mutex(true, MutexName, out var isFirst);
         if (!isFirst && !e.Args.Contains("--restarted"))
         {
-            // Another FlowBoard is running: hand it the project to open (if any), bring it to the front and quit.
             try
             {
                 AppPaths.DetectLocation();
@@ -56,7 +53,6 @@ public partial class App : Application
             }
             catch
             {
-                // The other instance may be starting up; nothing else to do.
             }
 
             Shutdown();
@@ -71,7 +67,6 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            // Never leave an invisible process behind: report the problem and quit.
             ReportFatal(ex);
         }
     }
@@ -107,7 +102,6 @@ public partial class App : Application
 
         _store.StartAutoSave();
 
-        // Double-clicking a .flowboard file in Explorer opens that project.
         if (ProjectArg(e.Args) is { } file) _vm.OpenProjectFile(file);
         FileAssociation.Register();
         _vm.ShowStartupWarning();
@@ -198,7 +192,6 @@ public partial class App : Application
 
     private bool IsWindowInForeground => _window is { IsVisible: true, IsActive: true } && _window.WindowState != WindowState.Minimized;
 
-    /// <summary>Global hotkey: pop the quick-add box over whatever you're doing; hide again afterwards if we were hidden.</summary>
     private void QuickAddFromAnywhere()
     {
         var wasHidden = !IsWindowInForeground;
@@ -241,7 +234,6 @@ public partial class App : Application
     private static string? ProjectArg(string[] args) =>
         args.FirstOrDefault(a => a.EndsWith(AppPaths.ProjectExtension, StringComparison.OrdinalIgnoreCase) && File.Exists(a));
 
-    /// <summary>Opens a project another FlowBoard launch (e.g. a double-click in Explorer) passed along.</summary>
     private void OpenRequestedProject()
     {
         try
@@ -253,7 +245,6 @@ public partial class App : Application
         }
         catch
         {
-            // Nothing to open.
         }
     }
 
@@ -268,7 +259,6 @@ public partial class App : Application
         _window.Focus();
     }
 
-    /// <summary>Called when the window is closed with "minimize to tray" enabled.</summary>
     public void OnHiddenToTray()
     {
         if (_trayHintShown) return;
@@ -276,7 +266,6 @@ public partial class App : Application
         _tray?.Notify("FlowBoard is still running", "Reminders and the focus timer keep working. Right-click the tray icon to exit.");
     }
 
-    /// <summary>The window is closing for real (tray disabled): shut down once the close completes.</summary>
     public void ExitFromWindowClosing()
     {
         IsExiting = true;
@@ -290,7 +279,6 @@ public partial class App : Application
         Shutdown();
     }
 
-    /// <summary>Restart after restoring a backup.</summary>
     public static void Restart()
     {
         _skipSave = true;
@@ -303,7 +291,6 @@ public partial class App : Application
         }
         catch
         {
-            // Not owned; fine.
         }
 
         if (Environment.ProcessPath is { } exe) Process.Start(exe, "--restarted");
@@ -337,7 +324,6 @@ public partial class App : Application
         e.Handled = true;
         LogError(e.Exception);
 
-        // Before the window is up there is nothing to recover to.
         if (_window == null || !_windowShownOnce)
         {
             ReportFatal(e.Exception);
@@ -359,7 +345,6 @@ public partial class App : Application
         }
         catch
         {
-            // Ignore logging failures.
         }
 
         return path;

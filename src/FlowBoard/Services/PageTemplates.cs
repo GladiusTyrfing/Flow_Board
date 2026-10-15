@@ -2,7 +2,6 @@ using FlowBoard.Models;
 
 namespace FlowBoard.Services;
 
-/// <summary>Starter content for new note pages.</summary>
 public static class PageTemplates
 {
     public static List<NoteBlock> Build(string name, DateTime now)

@@ -4,7 +4,6 @@ using FlowBoard.Models;
 
 namespace FlowBoard.Services;
 
-/// <summary>A single global stopwatch that logs time entries to cards.</summary>
 public sealed partial class TimeTracker : ObservableObject
 {
     private readonly DispatcherTimer _timer;
@@ -36,7 +35,6 @@ public sealed partial class TimeTracker : ObservableObject
         _timer.Start();
     }
 
-    /// <summary>Stops the timer and logs the entry (if at least a few seconds long).</summary>
     public void Stop()
     {
         if (!IsRunning || _card == null) return;
@@ -51,7 +49,6 @@ public sealed partial class TimeTracker : ObservableObject
         ElapsedText = "0:00";
     }
 
-    /// <summary>After undo replaces card objects, re-point the running timer at the new instance.</summary>
     public void Rebind(Workspace ws)
     {
         if (_card == null) return;

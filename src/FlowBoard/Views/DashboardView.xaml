@@ -136,7 +136,6 @@
         </Border>
 
         <Grid>
-            <!-- ============ No project open: welcome ============ -->
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="16,0"
                           Visibility="{Binding HasProject, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
                 <StackPanel MaxWidth="1040" Margin="12,40,12,24" HorizontalAlignment="Center">
@@ -196,11 +195,9 @@
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- ============ Project open: stats for every section ============ -->
             <ScrollViewer x:Name="DashScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="12,16,0,4"
                           Visibility="{Binding HasProject, Converter={StaticResource BoolToVis}}">
                 <StackPanel x:Name="DashContent">
-                    <!-- Greeting -->
                     <StackPanel Margin="4,0,0,18" h:Behaviors.AnimateIn="rise">
                         <TextBlock Text="{Binding Greeting}" Style="{StaticResource Fb.GradientTitle}" FontSize="30" />
                         <TextBlock Style="{StaticResource Fb.Muted}" FontSize="14" Margin="0,2,0,0">
@@ -208,7 +205,6 @@
                         </TextBlock>
                     </StackPanel>
 
-                    <!-- Sections -->
                     <ItemsControl ItemsSource="{Binding Sections}" Focusable="False">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -263,7 +259,6 @@
 
                     <TextBlock Text="Cards" Style="{StaticResource PanelTitle}" Margin="4,6,0,10"
                                Visibility="{Binding HasCardStats, Converter={StaticResource BoolToVis}}" />
-                    <!-- Tiles -->
                     <ItemsControl ItemsSource="{Binding Tiles}" Focusable="False"
                                   Visibility="{Binding HasCardStats, Converter={StaticResource BoolToVis}}">
                         <ItemsControl.ItemsPanel>
@@ -301,7 +296,6 @@
                         </Grid.ColumnDefinitions>
     
                         <StackPanel Visibility="{Binding HasCardStats, Converter={StaticResource BoolToVis}}">
-                            <!-- Completed per day -->
                             <Border Style="{StaticResource Panel}">
                                 <StackPanel>
                                     <Grid>
@@ -313,7 +307,6 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <!-- y axis: max and zero -->
                                         <Grid Margin="0,0,8,20">
                                             <TextBlock Text="{Binding ChartMax}" Style="{StaticResource Fb.Muted}" FontSize="11" VerticalAlignment="Top" />
                                             <TextBlock Text="0" Style="{StaticResource Fb.Muted}" FontSize="11" VerticalAlignment="Bottom" />
@@ -358,7 +351,6 @@
                                 </StackPanel>
                             </Border>
     
-                            <!-- Up next -->
                             <Border Style="{StaticResource Panel}">
                                 <StackPanel>
                                     <TextBlock Text="Up next — overdue and the next 7 days" Style="{StaticResource PanelTitle}" />
@@ -406,7 +398,6 @@
                         </Border>
 
                         <StackPanel Grid.Column="1">
-                            <!-- Open cards by priority -->
                             <Border Style="{StaticResource Panel}" Visibility="{Binding HasCardStats, Converter={StaticResource BoolToVis}}">
                                 <StackPanel>
                                     <TextBlock Text="Open cards by priority" Style="{StaticResource PanelTitle}" />
@@ -430,7 +421,6 @@
                                 </StackPanel>
                             </Border>
     
-                            <!-- Time per board -->
                             <Border Style="{StaticResource Panel}" Visibility="{Binding HasCardStats, Converter={StaticResource BoolToVis}}">
                                 <StackPanel>
                                     <TextBlock Text="Where your time went (7 days)" Style="{StaticResource PanelTitle}" />
@@ -453,7 +443,6 @@
                                 </StackPanel>
                             </Border>
     
-                            <!-- Jump back in -->
                             <Border Style="{StaticResource Panel}">
                                 <StackPanel>
                                     <TextBlock Text="Jump back in" Style="{StaticResource PanelTitle}" />
@@ -484,7 +473,6 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Switch project -->
                             <Border Style="{StaticResource Panel}">
                                 <StackPanel>
                                     <Grid Margin="0,0,0,8">

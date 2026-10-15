@@ -8,7 +8,6 @@ public sealed record BoardMinutes(Board Board, double Minutes);
 
 public sealed record AgendaEntry(Board Board, BoardList List, Card Card);
 
-/// <summary>Numbers for the dashboard, computed from the workspace (pure, so it can be tested).</summary>
 public sealed record DashboardStats(
     int OpenCards,
     int CompletedThisWeek,
@@ -47,7 +46,6 @@ public sealed record DashboardStats(
                 everything.Count(c => c.CreatedAt.Date == day)));
         }
 
-        // Days in a row (ending today, or yesterday if nothing is done yet today) with at least one completion.
         var doneDays = everything.Where(c => c.IsCompleted && c.CompletedAt != null).Select(c => c.CompletedAt!.Value.Date).ToHashSet();
         int streak = 0;
         var cursor = doneDays.Contains(today) ? today : today.AddDays(-1);
@@ -83,7 +81,6 @@ public sealed record DashboardStats(
     }
 }
 
-/// <summary>Size and progress of every section of a project (pure, so it can be tested).</summary>
 public sealed record ProjectStats(
     int Boards, int Lists, int Cards, int CardsDone,
     int Storyboards, int Shots, int ShotsDone, int ShotsWithPicture, int VoiceClips, double RuntimeSeconds,
@@ -128,7 +125,6 @@ public sealed record ProjectStats(
         return text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
     }
 
-    /// <summary>"1:05" style runtime, with hours when needed.</summary>
     public static string FormatRuntime(double seconds)
     {
         var t = TimeSpan.FromSeconds(Math.Round(seconds));

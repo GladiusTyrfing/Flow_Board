@@ -58,7 +58,6 @@ public static class TemplateService
             board = Json.CloneWithNewIds(source, includeCards: true);
             foreach (var card in board.AllActiveCards)
             {
-                // Template attachments point at files of the original card; drop them so deleting one card never affects another.
                 card.Attachments.Clear();
                 card.CoverAttachmentId = null;
                 card.Comments.Clear();
@@ -103,7 +102,6 @@ public static class TemplateService
         || name.Equals("Closed", StringComparison.OrdinalIgnoreCase)
         || name.Equals("Published", StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>A small tour board created on first launch.</summary>
     public static Board CreateWelcomeBoard(string author)
     {
         var board = Create(BuiltIn[0], "Welcome to FlowBoard");

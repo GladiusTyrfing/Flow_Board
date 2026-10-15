@@ -6,7 +6,6 @@ using FlowBoard.ViewModels;
 
 namespace FlowBoard.Views;
 
-/// <summary>Scroll syncing and bar dragging for the timeline.</summary>
 public partial class TimelineView : UserControl, Helpers.ICapturable
 {
     private TimelineViewModel? _vm;
@@ -47,7 +46,6 @@ public partial class TimelineView : UserControl, Helpers.ICapturable
         e.Handled = true;
     }
 
-    /// <summary>Wheel scrolls rows; Shift+wheel moves through time; Ctrl+wheel zooms.</summary>
     private void OnChartWheel(object sender, MouseWheelEventArgs e)
     {
         if (_vm == null) return;
@@ -107,7 +105,6 @@ public partial class TimelineView : UserControl, Helpers.ICapturable
         _vm.Commit(row, _dragMode, _dragDays);
     }
 
-    // ----- high-res screenshot -----
     FrameworkElement Helpers.ICapturable.CaptureElement => Chart;
     Rect? Helpers.ICapturable.CaptureArea => null;
     System.Windows.Media.Brush? Helpers.ICapturable.CaptureBackground => null;

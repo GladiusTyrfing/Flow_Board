@@ -7,12 +7,6 @@ using FlowBoard.Models;
 
 namespace FlowBoard.Services;
 
-/// <summary>
-/// Loads and saves projects as local JSON. Autosave works by serializing periodically and
-/// writing only when the content changed, so no change tracking is needed anywhere else.
-/// The <see cref="Workspace"/> instance never changes: opening a project swaps its contents,
-/// so everything bound to its collections keeps working.
-/// </summary>
 public sealed partial class DataStore
 {
     private readonly DispatcherTimer _timer;
@@ -37,7 +31,6 @@ public sealed partial class DataStore
         InitSync();
     }
 
-    /// <summary>Reads app settings. No project is opened: the app always starts on the home screen.</summary>
     public void Load()
     {
         Settings = TryRead<AppSettings>(AppPaths.SettingsFile, out _) ?? new AppSettings();
@@ -48,7 +41,6 @@ public sealed partial class DataStore
             if (e.PropertyName == nameof(AppSettings.ProjectsFolder)) AppPaths.CustomProjectsDir = Settings.ProjectsFolder;
         };
 
-        // Data from before projects existed shows up once in the recent list as "My workspace".
         if (!Settings.LegacyWorkspaceListed)
         {
             Settings.LegacyWorkspaceListed = true;
@@ -62,9 +54,6 @@ public sealed partial class DataStore
 
     public void StartAutoSave() => _timer.Start();
 
-    // ---------- projects ----------
-
-    /// <summary>Opens a project file, saving the current one first. Returns an error message on failure.</summary>
     public string? OpenProject(string path)
     {
         path = Path.GetFullPath(path);
@@ -83,7 +72,6 @@ public sealed partial class DataStore
         string? warning = null;
         if (ws == null)
         {
-            // Keep the damaged file and fall back to the newest backup.
             var backup = LoadNewestBackup(Path.Combine(ProjectPackage.MediaDirFor(path, null), "backups"))
                          ?? LoadNewestBackup(Path.Combine(Path.GetDirectoryName(path)!, "backups"));
             if (backup == null) return $"The project could not be read ({error}).";
@@ -104,9 +92,6 @@ public sealed partial class DataStore
         return null;
     }
 
-    /// <summary>
-    /// Creates a project at <paramref name="file"/> (any folder) with its "&lt;name&gt; files" folder beside it, and opens it.
-    /// </summary>
     public void CreateProject(string file, Workspace initial)
     {
         file = WithExtension(file);
@@ -118,10 +103,6 @@ public sealed partial class DataStore
         if (error != null) throw new IOException(error);
     }
 
-    /// <summary>
-    /// Saves the open project under a new name / place (with copies of its pictures, recordings and wallpapers)
-    /// and continues working in the new file.
-    /// </summary>
     public void SaveProjectAs(string file)
     {
         if (!HasProject) throw new InvalidOperationException("No project is open.");
@@ -151,7 +132,7 @@ public sealed partial class DataStore
         var previous = Workspace.MediaFolder;
         Workspace.MediaFolder = Path.GetFileName(media);
         var json = JsonSerializer.Serialize(Workspace, Json.Options);
-        Workspace.MediaFolder = previous; // the old file keeps pointing at its own folder
+        Workspace.MediaFolder = previous;
         _lastWorkspaceJson = JsonSerializer.Serialize(Workspace, Json.Options);
         ProjectPackage.Write(file, json);
         var error = OpenProject(file);
@@ -161,7 +142,6 @@ public sealed partial class DataStore
     private static string WithExtension(string file) =>
         string.Equals(Path.GetExtension(file), AppPaths.ProjectExtension, StringComparison.OrdinalIgnoreCase) ? file : file + AppPaths.ProjectExtension;
 
-    /// <summary>True for the pre-projects data.json (plain JSON in the app folder).</summary>
     public bool IsLegacyWorkspace => ProjectFile != null && !string.Equals(Path.GetExtension(ProjectFile), AppPaths.ProjectExtension, StringComparison.OrdinalIgnoreCase);
 
     public void CloseProject()
@@ -187,7 +167,6 @@ public sealed partial class DataStore
         if (Settings.RecentProjects.Count > 15) Settings.RecentProjects.RemoveRange(15, Settings.RecentProjects.Count - 15);
     }
 
-    /// <summary>Moves another workspace's contents into ours, keeping the same collection instances.</summary>
     private void Replace(Workspace from)
     {
         from.Hydrate();
@@ -208,22 +187,18 @@ public sealed partial class DataStore
         foreach (var i in list) target.Add(i);
     }
 
-    // ---------- saving ----------
-
     public void SaveIfChanged()
     {
         try
         {
             if (HasProject)
             {
-                // Someone else may have saved the shared project: bring their changes in before writing ours.
                 CheckForExternalChanges();
                 var ws = JsonSerializer.Serialize(Workspace, Json.Options);
                 if (ws != _lastWorkspaceJson && TryLockForSave(out var saveLock))
                 {
                     using (saveLock)
                     {
-                        // Check once more while holding the lock, so nobody's save slips in between.
                         CheckForExternalChanges();
                         ws = JsonSerializer.Serialize(Workspace, Json.Options);
                         ProjectPackage.Write(AppPaths.DataFile, ws, Settings.DisplayName);
@@ -250,7 +225,6 @@ public sealed partial class DataStore
         }
     }
 
-    /// <summary>Keeps up to 20 automatic copies of the project file in its backups folder, at most one every 12 hours.</summary>
     public void CreateBackupIfDue()
     {
         if (!HasProject || !File.Exists(AppPaths.DataFile)) return;
@@ -269,7 +243,6 @@ public sealed partial class DataStore
         }
     }
 
-    /// <summary>Writes a full backup of the open project (data, attachments, wallpapers) to a zip file.</summary>
     public void ExportZip(string zipPath)
     {
         if (!HasProject) throw new InvalidOperationException("Open a project first.");
@@ -289,9 +262,6 @@ public sealed partial class DataStore
                     AddFile(f);
     }
 
-    /// <summary>
-    /// Unpacks a backup zip next to the other projects (never over existing data) and returns the project file.
-    /// </summary>
     public string ImportZip(string zipPath)
     {
         using var zip = ZipFile.OpenRead(zipPath);
@@ -312,15 +282,13 @@ public sealed partial class DataStore
         {
             foreach (var e in zip.Entries)
             {
-                // Old full-app backups also carried settings.json: app settings are left alone.
                 if (e.FullName.EndsWith('/') || e.FullName == "settings.json") continue;
                 var target = e == entry ? file : Path.GetFullPath(Path.Combine(media, e.FullName));
-                if (e != entry && !target.StartsWith(media + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) continue; // no path escapes
+                if (e != entry && !target.StartsWith(media + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) continue;
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 e.ExtractToFile(target, true);
             }
 
-            // Validate, and point the project at its media folder (this also turns an old data.json into a package).
             var ws = ProjectPackage.Read(file);
             ws.MediaFolder = Path.GetFileName(media);
             ProjectPackage.Write(file, JsonSerializer.Serialize(ws, Json.Options));
@@ -333,7 +301,6 @@ public sealed partial class DataStore
         }
     }
 
-    /// <summary>Automatic backups, newest first (current and older naming).</summary>
     private static IEnumerable<string> BackupFiles(string dir) =>
         Directory.Exists(dir)
             ? Directory.GetFiles(dir, "backup-*").Concat(Directory.GetFiles(dir, "data-*.json"))
@@ -350,7 +317,6 @@ public sealed partial class DataStore
             }
             catch
             {
-                // Try the next one.
             }
         }
 

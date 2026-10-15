@@ -3,7 +3,6 @@ using System.Windows.Controls;
 
 namespace FlowBoard.Controls;
 
-/// <summary>Small date button with a calendar popup (no text box, no focus outline).</summary>
 public partial class DateChip : UserControl
 {
     public static readonly DependencyProperty DateProperty = DependencyProperty.Register(

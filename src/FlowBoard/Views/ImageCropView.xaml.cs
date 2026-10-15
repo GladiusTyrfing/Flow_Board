@@ -7,7 +7,6 @@ using FlowBoard.ViewModels;
 
 namespace FlowBoard.Views;
 
-/// <summary>Crop box interaction: drag to move, drag corners to resize (keeping the aspect when one is chosen).</summary>
 public partial class ImageCropView : UserControl
 {
     private ImageCropViewModel? _vm;
@@ -89,7 +88,6 @@ public partial class ImageCropView : UserControl
             return;
         }
 
-        // Fixed corner is the one opposite the handle being dragged.
         bool west = _mode.Contains('w'), north = _mode.Contains('n');
         var fixedX = west ? s.Right : s.Left;
         var fixedY = north ? s.Bottom : s.Top;
@@ -101,9 +99,8 @@ public partial class ImageCropView : UserControl
         var ratio = _vm.SelectedAspect.Ratio;
         if (ratio > 0)
         {
-            // Normalized units: pixel aspect = (w * imgW) / (h * imgH).
             var k = ratio / _vm.ImageAspect;
-            if (h * k > w) w = h * k; // follow whichever direction moved more
+            if (h * k > w) w = h * k;
             h = w / k;
             var maxH = north ? fixedY : 1 - fixedY;
             var maxW = west ? fixedX : 1 - fixedX;

@@ -88,7 +88,6 @@ public partial class AnimaticView : UserControl
         var t = transition.ToLowerInvariant();
         if (t is "fade")
         {
-            // Through black.
             FrontImage.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(450)));
         }
         else if (t is "dissolve")

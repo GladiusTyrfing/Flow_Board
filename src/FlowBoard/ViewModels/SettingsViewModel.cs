@@ -8,7 +8,6 @@ public sealed partial class SettingsViewModel : DialogViewModel
 {
     public override string EnterAnimation => "pop";
 
-    // Barely dim the app on the Board style page so changes are visible behind the dialog.
     public override double BackdropOpacity => Section == "boardstyle" ? 0.12 : 1;
 
     partial void OnSectionChanged(string value) => OnPropertyChanged(nameof(BackdropOpacity));
@@ -26,7 +25,6 @@ public sealed partial class SettingsViewModel : DialogViewModel
         }
     }
 
-    /// <summary>True when the open board has its own roundness, so the app slider doesn't change it.</summary>
     public bool BoardOverridesRadius => Main.CurrentBoard is { CornerRadius: >= 0 };
 
     [RelayCommand]
@@ -35,7 +33,6 @@ public sealed partial class SettingsViewModel : DialogViewModel
         if (Main.CurrentBoard != null) Main.CurrentBoard.CornerRadius = -1;
     }
 
-    /// <summary>Style editor for the board that is open (null when no board is open).</summary>
     public BoardSettingsViewModel? BoardStyle { get; }
     public bool HasBoard => BoardStyle != null;
 
@@ -120,7 +117,6 @@ public sealed partial class SettingsViewModel : DialogViewModel
         }
     }
 
-    /// <summary>Back to following the Windows user name.</summary>
     [RelayCommand]
     private void UseWindowsName()
     {
@@ -129,7 +125,6 @@ public sealed partial class SettingsViewModel : DialogViewModel
     }
     public IReadOnlyList<AccentPreset> Accents => ThemeService.AccentPresets;
 
-    /// <summary>Which settings page is shown (appearance, general, hotkeys, reminders, focus, data).</summary>
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty] private string _section = "appearance";
 
     [RelayCommand] private void SetAccentPreset(string name) => Settings.AccentPreset = name;
@@ -157,7 +152,7 @@ public sealed partial class BoardSettingsViewModel : DialogViewModel
     {
         _main = main;
         Board = board;
-        _tab = tab == "background" ? "style" : tab; // background now lives on the Style tab
+        _tab = tab == "background" ? "style" : tab;
         _snapshot = Json.SerializeBoard(board);
         _index = main.Workspace.Boards.IndexOf(board);
     }
@@ -165,7 +160,6 @@ public sealed partial class BoardSettingsViewModel : DialogViewModel
     private readonly string _snapshot;
     private readonly int _index;
 
-    // Drawer on the right without dimming, so style changes preview live on the board.
     public override double BackdropOpacity => 0;
     public override string EnterAnimation => "slide";
 
@@ -177,7 +171,6 @@ public sealed partial class BoardSettingsViewModel : DialogViewModel
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty] private string _tab;
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty] private Label? _editingLabel;
 
-    /// <summary>Background images previously added to any board.</summary>
     public IEnumerable<string> RecentImages =>
         System.IO.Directory.Exists(AppPaths.BackgroundsDir)
             ? System.IO.Directory.GetFiles(AppPaths.BackgroundsDir)
@@ -188,7 +181,6 @@ public sealed partial class BoardSettingsViewModel : DialogViewModel
 
     public IReadOnlyList<BoardThemePreset> Presets => BoardThemeService.Presets;
 
-    /// <summary>When on, this board uses the app-wide corner roundness.</summary>
     public bool UseAppRadius
     {
         get => Board.CornerRadius < 0;
@@ -215,7 +207,6 @@ public sealed partial class BoardSettingsViewModel : DialogViewModel
 
     [RelayCommand] private void SetTheme(string name) => Board.Theme = name;
 
-    /// <summary>Copies this board's look (theme, transparency, corners, blur, dim) to every board.</summary>
     [RelayCommand]
     private void ApplyStyleToAllBoards()
     {
@@ -233,7 +224,6 @@ public sealed partial class BoardSettingsViewModel : DialogViewModel
         _main.ShowToast("Style applied to all boards");
     }
 
-    /// <summary>One-click looks combining transparency and blur.</summary>
     [RelayCommand]
     private void ApplyLook(string look)
     {

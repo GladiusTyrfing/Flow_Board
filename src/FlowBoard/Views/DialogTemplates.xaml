@@ -6,7 +6,6 @@
                     xmlns:h="clr-namespace:FlowBoard.Helpers"
                     xmlns:c="clr-namespace:FlowBoard.Controls">
 
-    <!-- Larger dialogs live in their own views -->
     <DataTemplate DataType="{x:Type vm:CardDetailViewModel}">
         <views:CardDetailView />
     </DataTemplate>
@@ -53,7 +52,6 @@
         <views:LinkPickerView />
     </DataTemplate>
 
-    <!-- Documents shown in the main area -->
     <DataTemplate DataType="{x:Type vm:StoryboardViewModel}">
         <views:StoryboardView />
     </DataTemplate>
@@ -67,7 +65,6 @@
         <views:DashboardView />
     </DataTemplate>
 
-    <!-- Confirm -->
     <DataTemplate DataType="{x:Type vm:ConfirmDialogViewModel}">
         <Border Style="{StaticResource Fb.Dialog}" Width="440" Padding="24">
             <StackPanel>
@@ -91,7 +88,6 @@
         </DataTemplate.Triggers>
     </DataTemplate>
 
-    <!-- Text prompt -->
     <DataTemplate DataType="{x:Type vm:TextPromptViewModel}">
         <Border Style="{StaticResource Fb.Dialog}" Width="460" Padding="24">
             <StackPanel>
@@ -109,7 +105,6 @@
         </Border>
     </DataTemplate>
 
-    <!-- Keyboard shortcuts -->
     <DataTemplate DataType="{x:Type vm:ShortcutsViewModel}">
         <Border Style="{StaticResource Fb.Dialog}" Width="720" Margin="0,24" Padding="24,20,12,20">
             <DockPanel MaxHeight="720">
@@ -155,7 +150,6 @@
         </Border>
     </DataTemplate>
 
-    <!-- Image preview -->
     <DataTemplate DataType="{x:Type vm:ImagePreviewViewModel}">
         <Grid Margin="40">
             <Grid.RowDefinitions>
@@ -175,7 +169,6 @@
         </Grid>
     </DataTemplate>
 
-    <!-- Quick add (global hotkey) -->
     <DataTemplate DataType="{x:Type vm:QuickAddViewModel}">
         <Border Style="{StaticResource Fb.Dialog}" Width="560" VerticalAlignment="Top" Margin="0,80,0,0" Padding="20">
             <StackPanel>

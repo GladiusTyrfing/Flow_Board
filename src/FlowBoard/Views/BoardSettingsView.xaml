@@ -18,7 +18,6 @@
         </Style>
     </UserControl.Resources>
 
-    <!-- Right-hand drawer: the board stays visible so every change previews live. -->
     <Border Style="{StaticResource Fb.Dialog}" Width="400" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,8,8,8">
         <DockPanel>
             <Grid DockPanel.Dock="Top" Margin="22,20,16,12">
@@ -49,11 +48,9 @@
             </Border>
 
             <Grid>
-            <!-- Style tab: preview pinned on top, controls scroll inside the editor -->
             <views:BoardStyleEditor Margin="22,0,12,16" Panel.ZIndex="1" Visibility="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=style}" />
             <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="22,0,16,20">
                 <Grid>
-                    <!-- ============ Labels ============ -->
                     <StackPanel Visibility="{Binding Tab, Converter={StaticResource Equals}, ConverterParameter=labels}">
                         <TextBlock Style="{StaticResource Fb.Muted}" FontSize="13" Margin="0,0,0,12" TextWrapping="Wrap"
                                    Text="Labels belong to this board. Renaming or recoloring a label updates every card that uses it. Hover a card and press 1–9 to toggle labels." />

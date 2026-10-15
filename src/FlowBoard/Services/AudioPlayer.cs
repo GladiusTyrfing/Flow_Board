@@ -4,7 +4,6 @@ using NAudio.Wave;
 
 namespace FlowBoard.Services;
 
-/// <summary>Plays one voice note at a time and reports progress on the attachment itself.</summary>
 public sealed class AudioPlayer : IDisposable
 {
     private readonly DispatcherTimer _tick;

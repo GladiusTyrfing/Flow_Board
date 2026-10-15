@@ -13,10 +13,8 @@ namespace FlowBoard.ViewModels;
 
 public sealed record SlashOption(string Title, string Hint, string Icon, BlockType Type, string Keywords);
 
-/// <summary>A note page edited as blocks (Notion-style): Markdown shortcuts, "/" menu, to-dos, images and links.</summary>
 public sealed partial class NoteViewModel : DocumentViewModel
 {
-    /// <summary>Someone else changed the project: refresh link previews, numbering and the word count.</summary>
     public override void OnExternalChange()
     {
         Renumber();
@@ -41,7 +39,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
     public override object Model => Page;
     public override ActiveView Kind => ActiveView.Note;
 
-    /// <summary>Raised when a block's text box should take focus; caret -1 = end.</summary>
     public event EventHandler<(NoteBlock Block, int Caret)>? FocusRequested;
 
     public static readonly SlashOption[] AllSlashOptions =
@@ -84,8 +81,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
             return s + $" · edited {Page.UpdatedAt:d MMM HH:mm}";
         }
     }
-
-    // ================= change tracking =================
 
     private void OnPageChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -141,7 +136,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         foreach (var b in Page.Blocks) b.PropertyChanged -= OnBlockChanged;
         Page.Blocks.CollectionChanged -= OnBlocksChanged;
         Page.PropertyChanged -= OnPageChanged;
-        // Drop trailing empty paragraphs (but keep one block).
         while (Page.Blocks.Count > 1 && Page.Blocks[^1] is { Type: BlockType.Paragraph, Text: "" } && Page.Blocks[^2] is { Type: BlockType.Paragraph, Text: "" })
             Page.Blocks.RemoveAt(Page.Blocks.Count - 1);
         Main.RefreshDocSidebar();
@@ -163,8 +157,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
     }
 
     private void Focus(NoteBlock b, int caret) => FocusRequested?.Invoke(this, (b, caret));
-
-    // ================= Markdown shortcuts & slash menu =================
 
     private void ApplyShortcut(NoteBlock b)
     {
@@ -233,8 +225,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         await TurnInto(b, option.Type);
     }
 
-    // ================= block operations =================
-
     public NoteBlock InsertAfter(NoteBlock? after, BlockType type, string text = "")
     {
         var index = after == null ? Page.Blocks.Count : Page.Blocks.IndexOf(after) + 1;
@@ -243,7 +233,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         return b;
     }
 
-    /// <summary>Enter: split the block at the caret; lists continue, an empty list item ends the list.</summary>
     public void Enter(NoteBlock b, int caret)
     {
         Checkpoint();
@@ -271,7 +260,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         Focus(next, 0);
     }
 
-    /// <summary>Backspace at the very start: un-style, outdent, then merge into the previous block.</summary>
     public void BackspaceAtStart(NoteBlock b)
     {
         var i = Page.Blocks.IndexOf(b);
@@ -307,7 +295,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         Focus(prev, caret);
     }
 
-    /// <summary>Delete at the very end: pull the next block's text up.</summary>
     public void DeleteAtEnd(NoteBlock b)
     {
         var i = Page.Blocks.IndexOf(b);
@@ -334,7 +321,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         b.Indent = v;
     }
 
-    /// <summary>Arrow up/down across blocks.</summary>
     public void FocusSibling(NoteBlock b, int direction, int caret)
     {
         var i = Page.Blocks.IndexOf(b) + direction;
@@ -382,7 +368,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         Page.Blocks.Insert(Page.Blocks.IndexOf(b) + 1, copy);
     }
 
-    /// <summary>"+" in the gutter: new empty line below, with the slash menu ready.</summary>
     [RelayCommand]
     private void AddBelow(NoteBlock b)
     {
@@ -405,7 +390,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         Focus(InsertAfter(last, BlockType.Paragraph), 0);
     }
 
-    /// <summary>Gutter menu "Turn into": parameter is [block, type name].</summary>
     [RelayCommand]
     private Task Convert(object[] args) =>
         args is [NoteBlock b, string t] && Enum.TryParse<BlockType>(t, out var type) ? TurnInto(b, type) : Task.CompletedTask;
@@ -446,7 +430,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         }
     }
 
-    /// <summary>An empty text block becomes the new block; otherwise the new block goes below it. A text line follows.</summary>
     private void ReplaceOrInsert(NoteBlock b, NoteBlock replacement)
     {
         var i = Page.Blocks.IndexOf(b);
@@ -469,7 +452,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         }
     }
 
-    /// <summary>Ctrl+V with an image on the clipboard inserts an image block. Returns false when there was none.</summary>
     public bool PasteImage(NoteBlock at)
     {
         var rel = MediaStore.FromClipboard(Page.Id);
@@ -521,14 +503,10 @@ public sealed partial class NoteViewModel : DocumentViewModel
         else AddAtEnd();
     }
 
-    // ================= outline, cover, width, templates =================
-
-    /// <summary>Headings of the page (for the outline panel).</summary>
     public IEnumerable<NoteBlock> Outline => Page.Blocks.Where(b => b.Type is BlockType.Heading1 or BlockType.Heading2 or BlockType.Heading3 && b.Text.Length > 0).ToList();
 
     [ObservableProperty] private bool _showOutline;
 
-    /// <summary>The block that last had the cursor (inserts from the toolbar go below it).</summary>
     public NoteBlock? LastFocused { get; set; }
 
     [RelayCommand]
@@ -562,7 +540,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         Page.CoverPath = null;
     }
 
-    /// <summary>Inserts a block of the given type below the block you were typing in (toolbar buttons).</summary>
     [RelayCommand]
     private async Task Insert(string type)
     {
@@ -595,7 +572,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         Focus(Page.Blocks.FirstOrDefault(b => NoteMarkdown.HasText(b.Type) && b.Text.Length == 0) ?? Page.Blocks[0], -1);
     }
 
-    /// <summary>Resolves what every link block points to (title, board colors, frame thumbnails…).</summary>
     public void RefreshLinks()
     {
         foreach (var b in Page.Blocks.Where(b => b.Type == BlockType.Link)) b.Link = Preview(b);
@@ -615,8 +591,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         }));
     }
 
-    // ================= export =================
-
     [RelayCommand]
     private void ExportMarkdown()
     {
@@ -635,7 +609,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
         }
     }
 
-    /// <summary>Export as plain text or JSON (Markdown has its own command).</summary>
     [RelayCommand]
     private void ExportAs(string format) =>
         Main.SaveExport(format == "json" ? Exporters.PageToJson(Page, Main.Workspace) : Exporters.PageToText(Page, Main.Workspace), Page.Title, format);
@@ -654,13 +627,11 @@ public sealed partial class NoteViewModel : DocumentViewModel
         }
     }
 
-    /// <summary>Turns every unchecked to-do on the page into a card on the current board.</summary>
     [RelayCommand]
     private void TodosToCards()
     {
         var board = Main.CurrentBoard;
         var list = board?.Lists.FirstOrDefault(l => !l.IsDoneList);
-        // To-dos that already have a card stay linked to it (no duplicates).
         var todos = Page.Blocks.Where(b => b.Type == BlockType.Todo && !b.IsChecked && !string.IsNullOrWhiteSpace(b.Text)
                                            && !(b.LinkKind == LinkTarget.Card && b.LinkId is { } id && Main.Workspace.FindCard(id, out _, out _) != null)).ToList();
         if (board == null || list == null || todos.Count == 0)
@@ -676,7 +647,6 @@ public sealed partial class NoteViewModel : DocumentViewModel
             card.Description = $"From the page \"{Page.Title}\"";
             card.Links.Add(new ItemLink(LinkTarget.Note, Page.Id));
             list.Cards.Add(card);
-            // The to-do and the card now tick each other off.
             t.LinkKind = LinkTarget.Card;
             t.LinkId = card.Id;
         }

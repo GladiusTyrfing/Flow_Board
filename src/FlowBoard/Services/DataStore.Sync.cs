@@ -7,33 +7,22 @@ using FlowBoard.Models;
 
 namespace FlowBoard.Services;
 
-/// <summary>Changes that came in from someone else's copy of the project.</summary>
-/// <param name="ChangedItems">Ids of the boards, storyboards, canvases and pages that changed.</param>
 public sealed record ExternalChange(string? Editor, int Conflicts, IReadOnlyCollection<object> ChangedObjects, IReadOnlySet<Guid> ChangedItems, bool FromConflictCopy);
 
-/// <summary>
-/// Teamwork over a shared folder (network drive, Syncthing, OneDrive, Dropbox…), no server needed:
-/// the project file is watched, and when another FlowBoard saves it, its changes are merged into what's open
-/// (item by item, keeping both people's edits) before anything is written back. Conflict copies made by sync tools
-/// are merged in too. Each open copy leaves a small "presence" note so everyone can see who else is in the project.
-/// </summary>
 public sealed partial class DataStore
 {
     private FileSystemWatcher? _watcher;
     private DispatcherTimer? _debounce;
-    private string _baseRaw = string.Empty;          // the file's content as we last read or wrote it
-    private (DateTime Time, long Length) _diskStamp;  // …and its timestamp/size then
+    private string _baseRaw = string.Empty;
+    private (DateTime Time, long Length) _diskStamp;
     private bool _merging;
     private int _ticks;
     private string? _presenceFile;
 
-    /// <summary>Someone else's changes were merged into the open project.</summary>
     public event EventHandler<ExternalChange>? ExternalChangeMerged;
 
-    /// <summary>The list of other people who have the project open changed.</summary>
     public event EventHandler? CollaboratorsChanged;
 
-    /// <summary>Other people who have this project open right now.</summary>
     public IReadOnlyList<string> Collaborators { get; private set; } = [];
 
     private void InitSync()
@@ -59,7 +48,6 @@ public sealed partial class DataStore
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size,
                 EnableRaisingEvents = true,
             };
-            // Events arrive on a worker thread and in bursts: check once, shortly after, on the UI thread.
             FileSystemEventHandler poke = (_, _) => System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
             {
                 _debounce?.Stop();
@@ -71,7 +59,6 @@ public sealed partial class DataStore
         }
         catch (Exception ex)
         {
-            // Some network drives can't be watched: the regular check every couple of seconds still works.
             Debug.WriteLine($"Watcher failed: {ex.Message}");
             _watcher = null;
         }
@@ -95,7 +82,6 @@ public sealed partial class DataStore
         }
     }
 
-    /// <summary>Call when the app exits: others stop seeing us in the project.</summary>
     public void LeaveProject() => RemovePresence();
 
     private static string ReadRawOrEmpty(string file)
@@ -116,14 +102,12 @@ public sealed partial class DataStore
         return fi.Exists ? (fi.LastWriteTimeUtc, fi.Length) : default;
     }
 
-    /// <summary>Remembers what is on disk now (after we read or wrote it).</summary>
     private void RememberDisk(string raw)
     {
         _baseRaw = raw;
         if (ProjectFile != null) _diskStamp = Stamp(ProjectFile);
     }
 
-    /// <summary>Merges the project file into the open project if someone else changed it.</summary>
     public void CheckForExternalChanges()
     {
         if (!HasProject || _merging || ProjectFile is not { } file) return;
@@ -137,11 +121,11 @@ public sealed partial class DataStore
         }
         catch
         {
-            return; // being written right now: try again on the next check
+            return;
         }
 
         var stampAfter = Stamp(file);
-        if (stampAfter != stamp) return; // changed while reading
+        if (stampAfter != stamp) return;
         _diskStamp = stamp;
         if (theirs == _baseRaw) return;
 
@@ -167,14 +151,11 @@ public sealed partial class DataStore
         {
             var oursRaw = JsonSerializer.Serialize(Workspace, Json.Options);
             var ours = JsonNode.Parse(oursRaw);
-            // A conflict copy started from some unknown older version, so it's merged as a union:
-            // everything from both is kept, nothing is deleted, and where both differ ours stays.
-            // Without a known starting point for the main file, our version also wins where both differ.
             JsonNode? @base = fromConflictCopy ? null
                 : string.IsNullOrEmpty(_baseRaw) ? theirs.DeepClone() : JsonNode.Parse(_baseRaw);
             var stats = new MergeStats();
             if (JsonMerge.Merge(@base, ours, theirs, stats) is not JsonObject merged) return;
-            if (fromConflictCopy) stats.Conflicts = 0; // differences are expected there, not overlapping edits
+            if (fromConflictCopy) stats.Conflicts = 0;
 
             HashSet<object> changed;
             ModelEvents.Suspended = true;
@@ -188,7 +169,6 @@ public sealed partial class DataStore
                 ModelEvents.Suspended = false;
             }
 
-            // When the result is exactly their version there's nothing new to write back.
             var now = JsonSerializer.Serialize(Workspace, Json.Options);
             if (!fromConflictCopy && JsonNode.DeepEquals(JsonNode.Parse(now), theirs)) _lastWorkspaceJson = now;
 
@@ -205,7 +185,6 @@ public sealed partial class DataStore
         }
     }
 
-    /// <summary>Boards, storyboards, canvases and pages that differ between two versions of the project.</summary>
     public static HashSet<Guid> ChangedTopLevel(JsonNode? before, JsonNode? after)
     {
         static Dictionary<Guid, JsonNode> Items(JsonNode? root, string key)
@@ -229,10 +208,6 @@ public sealed partial class DataStore
         return result;
     }
 
-    /// <summary>
-    /// Sync tools keep both versions when two people save at once ("… sync-conflict …", "… conflicted copy …").
-    /// Those copies are merged into the project and then moved to the backups folder.
-    /// </summary>
     private void MergeConflictCopies()
     {
         if (!HasProject || ProjectFile is not { } file) return;
@@ -266,10 +241,6 @@ public sealed partial class DataStore
         }
     }
 
-    /// <summary>
-    /// A short-lived "&lt;project&gt;.flowboard.lock" file while saving, so two people on the same network drive
-    /// never write at the same moment. A lock older than 15 s is left over from a crash and is ignored.
-    /// </summary>
     private bool TryLockForSave(out IDisposable? handle)
     {
         handle = null;
@@ -286,31 +257,27 @@ public sealed partial class DataStore
         }
         catch (IOException)
         {
-            return false; // someone else is saving right now: try again on the next autosave
+            return false;
         }
         catch (UnauthorizedAccessException)
         {
-            return true;  // read-only folder or no rights to create files: save without a lock
+            return true;
         }
     }
 
-    /// <summary>Runs with autosave (every 2 s): slower housekeeping for shared projects.</summary>
     private void SyncTick()
     {
         _ticks++;
-        // Some network drives keep coarse timestamps: compare the content itself now and then.
         if (_ticks % 5 == 0)
         {
             _diskStamp = default;
             CheckForExternalChanges();
         }
 
-        if (_ticks % 5 == 0) ReadPresence();            // ~10 s
-        if (_ticks % 8 == 0) MergeConflictCopies();     // ~16 s
-        if (_ticks % 10 == 0) WritePresence();          // ~20 s
+        if (_ticks % 5 == 0) ReadPresence();
+        if (_ticks % 8 == 0) MergeConflictCopies();
+        if (_ticks % 10 == 0) WritePresence();
     }
-
-    // ---------- presence: who else has the project open ----------
 
     private const int PresenceTimeoutSeconds = 75;
 
@@ -342,7 +309,6 @@ public sealed partial class DataStore
         }
         catch
         {
-            // Stale notes expire on their own.
         }
 
         _presenceFile = null;
@@ -368,7 +334,6 @@ public sealed partial class DataStore
                     }
                     catch
                     {
-                        // Half-synced note: skip it this time.
                     }
                 }
             }

@@ -8,18 +8,13 @@ using System.Windows.Threading;
 
 namespace FlowBoard.Helpers;
 
-/// <summary>Small attached behaviors used across the XAML.</summary>
 public static class Behaviors
 {
-    // ---------- Corner radius for shared button templates ----------
-
     public static readonly DependencyProperty CornerRadiusProperty = DependencyProperty.RegisterAttached(
         "CornerRadius", typeof(CornerRadius), typeof(Behaviors), new PropertyMetadata(new CornerRadius(10)));
 
     public static CornerRadius GetCornerRadius(DependencyObject d) => (CornerRadius)d.GetValue(CornerRadiusProperty);
     public static void SetCornerRadius(DependencyObject d, CornerRadius v) => d.SetValue(CornerRadiusProperty, v);
-
-    // ---------- Rounded clipping (Border.CornerRadius does not clip its children) ----------
 
     public static readonly DependencyProperty ClipRadiusProperty = DependencyProperty.RegisterAttached(
         "ClipRadius", typeof(double), typeof(Behaviors), new PropertyMetadata(0.0, OnClipRadiusChanged));
@@ -37,8 +32,6 @@ public static class Behaviors
         {
             fe.SetValue(ClipHookedProperty, true);
             fe.SizeChanged += (_, _) => UpdateClip(fe);
-            // An area that starts hidden (e.g. the board area while Home is showing) may never get a
-            // SizeChanged when it appears: refresh the clip once it is laid out.
             fe.IsVisibleChanged += (_, _) =>
             {
                 if (fe.IsVisible) fe.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () => UpdateClip(fe));
@@ -52,17 +45,13 @@ public static class Behaviors
     {
         if (fe.ActualWidth <= 0 || fe.ActualHeight <= 0)
         {
-            // Not laid out yet: a zero-size clip would hide everything, so don't clip until there is a size.
             fe.Clip = null;
             return;
         }
 
         var r = GetClipRadius(fe);
-        // Radius 0 still clips (sharp corners) so content never spills outside rounded parents.
         fe.Clip = new RectangleGeometry(new Rect(0, 0, fe.ActualWidth, fe.ActualHeight), r, r);
     }
-
-    // ---------- Focus when a bound flag becomes true ----------
 
     public static readonly DependencyProperty FocusWhenProperty = DependencyProperty.RegisterAttached(
         "FocusWhen", typeof(bool), typeof(Behaviors), new PropertyMetadata(false, OnFocusWhenChanged));
@@ -75,7 +64,6 @@ public static class Behaviors
         if (e.NewValue is true && d is UIElement el) FocusLater(el);
     }
 
-    /// <summary>Focus the element as soon as it is loaded and visible.</summary>
     public static readonly DependencyProperty FocusOnLoadProperty = DependencyProperty.RegisterAttached(
         "FocusOnLoad", typeof(bool), typeof(Behaviors), new PropertyMetadata(false, OnFocusOnLoadChanged));
 
@@ -112,8 +100,6 @@ public static class Behaviors
     public static bool GetSelectAllOnFocus(DependencyObject d) => (bool)d.GetValue(SelectAllOnFocusProperty);
     public static void SetSelectAllOnFocus(DependencyObject d, bool v) => d.SetValue(SelectAllOnFocusProperty, v);
 
-    // ---------- Enter / Escape commands on text boxes ----------
-
     public static readonly DependencyProperty EnterCommandProperty = DependencyProperty.RegisterAttached(
         "EnterCommand", typeof(ICommand), typeof(Behaviors), new PropertyMetadata(null, OnKeyCommandChanged));
 
@@ -132,7 +118,6 @@ public static class Behaviors
     public static object? GetCommandParameter(DependencyObject d) => d.GetValue(CommandParameterProperty);
     public static void SetCommandParameter(DependencyObject d, object? v) => d.SetValue(CommandParameterProperty, v);
 
-    /// <summary>Command executed when the element loses keyboard focus (commit inline edits).</summary>
     public static readonly DependencyProperty LostFocusCommandProperty = DependencyProperty.RegisterAttached(
         "LostFocusCommand", typeof(ICommand), typeof(Behaviors), new PropertyMetadata(null, OnLostFocusCommandChanged));
 
@@ -152,7 +137,6 @@ public static class Behaviors
         var param = GetCommandParameter(d) ?? (d as FrameworkElement)?.DataContext;
         if (e.Key == Key.Enter && GetEnterCommand(d) is { } enter)
         {
-            // Shift+Enter inserts a newline in multi-line boxes.
             if (sender is TextBox { AcceptsReturn: true } && Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) return;
             if (sender is TextBox tb) tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
             if (enter.CanExecute(param)) enter.Execute(param);
@@ -175,7 +159,6 @@ public static class Behaviors
     private static void OnLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
     {
         var d = (DependencyObject)sender;
-        // Ignore focus moving into a popup/context menu opened from within the element.
         if (e.NewFocus is DependencyObject nf && IsDescendant(d, nf)) return;
         if (sender is TextBox tb) tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
         var param = GetCommandParameter(d) ?? (d as FrameworkElement)?.DataContext;
@@ -194,8 +177,6 @@ public static class Behaviors
         return false;
     }
 
-    // ---------- Entrance animation ----------
-
     public static bool AnimationsEnabled { get; set; } = true;
 
     public static readonly DependencyProperty AnimateInProperty = DependencyProperty.RegisterAttached(
@@ -210,7 +191,6 @@ public static class Behaviors
         fe.Loaded += (_, _) => AnimateIn(fe, kind);
     }
 
-    /// <summary>kind: "fade", "rise" (fade + slide up), "pop" (fade + scale).</summary>
     public static void AnimateIn(FrameworkElement fe, string kind)
     {
         if (!AnimationsEnabled) return;
@@ -241,9 +221,6 @@ public static class Behaviors
         }
     }
 
-    // ---------- Popup toggles ----------
-
-    /// <summary>Opens the named Popup (resolved from the element's namescope) when the button is clicked.</summary>
     public static readonly DependencyProperty OpensPopupProperty = DependencyProperty.RegisterAttached(
         "OpensPopup", typeof(Popup), typeof(Behaviors), new PropertyMetadata(null, OnOpensPopupChanged));
 
@@ -266,7 +243,6 @@ public static class Behaviors
         }
     }
 
-    /// <summary>Opens a button's ContextMenu on left click, positioned below the button.</summary>
     public static readonly DependencyProperty ClickOpensContextMenuProperty = DependencyProperty.RegisterAttached(
         "ClickOpensContextMenu", typeof(bool), typeof(Behaviors), new PropertyMetadata(false, OnClickOpensContextMenuChanged));
 
@@ -285,8 +261,6 @@ public static class Behaviors
             b.ContextMenu.IsOpen = true;
         };
     }
-
-    // ---------- Close parent popup on click ----------
 
     public static readonly DependencyProperty ClosesPopupProperty = DependencyProperty.RegisterAttached(
         "ClosesPopup", typeof(bool), typeof(Behaviors), new PropertyMetadata(false, OnClosesPopupChanged));
@@ -308,7 +282,6 @@ public static class Behaviors
                     return;
                 }
 
-                // Popup.Child's logical parent is the Popup itself; templated content only has visual parents.
                 cur = LogicalTreeHelper.GetParent(cur) ?? (cur is Visual ? VisualTreeHelper.GetParent(cur) : null);
             }
         };

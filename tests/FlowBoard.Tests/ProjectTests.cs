@@ -92,7 +92,6 @@ public class ProjectTests
     [InlineData("Trailing.", "Trailing")]
     public void Safe_names_have_no_invalid_characters(string name, string expected)
     {
-        // Invalid characters differ per OS; only check the ones that are invalid everywhere we run.
         var safe = AppPaths.SafeName(name);
         Assert.DoesNotContain(safe, c => Path.GetInvalidFileNameChars().Contains(c));
         if (OperatingSystem.IsWindows() || !name.Contains(':')) Assert.Equal(expected, safe);
@@ -130,7 +129,7 @@ public class ProjectPackageTests
         ProjectPackage.Write(file, System.Text.Json.JsonSerializer.Serialize(ws, Json.Options));
 
         Assert.True(ProjectPackage.IsPackage(file));
-        Assert.DoesNotContain("\"Shots\"", File.ReadAllText(file)); // compressed, not readable JSON
+        Assert.DoesNotContain("\"Shots\"", File.ReadAllText(file));
         var back = ProjectPackage.Read(file);
         Assert.Equal("Shots", back.Boards.Single().Name);
         Assert.Equal("Film files", back.MediaFolder);
@@ -145,7 +144,7 @@ public class ProjectPackageTests
         var ws = new Workspace();
         ws.Notes.Add(new NotePage { Title = "Old" });
         ProjectPackage.Write(file, System.Text.Json.JsonSerializer.Serialize(ws, Json.Options));
-        Assert.False(ProjectPackage.IsPackage(file)); // data.json stays JSON
+        Assert.False(ProjectPackage.IsPackage(file));
         Assert.Equal("Old", ProjectPackage.Read(file).Notes.Single().Title);
         Directory.Delete(dir, true);
     }
@@ -178,13 +177,13 @@ public class DisplayNameTests
     public void Name_follows_windows_until_customised()
     {
         var s = new AppSettings { DisplayName = "old-pc-name" };
-        s.SyncDisplayName("Gladius_Tyrfing");          // never synced before: follows Windows
+        s.SyncDisplayName("Gladius_Tyrfing");
         Assert.Equal("Gladius_Tyrfing", s.DisplayName);
 
-        s.SyncDisplayName("NewPC");                     // still the Windows name: follows again
+        s.SyncDisplayName("NewPC");
         Assert.Equal("NewPC", s.DisplayName);
 
-        s.DisplayName = "Gladius";                      // typed by the user
+        s.DisplayName = "Gladius";
         s.SyncDisplayName("OtherPC");
         Assert.Equal("Gladius", s.DisplayName);
     }
@@ -194,7 +193,7 @@ public class LinkSyncTests
 {
     [Theory]
     [InlineData(true, "Planned", "Done")]
-    [InlineData(true, "Approved", null)]     // already done: leave "Approved" alone
+    [InlineData(true, "Approved", null)]
     [InlineData(false, "Done", "In progress")]
     [InlineData(false, "Planned", null)]
     public void Shot_status_follows_its_card(bool cardDone, string current, string? expected) =>
@@ -226,7 +225,7 @@ public class LinkSyncTests
         Assert.Same(shot, LinkSync.ShotsOf(ws, card).Single());
         Assert.Same(todo, LinkSync.TodosFor(ws, card.Id).Single());
         Assert.True(LinkSync.ContainsShot(ws, shot));
-        Assert.False(LinkSync.ContainsShot(ws, new Shot { Id = shot.Id })); // a copy (e.g. an undo snapshot) doesn't count
+        Assert.False(LinkSync.ContainsShot(ws, new Shot { Id = shot.Id }));
         Assert.True(LinkSync.ContainsBlock(ws, todo));
     }
 

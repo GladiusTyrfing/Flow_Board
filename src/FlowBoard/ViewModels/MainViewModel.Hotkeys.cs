@@ -3,16 +3,11 @@ using FlowBoard.Models;
 
 namespace FlowBoard.ViewModels;
 
-/// <summary>
-/// Keyboard hotkeys that don't fit a plain KeyBinding: single-letter keys (only when not typing),
-/// board navigation, and Trello-style "hover a card and press a key" actions.
-/// </summary>
 public sealed partial class MainViewModel
 {
     private Card? _hoveredCard;
     private Card? _stickyCard;
 
-    /// <summary>The card under the mouse on the board (set by the board view).</summary>
     public Card? HoveredCard
     {
         get => _hoveredCard;
@@ -23,7 +18,6 @@ public sealed partial class MainViewModel
         }
     }
 
-    /// <summary>The card hotkeys act on: hovered card, the card just moved by keyboard, or the table's selected row.</summary>
     public Card? HotkeyTarget =>
         _hoveredCard ?? _stickyCard ?? (ViewMode == BoardViewMode.Table ? Table.SelectedRow?.Card : null);
 
@@ -40,11 +34,8 @@ public sealed partial class MainViewModel
         card.IsHighlighted = true;
     }
 
-    /// <summary>Handles a key press from the main window. Returns true when it was used.</summary>
-    /// <param name="isTyping">True when a text box has focus: then only modifier shortcuts apply.</param>
     public bool HandleKey(Key key, ModifierKeys mods, bool isTyping)
     {
-        // ----- Board navigation (work everywhere) -----
         if (key == Key.Tab && mods.HasFlag(ModifierKeys.Control))
         {
             CycleBoard(mods.HasFlag(ModifierKeys.Shift) ? -1 : 1);
@@ -61,15 +52,14 @@ public sealed partial class MainViewModel
 
         if (isTyping || HasDialog || ActiveView != ActiveView.Board) return false;
 
-        // ----- Single keys (not while typing) -----
         if (mods == ModifierKeys.None)
         {
             switch (key)
             {
-                case Key.Oem2: // "/"
+                case Key.Oem2:
                     OpenCommandPalette();
                     return true;
-                case Key.OemOpenBrackets: // "["
+                case Key.OemOpenBrackets:
                     ToggleSidebar();
                     return true;
                 case Key.N:
@@ -81,13 +71,12 @@ public sealed partial class MainViewModel
             }
         }
 
-        if (mods == ModifierKeys.Shift && key == Key.Oem2) // "?"
+        if (mods == ModifierKeys.Shift && key == Key.Oem2)
         {
             OpenShortcuts();
             return true;
         }
 
-        // ----- Card hotkeys -----
         if (!Settings.CardHoverHotkeys || HotkeyTarget is not { } card || card.Board is not { } board) return false;
         var list = board.FindListOf(card);
         if (list == null) return false;

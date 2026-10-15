@@ -5,24 +5,17 @@ using static FlowBoard.Services.ThemeService;
 
 namespace FlowBoard.Services;
 
-/// <summary>A board look: base colors for lists and cards plus readable text colors.</summary>
 public sealed record BoardThemePreset(string Name, bool IsDark, Color List, Color Card, Color Text, Color Muted)
 {
-    /// <summary>Small preview tile (list color with a card on top) for the style picker.</summary>
     public Brush ListPreview => Frozen(new SolidColorBrush(List));
     public Brush CardPreview => Frozen(new SolidColorBrush(Card));
     public Brush TextPreview => Frozen(new SolidColorBrush(Text));
 }
 
-/// <summary>
-/// Applies a board's style (preset + list/card transparency) by overriding the shared color
-/// resources on the board area only, so the rest of the app keeps the app theme.
-/// </summary>
 public static class BoardThemeService
 {
     public static IReadOnlyList<BoardThemePreset> Presets { get; } =
     [
-        // "Auto" is resolved at apply time from the app theme.
         new("Auto", true, Hex("#0E1118"), Hex("#1A1E29"), Hex("#EEF1F6"), Hex("#98A2B3")),
         new("Glass", true, Hex("#0B0D14"), Hex("#1C2130"), Hex("#F3F5FA"), Hex("#A3ADBF")),
         new("Frost", false, Hex("#FFFFFF"), Hex("#FFFFFF"), Hex("#111827"), Hex("#5B6475")),
@@ -48,14 +41,9 @@ public static class BoardThemeService
             : new BoardThemePreset("Auto", false, Hex("#F6F7FB"), Hex("#FFFFFF"), Hex("#111827"), Hex("#5B6475"));
     }
 
-    // The board dictionary currently merged into a host (board area or a preview).
     private static readonly DependencyProperty CurrentDictionaryProperty = DependencyProperty.RegisterAttached(
         "CurrentDictionary", typeof(ResourceDictionary), typeof(BoardThemeService), new PropertyMetadata(null));
 
-    /// <summary>
-    /// Applies <paramref name="board"/>'s look to everything inside <paramref name="host"/> by swapping in one
-    /// merged dictionary (a single resource refresh, so sliders stay smooth). Null clears it.
-    /// </summary>
     public static void Apply(FrameworkElement host, Board? board)
     {
         var current = (ResourceDictionary?)host.GetValue(CurrentDictionaryProperty);
@@ -66,11 +54,9 @@ public static class BoardThemeService
 
     public static ResourceDictionary Build(Board board) => Build(board.Theme, board.ListOpacity, board.CardOpacity, board.CornerRadius);
 
-    // The dictionary applied to the storyboard / canvas / page area.
     private static readonly DependencyProperty DocDictionaryProperty = DependencyProperty.RegisterAttached(
         "DocDictionary", typeof(ResourceDictionary), typeof(BoardThemeService), new PropertyMetadata(null));
 
-    /// <summary>Applies a document's theme preset to the document area (null clears it).</summary>
     public static void ApplyDoc(FrameworkElement host, StyledDocument? doc)
     {
         var current = (ResourceDictionary?)host.GetValue(DocDictionaryProperty);
@@ -109,9 +95,7 @@ public static class BoardThemeService
         Set(d, "Fb.SurfaceRaisedBrush", WithAlpha(ink, 0x14));
         Set(d, "Fb.CalendarCellBrush", WithAlpha(p.Card, (byte)Math.Max(cardA * 0.55, 0x30)));
 
-        // Board-specific corner roundness (negative = inherit the app setting).
         if (cornerRadius >= 0) ApplyRadius(d, cornerRadius);
-        // Page-like surfaces (notes, dashboard panels) follow the preset too.
         Set(d, "Fb.PanelBrush", WithAlpha(p.List, (byte)Math.Max((int)listA, 0x40)));
         return d;
     }

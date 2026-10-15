@@ -11,7 +11,6 @@
              d:DataContext="{d:DesignInstance vm:SketchPadViewModel}">
     <Border Style="{StaticResource Fb.Dialog}" MaxWidth="1100" Margin="40,30" Padding="18" VerticalAlignment="Center">
         <DockPanel>
-            <!-- Title -->
             <Grid DockPanel.Dock="Top" Margin="4,0,0,12">
                 <StackPanel Orientation="Horizontal">
                     <ui:SymbolIcon Symbol="Pen24" FontSize="18" Foreground="{DynamicResource Fb.AccentTextBrush}" />
@@ -24,7 +23,6 @@
                 </Button>
             </Grid>
 
-            <!-- Tools -->
             <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,12">
                 <ItemsControl ItemsSource="{Binding Colors}" Focusable="False" VerticalAlignment="Center">
                     <ItemsControl.ItemsPanel>
@@ -104,7 +102,6 @@
                 </Button>
             </WrapPanel>
 
-            <!-- Footer -->
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
                 <TextBlock Text="Tip: use a pen or tablet for pressure-sensitive lines." Style="{StaticResource Fb.Muted}" FontSize="12" VerticalAlignment="Center" Margin="0,0,16,0" />
                 <Button Style="{StaticResource Fb.SubtleButton}" Content="Cancel" Command="{Binding CloseCommand}" Margin="0,0,8,0" />
@@ -116,7 +113,6 @@
                 </Button>
             </StackPanel>
 
-            <!-- Drawing surface: fixed 16:9 page, scaled to fit -->
             <Border CornerRadius="{DynamicResource Fb.Radius}" BorderThickness="1" BorderBrush="{DynamicResource Fb.DividerBrush}" ClipToBounds="True">
                 <Viewbox Stretch="Uniform" MaxHeight="620">
                     <Grid x:Name="Surface" Width="960" Height="540" Background="White" ClipToBounds="True">

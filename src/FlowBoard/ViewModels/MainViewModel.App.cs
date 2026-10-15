@@ -12,8 +12,6 @@ namespace FlowBoard.ViewModels;
 
 public sealed partial class MainViewModel
 {
-    // ================= Dialog stack =================
-
     public void ShowDialog(DialogViewModel dialog)
     {
         Dialogs.Add(dialog);
@@ -73,8 +71,6 @@ public sealed partial class MainViewModel
         return await vm.Result;
     }
 
-    // ================= Toasts =================
-
     public void ShowToast(string text, string? actionText = null, Action? action = null, bool isError = false)
     {
         var toast = new ToastMessage { Text = text, ActionText = actionText, Action = action, IsError = isError };
@@ -98,21 +94,17 @@ public sealed partial class MainViewModel
         return await vm.Result;
     }
 
-    // ================= Undo / Redo =================
-
     [RelayCommand]
     private void DoUndo() => UndoCore(redo: false);
 
     [RelayCommand]
     private void DoRedo() => UndoCore(redo: true);
 
-    // Friendlier names for bindings and the command palette.
     public IRelayCommand UndoCommand => DoUndoCommand;
     public IRelayCommand RedoCommand => DoRedoCommand;
 
     private void UndoCore(bool redo)
     {
-        // Storyboards, canvases and notes have their own undo history.
         if (ActiveView != ActiveView.Board && ActiveDocument != null)
         {
             if (Dialogs.Count > 0) CloseAllDialogs();
@@ -121,7 +113,6 @@ public sealed partial class MainViewModel
             return;
         }
 
-        // Close editors first so their pending edits become their own undo step and nothing edits a stale board.
         CloseAllDialogs();
         var currentId = CurrentBoard?.Id;
         var restored = redo ? Undo.Redo(Workspace, out var desc) : Undo.Undo(Workspace, out desc);
@@ -139,8 +130,6 @@ public sealed partial class MainViewModel
         RefreshSidebar();
         ShowToast($"{(redo ? "Redid" : "Undid")}: {desc}");
     }
-
-    // ================= Appearance & layout =================
 
     [RelayCommand]
     private void ToggleTheme()
@@ -181,8 +170,6 @@ public sealed partial class MainViewModel
         ShowDialog(new CommandPaletteViewModel(this));
     }
 
-    // ================= Pomodoro & timer =================
-
     [RelayCommand]
     private void TogglePomodoro() => Pomodoro.Toggle();
 
@@ -217,8 +204,6 @@ public sealed partial class MainViewModel
             OpenCard(card);
         }
     }
-
-    // ================= Data =================
 
     [RelayCommand]
     private void OpenDataFolder()
@@ -255,7 +240,6 @@ public sealed partial class MainViewModel
         }
     }
 
-    /// <summary>Unpacks a backup zip as a new project (nothing is overwritten) and opens it.</summary>
     [RelayCommand]
     private void RestoreBackup()
     {
@@ -349,8 +333,6 @@ public sealed partial class MainViewModel
         }
     }
 
-    // ================= export =================
-
     private static readonly Dictionary<string, (string Ext, string Filter)> ExportFormats = new()
     {
         ["txt"] = (".txt", "Plain text"),
@@ -362,7 +344,6 @@ public sealed partial class MainViewModel
         ["svg"] = (".svg", "SVG vector image"),
     };
 
-    /// <summary>Asks where to save an export and writes it (UTF-8).</summary>
     public void SaveExport(string content, string name, string format)
     {
         var (ext, filter) = ExportFormats[format];
@@ -417,7 +398,6 @@ public sealed partial class MainViewModel
 
     public void RequestHideWindow() => HideWindowRequested?.Invoke(this, EventArgs.Empty);
 
-    /// <summary>Opens the quick-add box (used by the global hotkey and the tray menu).</summary>
     public void ShowQuickAdd(bool hideAfter)
     {
         if (!EnsureProject()) return;

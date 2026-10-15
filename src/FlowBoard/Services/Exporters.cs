@@ -9,10 +9,6 @@ using FlowBoard.Models;
 
 namespace FlowBoard.Services;
 
-/// <summary>
-/// Turns pages, canvases, boards and storyboards into files other apps understand: plain text, JSON,
-/// CSV, Markdown, Mermaid (GitHub, Notion, Obsidian…), draw.io / diagrams.net and SVG. Pure, so it can be tested.
-/// </summary>
 public static class Exporters
 {
     private static readonly JsonSerializerOptions JsonOut = new()
@@ -27,10 +23,6 @@ public static class Exporters
     private static string F(double v) => Math.Round(v, 1).ToString("0.#", CultureInfo.InvariantCulture);
 
     private static string X(string? s) => SecurityElement.Escape(s ?? string.Empty) ?? string.Empty;
-
-    // =====================================================================
-    // Pages
-    // =====================================================================
 
     public static string PageToText(NotePage page, Workspace? ws = null)
     {
@@ -93,14 +85,9 @@ public static class Exporters
             link = b.LinkId is { } id
                 ? new { kind = b.LinkKind, id, title = ws == null ? null : LinkResolver.TitleOf(ws, b.LinkKind, id) }
                 : null,
-            // Formatting (bold, colors, inline links…) when the text has any.
             spans = b.Spans is { Count: > 0 } s && s.Any(x => !x.IsPlain) ? s : null,
         }),
     }, JsonOut);
-
-    // =====================================================================
-    // Canvas
-    // =====================================================================
 
     private static string NodeLabel(CanvasNode n, Workspace? ws) => n.Shape switch
     {
@@ -210,19 +197,16 @@ public static class Exporters
             sb.AppendLine($"  {ids[e.FromId]} {link}{label} {ids[e.ToId]}");
         }
 
-        // Colors, so the diagram looks like the canvas.
         foreach (var n in doc.Nodes.Where(n => n.Shape is not (NodeShape.Frame or NodeShape.Text or NodeShape.Image or NodeShape.Ink or NodeShape.Card or NodeShape.Link)))
             sb.AppendLine($"  style {ids[n.Id]} fill:{n.Fill},stroke:{n.Fill},color:{ContrastText(n.Fill)}");
         return sb.ToString();
     }
 
-    /// <summary>A diagrams.net (draw.io) file with the same shapes, colors, positions, sections and lines.</summary>
     public static string CanvasToDrawio(CanvasDoc doc, Workspace? ws = null)
     {
         var sb = new StringBuilder();
         BeginDrawio(sb, doc.Name);
         var byId = doc.Nodes.ToDictionary(n => n.Id);
-        // Parents first, so every section exists before what's inside it.
         int Depth(CanvasNode n)
         {
             int d = 0;
@@ -277,7 +261,6 @@ public static class Exporters
         return sb.ToString();
     }
 
-    /// <summary>A vector picture of the canvas (opens in browsers, Figma, Illustrator, Inkscape…).</summary>
     public static string CanvasToSvg(CanvasDoc doc, Workspace? ws = null, Func<string, string?>? imageData = null)
     {
         var byId = doc.Nodes.ToDictionary(n => n.Id);
@@ -384,10 +367,6 @@ public static class Exporters
         return sb.ToString();
     }
 
-    // =====================================================================
-    // Boards
-    // =====================================================================
-
     private static string LabelNames(Board b, Card c) =>
         string.Join(", ", c.LabelIds.Select(id => b.Labels.FirstOrDefault(l => l.Id == id)?.Name).Where(n => !string.IsNullOrEmpty(n)));
 
@@ -469,7 +448,6 @@ public static class Exporters
         return sb.ToString();
     }
 
-    /// <summary>Lists as groups, cards inside, dependencies and related cards as arrows.</summary>
     public static string BoardToMermaid(Board board)
     {
         var ids = new Dictionary<Guid, string>();
@@ -491,7 +469,6 @@ public static class Exporters
             sb.AppendLine("  end");
         }
 
-        // Keep the lists in board order.
         for (int k = 1; k < li; k++) sb.AppendLine($"  L{k} ~~~ L{k + 1}");
         foreach (var c in board.Lists.SelectMany(l => l.Cards))
         {
@@ -502,7 +479,6 @@ public static class Exporters
         return sb.ToString();
     }
 
-    /// <summary>The board as it looks: a column per list with its cards, dependency arrows between cards.</summary>
     public static string BoardToDrawio(Board board)
     {
         var sb = new StringBuilder();
@@ -541,10 +517,6 @@ public static class Exporters
         EndDrawio(sb);
         return sb.ToString();
     }
-
-    // =====================================================================
-    // Storyboards
-    // =====================================================================
 
     public static string StoryboardToJson(Storyboard sb) => JsonSerializer.Serialize(new
     {
@@ -589,10 +561,6 @@ public static class Exporters
         return o.ToString();
     }
 
-    // =====================================================================
-    // helpers
-    // =====================================================================
-
     private static void BeginDrawio(StringBuilder sb, string name)
     {
         sb.AppendLine($"<mxfile host=\"FlowBoard\" type=\"device\">");
@@ -611,7 +579,6 @@ public static class Exporters
         sb.AppendLine("</mxfile>");
     }
 
-    /// <summary>Black or white text, whichever reads better on the color.</summary>
     public static string ContrastText(string? hex)
     {
         if (hex is not { Length: >= 7 } || hex[0] != '#') return "#18181B";

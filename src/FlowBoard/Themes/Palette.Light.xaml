@@ -1,6 +1,5 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- FlowBoard "Aurora" light palette. Board-area keys are overridden per board by BoardThemeService. -->
     <Color x:Key="Fb.ShadowColor">#1B2340</Color>
     <SolidColorBrush x:Key="Fb.WindowBrush" Color="#EEF0F7" />
     <SolidColorBrush x:Key="Fb.PanelBrush" Color="#D9FFFFFF" />
@@ -37,7 +36,6 @@
     <SolidColorBrush x:Key="Fb.CalendarCellMutedBrush" Color="#66FFFFFF" />
     <SolidColorBrush x:Key="Fb.ToastBrush" Color="#F7111827" />
 
-    <!-- Accent defaults (replaced at runtime by the chosen accent preset) -->
     <Color x:Key="Fb.AccentColor">#8B5CF6</Color>
     <Color x:Key="Fb.Accent2Color">#06B6D4</Color>
     <SolidColorBrush x:Key="Fb.AccentBrush" Color="#8B5CF6" />

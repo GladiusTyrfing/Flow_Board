@@ -9,10 +9,8 @@ namespace FlowBoard.ViewModels;
 
 public sealed record AspectChoice(string Name, double Ratio);
 
-/// <summary>Result of the crop dialog. <see cref="Fit"/> = show the whole image (letterboxed) instead of filling the frame.</summary>
 public sealed record CropResult(string ImagePath, string OriginalPath, bool Fit, Rect Crop);
 
-/// <summary>Crop an image (free or fixed aspect) or choose to show all of it.</summary>
 public sealed partial class ImageCropViewModel : DialogViewModel
 {
     private readonly Guid _owner;
@@ -33,7 +31,6 @@ public sealed partial class ImageCropViewModel : DialogViewModel
         }
         catch
         {
-            // Keep the default aspect.
         }
 
         if (previous is not { Width: > 0 }) FitToAspect();
@@ -52,14 +49,12 @@ public sealed partial class ImageCropViewModel : DialogViewModel
 
     [ObservableProperty] private AspectChoice _selectedAspect;
 
-    /// <summary>Crop rectangle in 0..1 image coordinates.</summary>
     [ObservableProperty] private Rect _crop = new(0, 0, 1, 1);
 
     partial void OnSelectedAspectChanged(AspectChoice value) => FitToAspect();
 
     [RelayCommand] private void SetAspect(AspectChoice a) => SelectedAspect = a;
 
-    /// <summary>Largest centered rectangle with the chosen aspect.</summary>
     [RelayCommand]
     public void FitToAspect()
     {

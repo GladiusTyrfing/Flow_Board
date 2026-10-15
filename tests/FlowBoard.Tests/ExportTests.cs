@@ -28,11 +28,11 @@ public class ExportTests
         var m = Exporters.CanvasToMermaid(SampleCanvas());
         Assert.Contains("flowchart LR", m);
         Assert.Contains("subgraph n1[\"Act 1\"]", m);
-        Assert.Contains("([\"Start <here>\"])", m);   // ellipse
-        Assert.Contains("{\"Decide?\"}", m);          // diamond
-        Assert.Contains("((\"End\"))", m);            // circle
+        Assert.Contains("([\"Start <here>\"])", m);
+        Assert.Contains("{\"Decide?\"}", m);
+        Assert.Contains("((\"End\"))", m);
         Assert.Contains("-->|\"go\"|", m);
-        Assert.Contains("-.-", m);                    // dashed, no arrow
+        Assert.Contains("-.-", m);
         Assert.Equal(1, m.Split('\n').Count(l => l.Trim() == "end"));
     }
 
@@ -45,7 +45,7 @@ public class ExportTests
         var frameId = doc.Nodes[0].Id.ToString("N");
         var inner = cells.Single(c => (string?)c.Attribute("value") == "Start <here>");
         Assert.Equal(frameId, (string?)inner.Attribute("parent"));
-        Assert.Equal("20", inner.Element("mxGeometry")!.Attribute("x")!.Value); // relative to the section
+        Assert.Equal("20", inner.Element("mxGeometry")!.Attribute("x")!.Value);
         Assert.Equal(3, cells.Count(c => (string?)c.Attribute("edge") == "1"));
         Assert.Contains(cells, c => c.Descendants("mxPoint").Any(p => (string?)p.Attribute("as") == "sourcePoint"));
     }

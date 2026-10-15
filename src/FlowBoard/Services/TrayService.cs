@@ -3,7 +3,6 @@ using WinForms = System.Windows.Forms;
 
 namespace FlowBoard.Services;
 
-/// <summary>System tray icon with a small menu and balloon (toast) notifications.</summary>
 public sealed class TrayService : IDisposable
 {
     private readonly WinForms.NotifyIcon _icon;
@@ -62,7 +61,6 @@ public sealed class TrayService : IDisposable
         }
         catch
         {
-            // Fall through to the default icon.
         }
 
         return System.Drawing.SystemIcons.Application;

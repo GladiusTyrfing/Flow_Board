@@ -4,10 +4,6 @@ using System.Windows.Input;
 
 namespace FlowBoard.Controls;
 
-/// <summary>
-/// "Custom color" swatch: opens a <see cref="ColorPicker"/>; "Use color" runs <see cref="Command"/> with the hex
-/// (and raises <see cref="ColorChosen"/>). Put it at the end of any palette.
-/// </summary>
 public partial class ColorButton : UserControl
 {
     public static readonly DependencyProperty CommandProperty = DependencyProperty.Register(
@@ -16,7 +12,6 @@ public partial class ColorButton : UserControl
     public static readonly DependencyProperty InitialColorProperty = DependencyProperty.Register(
         nameof(InitialColor), typeof(string), typeof(ColorButton), new PropertyMetadata(null));
 
-    /// <summary>Text put before the hex when running the command (e.g. "color:" for board backgrounds).</summary>
     public static readonly DependencyProperty PrefixProperty = DependencyProperty.Register(
         nameof(Prefix), typeof(string), typeof(ColorButton), new PropertyMetadata(string.Empty));
 
@@ -45,7 +40,6 @@ public partial class ColorButton : UserControl
 
     public event EventHandler<string>? ColorChosen;
 
-    /// <summary>Raised when the popup opens / closes (e.g. to keep a text selection alive).</summary>
     public event EventHandler? Opened;
     public event EventHandler? ClosedPicker;
 

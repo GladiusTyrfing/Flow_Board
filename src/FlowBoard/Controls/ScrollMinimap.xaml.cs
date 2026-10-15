@@ -7,10 +7,6 @@ using FlowBoard.ViewModels;
 
 namespace FlowBoard.Controls;
 
-/// <summary>
-/// Overview of a scrollable area (live miniature of its content) with the visible part outlined.
-/// Click or drag on it to jump. Hidden automatically when everything already fits on screen.
-/// </summary>
 public partial class ScrollMinimap : UserControl
 {
     public static readonly DependencyProperty TargetProperty = DependencyProperty.Register(
@@ -90,7 +86,6 @@ public partial class ScrollMinimap : UserControl
             return;
         }
 
-        // Nothing to navigate when it all fits.
         var fits = sv.ExtentWidth <= sv.ViewportWidth + 2 && sv.ExtentHeight <= sv.ViewportHeight + 2;
         Visibility = fits ? Visibility.Collapsed : Visibility.Visible;
         Panel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
@@ -127,7 +122,6 @@ public partial class ScrollMinimap : UserControl
     {
         var p = e.GetPosition(Map);
         var box = new Rect(Canvas.GetLeft(ViewportBox), Canvas.GetTop(ViewportBox), ViewportBox.Width, ViewportBox.Height);
-        // Grabbing the box drags it from where it was grabbed; clicking elsewhere jumps there first.
         _grab = box.Contains(p) ? p - new Point(box.X + box.Width / 2, box.Y + box.Height / 2) : new Vector();
         _dragging = true;
         Map.CaptureMouse();

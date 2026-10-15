@@ -5,14 +5,12 @@ using GongSolutions.Wpf.DragDrop;
 
 namespace FlowBoard.ViewModels;
 
-/// <summary>Moves cards between lists (records undo + activity, auto-completes in "done" lists).</summary>
 public sealed class CardDropHandler : DefaultDropHandler
 {
     public override void DragOver(IDropInfo dropInfo)
     {
         if (dropInfo.Data is BoardList)
         {
-            // Let the enclosing lists panel handle list reordering.
             dropInfo.NotHandled = true;
             return;
         }
@@ -44,7 +42,6 @@ public sealed class CardDropHandler : DefaultDropHandler
         collection == null ? null : board.Lists.FirstOrDefault(l => ReferenceEquals(l.Cards, collection));
 }
 
-/// <summary>Reorders lists; dropping a card on a list header/collapsed list appends it to that list.</summary>
 public sealed class ListDropHandler : DefaultDropHandler
 {
     public override void DragOver(IDropInfo dropInfo)
@@ -99,7 +96,6 @@ public sealed class ListDropHandler : DefaultDropHandler
     }
 }
 
-/// <summary>Reschedules cards by dragging them onto calendar days (or the "no date" tray).</summary>
 public sealed class CalendarDropHandler : IDropTarget
 {
     private readonly CalendarViewModel _calendar;

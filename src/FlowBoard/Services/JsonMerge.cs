@@ -2,25 +2,11 @@ using System.Text.Json.Nodes;
 
 namespace FlowBoard.Services;
 
-/// <summary>What a merge did, for the "updated by …" message.</summary>
 public sealed class MergeStats
 {
-    /// <summary>Places where both sides changed the same value differently (this side's value was kept).</summary>
     public int Conflicts { get; set; }
 }
 
-/// <summary>
-/// Three-way merge of two edited copies of a project (ours and theirs) against the version both started from (base).
-/// Works on the JSON of the whole project, so it covers every section:
-/// <list type="bullet">
-/// <item>objects merge property by property: a value changed on one side wins; changed differently on both sides, ours wins (counted as a conflict);</item>
-/// <item>lists of things with an <c>Id</c> (boards, lists, cards, shots, shapes, blocks…) merge item by item: additions from both sides are kept,
-/// deletions are applied, an item deleted on one side but edited on the other is kept, and an item moved (e.g. a card to another list) moves;</item>
-/// <item>lists of plain values (label ids, linked card ids…) merge as sets;</item>
-/// <item>other lists are treated as one value.</item>
-/// </list>
-/// Pure (no file or UI access) so it can be tested.
-/// </summary>
 public static class JsonMerge
 {
     private const string IdKey = "Id";
@@ -44,8 +30,6 @@ public static class JsonMerge
     private static JsonNode? MergeNode(JsonNode? b, JsonNode? o, JsonNode? t, Context ctx, string? arrayName = null)
     {
         if (Same(o, t)) return Clone(o);
-        // Only one side changed this part. Items inside it may still have been edited by the other side
-        // somewhere else (e.g. a card they moved into a list we didn't touch), so those are merged too.
         if (Same(o, b)) return Reconcile(Clone(t), ctx);
         if (Same(t, b)) return Reconcile(Clone(o), ctx);
 
@@ -56,7 +40,6 @@ public static class JsonMerge
         return Clone(o);
     }
 
-    /// <summary>Re-merges items (anywhere inside <paramref name="node"/>) that both sides changed.</summary>
     private static JsonNode? Reconcile(JsonNode? node, Context ctx, string? name = null)
     {
         switch (node)
@@ -98,7 +81,6 @@ public static class JsonMerge
     private static JsonObject MergeObject(JsonObject? b, JsonObject o, JsonObject t, Context ctx)
     {
         var result = new JsonObject();
-        // Keep ours' property order, then anything only theirs has.
         var keys = o.Select(p => p.Key).Concat(t.Select(p => p.Key).Where(k => !o.ContainsKey(k))).ToList();
         foreach (var key in keys)
         {
@@ -107,10 +89,9 @@ public static class JsonMerge
             var hasO = o.TryGetPropertyValue(key, out var ov);
             var hasT = t.TryGetPropertyValue(key, out var tv);
 
-            // Missing properties (nulls are left out when saving): treat like the value being removed.
             if (!hasO && !hasT) continue;
-            if (!hasO && hasB && Same(tv, bv)) continue;  // ours removed it, theirs untouched
-            if (!hasT && hasB && Same(ov, bv)) continue;  // theirs removed it, ours untouched
+            if (!hasO && hasB && Same(tv, bv)) continue;
+            if (!hasT && hasB && Same(ov, bv)) continue;
 
             var merged = MergeNode(bv, hasO ? ov : null, hasT ? tv : null, ctx, key);
             if (merged != null) result[key] = merged;
@@ -126,8 +107,6 @@ public static class JsonMerge
         ctx.Stats.Conflicts++;
         return Clone(o);
     }
-
-    // ---------- lists of items with an Id ----------
 
     private static bool IsIdArray(JsonArray a) => a.Count > 0 && a.All(n => n is JsonObject obj && IdOf(obj) != null) || a.Count == 0;
 
@@ -146,19 +125,16 @@ public static class JsonMerge
         {
             var inO = oSet.Contains(id);
             var inT = tSet.Contains(id);
-            if (!bSet.Contains(id)) return inO || inT;  // added on a side
+            if (!bSet.Contains(id)) return inO || inT;
             if (inO && inT) return true;
-            // Removed from this list on one side.
             var removedByOurs = !inO;
             var remover = removedByOurs ? ctx.Ours : ctx.Theirs;
             var other = removedByOurs ? ctx.Theirs : ctx.Ours;
             var key = name + ":" + id;
-            if (remover.ContainsKey(key)) return false;               // moved somewhere else: follow the move
-            // Deleted: stays deleted unless the other side changed it meanwhile.
+            if (remover.ContainsKey(key)) return false;
             return other.TryGetValue(key, out var edited) && ctx.Base.TryGetValue(key, out var original) && !Same(edited, original);
         }
 
-        // Order: whichever side reordered wins; new items from the other side go before the item that follows them.
         var theirOrderChanged = !bIds.Where(tSet.Contains).SequenceEqual(tIds.Where(bSet.Contains));
         var ourOrderChanged = !bIds.Where(oSet.Contains).SequenceEqual(oIds.Where(bSet.Contains));
         var useTheirs = theirOrderChanged && !ourOrderChanged;
@@ -177,7 +153,6 @@ public static class JsonMerge
         foreach (var id in order.Distinct())
         {
             var key = name + ":" + id;
-            // The item's content merges from wherever it lives on each side (it may have moved lists).
             ctx.Base.TryGetValue(key, out var bi);
             ctx.Ours.TryGetValue(key, out var oi);
             ctx.Theirs.TryGetValue(key, out var ti);
@@ -188,7 +163,6 @@ public static class JsonMerge
         return result;
     }
 
-    /// <summary>Every object with an Id, by "listName:id" (ids are unique within a kind of list, e.g. all "Cards").</summary>
     private static Dictionary<string, JsonObject> Index(JsonNode? root)
     {
         var map = new Dictionary<string, JsonObject>();
@@ -215,8 +189,6 @@ public static class JsonMerge
         return map;
     }
 
-    // ---------- lists of plain values ----------
-
     private static bool IsValueArray(JsonArray a) => a.All(n => n is JsonValue);
 
     private static JsonArray MergeSet(JsonArray? b, JsonArray o, JsonArray t)
@@ -230,7 +202,6 @@ public static class JsonMerge
         foreach (var n in o)
         {
             var k = K(n);
-            // Removed by theirs (was there before, now gone) and not re-added by us.
             if (bSet.Contains(k) && !tSet.Contains(k)) continue;
             if (seen.Add(k)) result.Add(Clone(n));
         }
@@ -238,7 +209,7 @@ public static class JsonMerge
         foreach (var n in t)
         {
             var k = K(n);
-            if (!bSet.Contains(k) && !oSet.Contains(k) && seen.Add(k)) result.Add(Clone(n)); // added by theirs
+            if (!bSet.Contains(k) && !oSet.Contains(k) && seen.Add(k)) result.Add(Clone(n));
         }
 
         return result;

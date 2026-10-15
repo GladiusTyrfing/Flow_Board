@@ -4,7 +4,6 @@ using FlowBoard.Services;
 
 namespace FlowBoard.ViewModels;
 
-/// <summary>Theme and wallpaper for a storyboard, canvas or page (a drawer; the document previews live behind it).</summary>
 public sealed partial class DocStyleViewModel : DialogViewModel
 {
     private readonly MainViewModel _main;
@@ -64,7 +63,6 @@ public sealed partial class DocStyleViewModel : DialogViewModel
         Doc.PanelOpacity = 0.9;
     }
 
-    /// <summary>Use this look for every storyboard, canvas and page.</summary>
     [RelayCommand]
     private void ApplyToAll()
     {

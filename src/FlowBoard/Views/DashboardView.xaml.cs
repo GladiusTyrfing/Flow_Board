@@ -10,7 +10,6 @@ public partial class DashboardView : UserControl, Helpers.ICapturable
         InitializeComponent();
     }
 
-    // ----- high-res screenshot -----
     FrameworkElement Helpers.ICapturable.CaptureElement => DashContent;
     Rect? Helpers.ICapturable.CaptureArea => null;
     System.Windows.Media.Brush? Helpers.ICapturable.CaptureBackground => null;

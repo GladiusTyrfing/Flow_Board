@@ -16,15 +16,12 @@ public readonly record struct Box(double X, double Y, double W, double H)
     public bool Contains(Box o) => o.X >= X && o.Right <= Right && o.Y >= Y && o.Bottom <= Bottom;
 }
 
-/// <summary>Path (WPF path mini-language), arrow head and label position for a connector.</summary>
 public sealed record EdgeShape(string Path, string Arrow, double LabelX, double LabelY, double X1 = 0, double Y1 = 0, double X2 = 0, double Y2 = 0);
 
-/// <summary>Connector routing between two boxes (pure math, no WPF so it can be unit tested).</summary>
 public static class CanvasGeometry
 {
     private static string F(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
 
-    /// <summary>Picks the facing sides of the two boxes: left/right when they sit side by side, top/bottom otherwise.</summary>
     public static (double X1, double Y1, double Nx1, double Ny1, double X2, double Y2, double Nx2, double Ny2) Anchors(Box a, Box b)
     {
         var dx = b.CenterX - a.CenterX;
@@ -43,7 +40,6 @@ public static class CanvasGeometry
     public static EdgeShape Route(Box a, Box b, EdgeStyle style, bool arrow, bool startArrow = false, double thickness = 2, double bendX = 0, double bendY = 0)
     {
         var (x1, y1, nx1, ny1, x2, y2, nx2, ny2) = Anchors(a, b);
-        // A free end (a 0-size box) is the exact point.
         if (a.W <= 0.01 && a.H <= 0.01) (x1, y1) = (a.X, a.Y);
         if (b.W <= 0.01 && b.H <= 0.01) (x2, y2) = (b.X, b.Y);
         var sb = new StringBuilder();
@@ -53,7 +49,6 @@ public static class CanvasGeometry
 
         if (bendX != 0 || bendY != 0)
         {
-            // Bent line: a smooth curve that passes through the handle (the middle point pulled by the bend).
             double hx = (x1 + x2) / 2 + bendX, hy = (y1 + y2) / 2 + bendY;
             double cx = 2 * hx - (x1 + x2) / 2, cy = 2 * hy - (y1 + y2) / 2;
             sb.Append("Q ").Append(F(cx)).Append(',').Append(F(cy)).Append(' ').Append(F(x2)).Append(',').Append(F(y2));
@@ -116,7 +111,6 @@ public static class CanvasGeometry
             default:
                 if (a.W <= 0.01 && b.W <= 0.01)
                 {
-                    // Two free points: a gentle curve would have no direction to follow, so draw it straight.
                     goto case EdgeStyle.Straight;
                 }
 
@@ -139,7 +133,6 @@ public static class CanvasGeometry
         return new EdgeShape(sb.ToString(), heads.Trim(), lx, ly, x1, y1, x2, y2);
     }
 
-    /// <summary>Filled triangle with its tip at (x, y) pointing along (dx, dy).</summary>
     public static string ArrowHead(double x, double y, double dx, double dy, double size = 11)
     {
         var len = Math.Sqrt(dx * dx + dy * dy);
@@ -154,7 +147,6 @@ public static class CanvasGeometry
     public static double Snap(double v, double grid) => grid <= 0 ? v : Math.Round(v / grid) * grid;
 }
 
-/// <summary>Tidy left-to-right layered layout for flowcharts and mind maps.</summary>
 public static class CanvasLayout
 {
     public static Dictionary<Guid, (double X, double Y)> Layered(
@@ -176,7 +168,6 @@ public static class CanvasLayout
             parents[to].Add(from);
         }
 
-        // Layer = longest distance from a root, following edges in document order and ignoring cycles.
         var layer = new Dictionary<Guid, int>();
         var order = nodes.Select(n => n.Id).ToList();
         var roots = order.Where(i => parents[i].Count == 0).ToList();
@@ -186,7 +177,7 @@ public static class CanvasLayout
         void Visit(Guid id, int depth)
         {
             if (layer.TryGetValue(id, out var d) && d >= depth) return;
-            if (!visiting.Add(id)) return; // cycle
+            if (!visiting.Add(id)) return;
             layer[id] = depth;
             foreach (var c in children[id]) Visit(c, depth + 1);
             visiting.Remove(id);
@@ -195,7 +186,6 @@ public static class CanvasLayout
         foreach (var r in roots) Visit(r, 0);
         foreach (var id in order.Where(i => !layer.ContainsKey(i))) Visit(id, 0);
 
-        // Order inside a layer by the average position of the parents (barycenter), keeping document order otherwise.
         var layers = layer.GroupBy(kv => kv.Value).OrderBy(g => g.Key).Select(g => g.Select(kv => kv.Key).OrderBy(order.IndexOf).ToList()).ToList();
         var rank = new Dictionary<Guid, double>();
         foreach (var l in layers)

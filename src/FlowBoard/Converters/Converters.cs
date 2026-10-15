@@ -11,7 +11,6 @@ using Wpf.Ui.Controls;
 
 namespace FlowBoard.Converters;
 
-/// <summary>true → Visible. ConverterParameter "invert" flips it.</summary>
 public sealed class BoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -34,7 +33,6 @@ public sealed class InverseBoolConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => value is not true;
 }
 
-/// <summary>null, empty string, 0 or empty collection → Collapsed. "invert" flips it.</summary>
 public sealed class HasValueToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -56,7 +54,6 @@ public sealed class HasValueToVisibilityConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Compares an enum (or any value) to the ConverterParameter by name. Works two-way for radio buttons.</summary>
 public sealed class EqualsConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -105,7 +102,6 @@ public sealed class HexToColorConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Black or white text depending on the brightness of a hex background.</summary>
 public sealed class ContrastBrushConverter : IValueConverter
 {
     private static readonly SolidColorBrush Dark = Freeze(new SolidColorBrush(Color.FromRgb(0x1D, 0x21, 0x25)));
@@ -131,7 +127,6 @@ public sealed class ContrastBrushConverter : IValueConverter
     }
 }
 
-/// <summary>Turns a board background spec ("gradient:#a,#b", "color:#a", "image:path") into a brush.</summary>
 public sealed class BoardBackgroundConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => ToBrush(value as string);
@@ -174,7 +169,6 @@ public sealed class BoardBackgroundConverter : IValueConverter
         }
         catch
         {
-            // Fall back below.
         }
 
         return Brushes.SlateGray;
@@ -183,13 +177,11 @@ public sealed class BoardBackgroundConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Small thumbnail version of a board background (for the sidebar and pickers).</summary>
 public sealed class BoardThumbnailConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
         value as string == "none" ? Checker : BoardBackgroundConverter.ToBrush(value as string, 160);
 
-    /// <summary>Checkerboard that signals "transparent".</summary>
     private static readonly Brush Checker = CreateChecker();
 
     private static Brush CreateChecker()
@@ -207,7 +199,6 @@ public sealed class BoardThumbnailConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Loads images without locking the file, decoded at a reduced size. ConverterParameter = decode width.</summary>
 public sealed class ImagePathConverter : IValueConverter
 {
     public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -249,7 +240,6 @@ public static class ImageLoader
             bmp.CacheOption = BitmapCacheOption.OnLoad;
             bmp.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
             bmp.UriSource = new Uri(path, UriKind.Absolute);
-            // Never decode larger than the file itself (that only wastes memory).
             if (decodeWidth > 0 && decodeWidth < SourceWidth(path)) bmp.DecodePixelWidth = decodeWidth;
             bmp.EndInit();
             bmp.Freeze();
@@ -389,7 +379,6 @@ public sealed class AttachmentIconConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Multiplies a number by the ConverterParameter (used for progress widths etc.).</summary>
 public sealed class MultiplyConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -410,7 +399,6 @@ public sealed class DateOnlyTextConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Is the given label id (value[1]) contained in the card's label ids (value[0])?</summary>
 public sealed class ContainsMultiConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) =>
@@ -419,7 +407,6 @@ public sealed class ContainsMultiConverter : IMultiValueConverter
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => [];
 }
 
-/// <summary>Packs several bindings into an object[] (for commands that need two parameters).</summary>
 public sealed class ArrayMultiConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) => values.Clone();
@@ -427,7 +414,6 @@ public sealed class ArrayMultiConverter : IMultiValueConverter
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => [];
 }
 
-/// <summary>True when all bound values are the same object (e.g. "is this the current board?").</summary>
 public sealed class SameMultiConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) =>
@@ -436,7 +422,6 @@ public sealed class SameMultiConverter : IMultiValueConverter
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => [];
 }
 
-/// <summary>Binds int settings to NumberBox (double?) values.</summary>
 public sealed class IntToDoubleConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
@@ -446,7 +431,6 @@ public sealed class IntToDoubleConverter : IValueConverter
         value is double d ? (int)Math.Round(d) : Binding.DoNothing;
 }
 
-/// <summary>Returns "selected" when both values are equal (drives the swatch ring via Tag).</summary>
 public sealed class SelectedTagMultiConverter : IMultiValueConverter
 {
     public object? Convert(object[] values, Type targetType, object parameter, CultureInfo culture) =>
@@ -455,7 +439,6 @@ public sealed class SelectedTagMultiConverter : IMultiValueConverter
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => [];
 }
 
-/// <summary>0.42 → "42%".</summary>
 public sealed class PercentConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
@@ -464,7 +447,6 @@ public sealed class PercentConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Live preview of what smart quick add understood ("Due Fri 15:00 · High · #video").</summary>
 public sealed class SmartPreviewConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -478,7 +460,6 @@ public sealed class SmartPreviewConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Opposite of <see cref="EqualsConverter"/> (one-way): true / Visible when the value differs from the parameter.</summary>
 public sealed class NotEqualsConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -491,7 +472,6 @@ public sealed class NotEqualsConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>3.5 → "3.5s", 75 → "1:15".</summary>
 public sealed class SecondsConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -503,7 +483,6 @@ public sealed class SecondsConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Visible / true when a number is greater than the parameter (default 0).</summary>
 public sealed class GreaterThanConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -518,7 +497,6 @@ public sealed class GreaterThanConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Path mini-language string → frozen Geometry (empty string → nothing).</summary>
 public sealed class GeometryConverter : IValueConverter
 {
     public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -539,7 +517,6 @@ public sealed class GeometryConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Indent level → left margin (ConverterParameter = pixels per level, default 28).</summary>
 public sealed class IndentToMarginConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -551,7 +528,6 @@ public sealed class IndentToMarginConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Symbol name string ("Rocket24") → SymbolRegular for dynamic icons.</summary>
 public sealed class SymbolNameConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
@@ -560,7 +536,6 @@ public sealed class SymbolNameConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Storyboard mode → sidebar icon.</summary>
 public sealed class StoryboardIconConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
@@ -569,7 +544,6 @@ public sealed class StoryboardIconConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Storyboard shot status → chip color.</summary>
 public sealed class StatusBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

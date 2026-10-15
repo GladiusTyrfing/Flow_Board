@@ -14,7 +14,6 @@
             CornerRadius="{DynamicResource Fb.RadiusLarge}" h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}"
             DataContext="{Binding Timeline}">
         <DockPanel>
-            <!-- Toolbar -->
             <Grid DockPanel.Dock="Top" Margin="12,10,12,8">
                 <StackPanel Orientation="Horizontal">
                     <Button Style="{StaticResource Fb.SubtleButton}" Padding="12,6" Command="{Binding ScrollToTodayCommand}">
@@ -80,7 +79,6 @@
                 </Popup>
             </Grid>
 
-            <!-- Empty -->
             <Grid>
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="5" Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
                     <ui:SymbolIcon Symbol="TextBulletListSquare24" FontSize="40" Foreground="{DynamicResource Fb.FaintTextBrush}" HorizontalAlignment="Center" />
@@ -101,7 +99,6 @@
                     <Border Grid.ColumnSpan="2" BorderThickness="0,1,0,1" BorderBrush="{DynamicResource Fb.DividerBrush}" />
                     <TextBlock Text="CARD" Style="{StaticResource Fb.Caption}" VerticalAlignment="Center" Margin="16,0,0,0" />
 
-                    <!-- Date header -->
                     <ScrollViewer x:Name="HeaderScroller" Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Focusable="False">
                         <ItemsControl ItemsSource="{Binding Days}" Width="{Binding TotalWidth}" Height="46" Focusable="False">
                             <ItemsControl.ItemsPanel>
@@ -135,20 +132,17 @@
                         </ItemsControl>
                     </ScrollViewer>
 
-                    <!-- Card names -->
                     <ScrollViewer x:Name="NamesScroller" Grid.Row="1" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" Focusable="False"
                                   PreviewMouseWheel="OnNamesWheel">
                         <ItemsControl ItemsSource="{Binding Rows}" Height="{Binding TotalHeight}" VerticalAlignment="Top" Focusable="False">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type vm:TimelineRow}">
                                     <Grid Height="{Binding Height}">
-                                        <!-- List header -->
                                         <StackPanel x:Name="Header" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0" Visibility="Collapsed">
                                             <Border Width="8" Height="8" CornerRadius="4" Background="{Binding Color, Converter={StaticResource HexToBrush}}" Margin="0,0,8,0" />
                                             <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource Fb.ListHeaderTextBrush}" />
                                             <TextBlock Text="{Binding Count}" Style="{StaticResource Fb.Muted}" FontSize="12" Margin="8,0,0,0" />
                                         </StackPanel>
-                                        <!-- Card -->
                                         <Button x:Name="CardRow" Style="{StaticResource Fb.GhostButton}" Padding="10,2" Margin="6,2" HorizontalContentAlignment="Stretch"
                                                 Command="{Binding DataContext.Timeline.OpenCommand, ElementName=Root}" CommandParameter="{Binding}">
                                             <Grid>
@@ -183,13 +177,11 @@
                         </ItemsControl>
                     </ScrollViewer>
 
-                    <!-- Chart -->
                     <Grid Grid.Row="1" Grid.Column="1">
                         <ScrollViewer x:Name="ChartScroller" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                                       ScrollChanged="OnChartScroll" PreviewMouseWheel="OnChartWheel">
                             <Grid x:Name="Chart" Width="{Binding TotalWidth}" Height="{Binding TotalHeight}" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent"
                                   MouseLeftButtonDown="OnChartDown" MouseMove="OnChartMove" MouseLeftButtonUp="OnChartUp">
-                                <!-- Weekend columns + today line -->
                                 <ItemsControl ItemsSource="{Binding Days}" Focusable="False" IsHitTestVisible="False">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -220,7 +212,6 @@
                                     <Rectangle Canvas.Left="{Binding TodayX}" Width="2" Height="{Binding TotalHeight}" Fill="{DynamicResource Fb.AccentBrush}" Opacity="0.85" />
                                 </Canvas>
     
-                                <!-- Dependency arrows -->
                                 <ItemsControl ItemsSource="{Binding Links}" Focusable="False" IsHitTestVisible="False">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -244,7 +235,6 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
     
-                                <!-- Bars -->
                                 <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>

@@ -34,7 +34,6 @@ public partial class StoryboardView : UserControl, Helpers.ICapturable
         };
     }
 
-    /// <summary>Scrolls a linked shot into the middle of the view.</summary>
     private void OnShotFocus(object? sender, Shot shot) =>
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
         {
@@ -45,12 +44,10 @@ public partial class StoryboardView : UserControl, Helpers.ICapturable
 
     public IDropTarget ShotDropHandler { get; }
 
-    /// <summary>Mouse wheel scrolls the shot row sideways unless the column under the mouse can scroll itself.</summary>
     private void OnScrollerWheel(object sender, MouseWheelEventArgs e)
     {
         if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
         {
-            // Over a shot column: only that column scrolls (never the whole row, even at its top or bottom).
             for (var d = e.OriginalSource as DependencyObject; d is Visual && d != Scroller; d = VisualTreeHelper.GetParent(d))
             {
                 if (d is ScrollViewer sv)
@@ -87,7 +84,6 @@ public partial class StoryboardView : UserControl, Helpers.ICapturable
         if (_vm == null) return;
         try
         {
-            // Render the whole row (not only the visible part) on the app background.
             ExportRoot.UpdateLayout();
             var bg = (Brush)FindResource("Fb.WindowBrush");
             var image = MediaStore.Render(ExportRoot, 2, bg);
@@ -100,7 +96,6 @@ public partial class StoryboardView : UserControl, Helpers.ICapturable
         }
     }
 
-    /// <summary>Reorders shots by dragging a column; snapshots first so Ctrl+Z restores the order.</summary>
     private sealed class ShotReorderHandler(StoryboardView view) : DefaultDropHandler
     {
         public override void DragOver(IDropInfo dropInfo)
@@ -124,7 +119,6 @@ public partial class StoryboardView : UserControl, Helpers.ICapturable
         }
     }
 
-    // ----- high-res screenshot -----
     FrameworkElement Helpers.ICapturable.CaptureElement => ExportRoot;
     Rect? Helpers.ICapturable.CaptureArea => null;
     System.Windows.Media.Brush? Helpers.ICapturable.CaptureBackground => Helpers.CaptureHelpers.DocWallpaper();

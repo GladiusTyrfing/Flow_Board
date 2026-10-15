@@ -7,7 +7,6 @@ using FlowBoard.Services;
 
 namespace FlowBoard.Controls;
 
-/// <summary>Any color: saturation/brightness square, hue bar, hex input, presets and recently used colors.</summary>
 public partial class ColorPicker : UserControl
 {
     public static readonly DependencyProperty ColorProperty = DependencyProperty.Register(
@@ -20,7 +19,6 @@ public partial class ColorPicker : UserControl
         "#84CC16", "#22C55E", "#10B981", "#14B8A6", "#06B6D4", "#3B82F6", "#6366F1", "#8B5CF6", "#A855F7", "#EC4899",
     ];
 
-    /// <summary>Colors picked recently (shared by every picker in the app).</summary>
     public static ObservableCollection<string> Recent { get; } = [];
 
     private double _h, _s = 1, _v = 1;
@@ -92,8 +90,6 @@ public partial class ColorPicker : UserControl
         Refresh();
     }
 
-    // ---------- mouse ----------
-
     private void OnSvDown(object sender, MouseButtonEventArgs e)
     {
         SvArea.CaptureMouse();
@@ -148,8 +144,6 @@ public partial class ColorPicker : UserControl
         if (ThemeService.TryParseColor(t, out var c)) Color = ToHex(c);
         else HexBox.Text = Color;
     }
-
-    // ---------- color math ----------
 
     public static string ToHex(Color c) => $"#{c.R:X2}{c.G:X2}{c.B:X2}";
 

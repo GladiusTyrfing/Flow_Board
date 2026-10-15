@@ -39,15 +39,12 @@ public partial class LabelOption : ObservableObject
 
 public sealed record ReminderChoice(int Minutes, string Text);
 
-/// <summary>A related card shown in the card editor. Relation: "Linked", "Blocked by" or "Blocks".</summary>
 public sealed record CardRelation(Guid Id, Card? Card, string Relation, string Title, string Where, bool IsDone)
 {
-    /// <summary>What the row points at (a card, or an item in another section).</summary>
     public LinkTarget Kind { get; init; } = LinkTarget.Card;
     public string Icon { get; init; } = "TaskListLtr24";
 }
 
-/// <summary>The big card editor (Trello's "card back").</summary>
 public sealed partial class CardDetailViewModel : DialogViewModel
 {
     private readonly MainViewModel _main;
@@ -68,8 +65,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         Board.Labels.CollectionChanged += OnBoardLabelsChanged;
         RefreshRelations();
     }
-
-    // ---------- linked cards & dependencies ----------
 
     public ObservableCollection<CardRelation> Relations { get; } = [];
     public bool HasRelations => Relations.Count > 0;
@@ -124,7 +119,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         _ => kind.ToString(),
     };
 
-    /// <summary>Links this card to a board, storyboard, single shot, canvas or page.</summary>
     [RelayCommand]
     private async Task LinkItem()
     {
@@ -190,7 +184,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         _main.RefreshBlocked();
     }
 
-    /// <summary>True when <paramref name="card"/> (transitively) waits on <paramref name="blocker"/>.</summary>
     private bool DependsOn(Guid card, Guid blocker)
     {
         var seen = new HashSet<Guid>();
@@ -284,10 +277,8 @@ public sealed partial class CardDetailViewModel : DialogViewModel
     [ObservableProperty] private bool _isEditingDescription;
     [ObservableProperty] private bool _isDragOver;
 
-    /// <summary>A popup to open as soon as the view appears ("dates", "labels"), set by hover hotkeys.</summary>
     public string? PendingPopup { get; set; }
 
-    // ---- date editor state ----
     [ObservableProperty] private bool _hasStartDate;
     [ObservableProperty] private DateTime? _startDateValue;
     [ObservableProperty] private bool _hasDueDate = true;
@@ -310,7 +301,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         if (Recorder.IsRecording) _ = Recorder.CancelAsync();
         _main.Player.Stop();
 
-        // Clean up empty checklist items and record one undo step for everything edited here.
         foreach (var cl in Card.Checklists)
             foreach (var i in cl.Items.Where(i => string.IsNullOrWhiteSpace(i.Text)).ToList())
                 cl.Items.Remove(i);
@@ -320,8 +310,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
             _main.Undo.PushSnapshot(Board.Id, _boardIndex, _snapshot, $"Edit \"{Card.Title}\"");
         _main.OnCardDialogClosed();
     }
-
-    // ---------- title / completion / description ----------
 
     [RelayCommand]
     private void ToggleComplete()
@@ -335,8 +323,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
 
     [RelayCommand] private void EditDescription() => IsEditingDescription = true;
     [RelayCommand] private void DoneEditingDescription() => IsEditingDescription = false;
-
-    // ---------- labels ----------
 
     private void RebuildLabelOptions()
     {
@@ -383,8 +369,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         RebuildLabelOptions();
         _main.Filter.SetBoard(Board);
     }
-
-    // ---------- dates ----------
 
     private void LoadDateEditor()
     {
@@ -450,8 +434,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         Card.AddActivity("removed the dates", Me);
     }
 
-    // ---------- priority / cover ----------
-
     [RelayCommand]
     private void SetPriority(Priority p)
     {
@@ -481,8 +463,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         Card.CoverAttachmentId = null;
     }
 
-    // ---------- checklists ----------
-
     [RelayCommand]
     private void AddChecklist()
     {
@@ -498,7 +478,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
     {
         var text = cl.NewItemText.Trim();
         if (text.Length == 0) return;
-        // Pasting several lines creates one item per line.
         foreach (var line in text.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0))
             cl.Items.Add(new ChecklistItem { Text = line });
         cl.NewItemText = string.Empty;
@@ -522,8 +501,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         DeleteChecklistItem(item);
         _main.ShowToast($"Created card \"{card.Title}\"");
     }
-
-    // ---------- attachments ----------
 
     [RelayCommand]
     private void AddFiles()
@@ -565,7 +542,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         if (added > 0) Card.AddActivity(added == 1 ? "attached a file" : $"attached {added} files", Me);
     }
 
-    /// <summary>Ctrl+V inside the card: images from the clipboard, copied files, or a URL.</summary>
     [RelayCommand]
     public void PasteFromClipboard()
     {
@@ -714,8 +690,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
 
     public void HandleFileDrop(string[] files) => AddFilesFromPaths(files);
 
-    // ---------- voice notes ----------
-
     [RelayCommand]
     private void StartRecording()
     {
@@ -757,7 +731,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         }
         catch
         {
-            // Use the wall-clock duration.
         }
 
         Card.Attachments.Add(new Attachment
@@ -770,7 +743,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
 
     [RelayCommand] private Task CancelRecording() => Recorder.CancelAsync();
 
-    /// <summary>Adds audio files from the PC as voice notes.</summary>
     [RelayCommand]
     private void ImportVoice()
     {
@@ -799,8 +771,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         var name = await _main.PromptAsync("Rename", string.Empty, a.Name, "Rename");
         if (name != null) a.Name = name;
     }
-
-    // ---------- time tracking / focus ----------
 
     [RelayCommand]
     private void ToggleTimer()
@@ -859,8 +829,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
         return true;
     }
 
-    // ---------- comments ----------
-
     [RelayCommand]
     private void AddComment()
     {
@@ -872,8 +840,6 @@ public sealed partial class CardDetailViewModel : DialogViewModel
 
     [RelayCommand]
     private void DeleteComment(Comment c) => Card.Comments.Remove(c);
-
-    // ---------- card actions ----------
 
     [RelayCommand]
     private void Archive()

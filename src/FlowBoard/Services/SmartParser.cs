@@ -4,12 +4,10 @@ using FlowBoard.Models;
 
 namespace FlowBoard.Services;
 
-/// <summary>Result of parsing a quick-add line such as "Edit trailer fri 3pm #video !high".</summary>
 public sealed record ParsedTask(string Title, DateTime? Due, Priority? Priority, IReadOnlyList<string> Labels)
 {
     public bool HasExtras => Due != null || Priority != null || Labels.Count > 0;
 
-    /// <summary>Short human summary for live previews, e.g. "Due Fri, Jun 12 15:00 · High · #video".</summary>
     public string Summary
     {
         get
@@ -24,12 +22,6 @@ public sealed record ParsedTask(string Title, DateTime? Due, Priority? Priority,
     }
 }
 
-/// <summary>
-/// Natural-language quick add. Understands:
-/// dates (today, tomorrow, tonight, mon…sun, next fri, weekend, next week, in 3 days/weeks/months,
-/// jun 12, 12 june, 2026-06-12), times (3pm, 3:30pm, 15:30, noon, "at 5"),
-/// labels (#name) and priority (!urgent !high !medium !low, !1…!4).
-/// </summary>
 public static partial class SmartParser
 {
     private static readonly string[] MonthNames =
@@ -54,14 +46,12 @@ public static partial class SmartParser
         DateTime? date = null;
         TimeSpan? time = null;
 
-        // ---- labels ----
         text = LabelRegex().Replace(text, m =>
         {
             labels.Add(m.Groups[1].Value.Replace('_', ' '));
             return " ";
         });
 
-        // ---- priority ----
         text = PriorityRegex().Replace(text, m =>
         {
             priority = m.Groups[1].Value.ToLowerInvariant() switch
@@ -74,7 +64,6 @@ public static partial class SmartParser
             return " ";
         });
 
-        // ---- ISO date ----
         text = IsoDateRegex().Replace(text, m =>
         {
             if (DateTime.TryParseExact(m.Groups[1].Value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var d))
@@ -82,7 +71,6 @@ public static partial class SmartParser
             return " ";
         }, 1);
 
-        // ---- relative words ----
         text = Replace(text, TonightRegex(), _ =>
         {
             date = now.Date;
@@ -101,7 +89,6 @@ public static partial class SmartParser
                 : now.Date.AddMonths(n);
         });
 
-        // ---- month + day ("jun 12", "12 june", "june 12th") ----
         text = Replace(text, MonthDayRegex(), m =>
         {
             if (TryMonth(m.Groups[1].Value, out var month)) date = MakeDate(now, month, int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture));
@@ -111,14 +98,12 @@ public static partial class SmartParser
             if (TryMonth(m.Groups[2].Value, out var month)) date = MakeDate(now, month, int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture));
         });
 
-        // ---- weekdays ("fri", "next friday", "on monday") ----
         text = Replace(text, WeekdayRegex(), m =>
         {
             if (Days.TryGetValue(m.Groups[2].Value, out var dow))
                 date = NextWeekday(now.Date, dow, forceNextWeek: m.Groups[1].Success && m.Groups[1].Value.Length > 0);
         });
 
-        // ---- times ----
         text = Replace(text, NoonRegex(), m => time = m.Value.Trim().StartsWith("noon", StringComparison.OrdinalIgnoreCase)
             ? TimeSpan.FromHours(12)
             : new TimeSpan(23, 59, 0));
@@ -138,7 +123,6 @@ public static partial class SmartParser
         text = Replace(text, AtHourRegex(), m =>
         {
             var h = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
-            // "at 5" means 5pm for small numbers during working hours.
             if (h is >= 1 and <= 7) h += 12;
             if (h < 24) time = TimeSpan.FromHours(h);
         });
@@ -147,11 +131,10 @@ public static partial class SmartParser
         if (date != null || time != null)
         {
             var d = date ?? now.Date;
-            if (date == null && time != null && now.Date + time.Value < now) d = d.AddDays(1); // time already passed today
+            if (date == null && time != null && now.Date + time.Value < now) d = d.AddDays(1);
             due = d + (time ?? TimeSpan.Zero);
         }
 
-        // ---- tidy the title ----
         var title = MultiSpaceRegex().Replace(text, " ").Trim();
         title = TrailingJoinerRegex().Replace(title, string.Empty).Trim();
         title = LeadingJoinerRegex().Replace(title, string.Empty).Trim();
@@ -177,7 +160,6 @@ public static partial class SmartParser
     {
         day = Math.Clamp(day, 1, DateTime.DaysInMonth(now.Year, month));
         var d = new DateTime(now.Year, month, day);
-        // A date that already passed this year means next year.
         return d < now.Date ? d.AddYears(1) : d;
     }
 

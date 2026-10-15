@@ -20,8 +20,6 @@ public partial class BoardView : UserControl, Helpers.ICapturable
         InitializeComponent();
     }
 
-    // ---------- open a card on click (but not after a drag) ----------
-
     private void Card_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         _cardDownPoint = e.GetPosition(this);
@@ -36,8 +34,6 @@ public partial class BoardView : UserControl, Helpers.ICapturable
         e.Handled = true;
     }
 
-    // ---------- hover tracking for card hotkeys ----------
-
     private void Card_MouseEnter(object sender, MouseEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: Card card }) MainViewModel.Instance.HoveredCard = card;
@@ -48,8 +44,6 @@ public partial class BoardView : UserControl, Helpers.ICapturable
         if (sender is FrameworkElement { DataContext: Card card } && MainViewModel.Instance.HoveredCard == card)
             MainViewModel.Instance.HoveredCard = null;
     }
-
-    // ---------- mouse wheel scrolls sideways unless a list can scroll ----------
 
     private void BoardScroller_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
@@ -62,8 +56,6 @@ public partial class BoardView : UserControl, Helpers.ICapturable
         BoardScroller.ScrollToHorizontalOffset(BoardScroller.HorizontalOffset - e.Delta);
         e.Handled = true;
     }
-
-    // ---------- drag the empty board background to pan ----------
 
     private void BoardScroller_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -91,7 +83,6 @@ public partial class BoardView : UserControl, Helpers.ICapturable
         Cursor = null;
     }
 
-    /// <summary>True when the click landed on bare board area (not a list, card, button or scrollbar).</summary>
     private bool IsBackground(DependencyObject? d)
     {
         while (d != null && d != BoardScroller)
@@ -118,7 +109,6 @@ public partial class BoardView : UserControl, Helpers.ICapturable
     private static bool IsInside<T>(DependencyObject? d, DependencyObject stopAt) where T : DependencyObject =>
         FindAncestor<T>(d, stopAt) != null;
 
-    // ----- high-res screenshot -----
     FrameworkElement Helpers.ICapturable.CaptureElement => BoardContent;
     Rect? Helpers.ICapturable.CaptureArea => null;
     System.Windows.Media.Brush? Helpers.ICapturable.CaptureBackground => (DataContext as ViewModels.MainViewModel)?.CurrentBoard is { } b && b.Background != "none" ? Converters.BoardBackgroundConverter.ToBrush(b.Background) : null;

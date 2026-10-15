@@ -12,7 +12,6 @@
              x:Name="Root"
              d:DataContext="{d:DesignInstance vm:SettingsViewModel}">
     <UserControl.Resources>
-        <!-- One setting: control docked right, text fills the rest (never overlaps). -->
         <Style x:Key="Row" TargetType="DockPanel">
             <Setter Property="Margin" Value="0,0,0,16" />
             <Setter Property="LastChildFill" Value="True" />
@@ -34,7 +33,6 @@
             <Setter Property="FontWeight" Value="ExtraBold" />
             <Setter Property="Margin" Value="0,0,0,18" />
         </Style>
-        <!-- Left navigation item -->
         <Style x:Key="NavItem" TargetType="RadioButton">
             <Setter Property="Foreground" Value="{DynamicResource Fb.TextBrush}" />
             <Setter Property="Cursor" Value="Hand" />
@@ -63,7 +61,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <!-- Click, then press a key combination -->
         <Style x:Key="HotkeyBox" TargetType="TextBox" BasedOn="{StaticResource Fb.Input}">
             <Setter Property="Width" Value="190" />
             <Setter Property="IsReadOnly" Value="True" />
@@ -83,7 +80,6 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- ============ Navigation ============ -->
             <Border CornerRadius="0" Background="{DynamicResource Fb.SurfaceAltBrush}" BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="0,0,1,0">
                 <DockPanel Margin="14,22,14,16">
                     <TextBlock DockPanel.Dock="Top" Text="Settings" Style="{StaticResource Fb.GradientTitle}" FontSize="24" Margin="8,0,0,18" />
@@ -143,12 +139,10 @@
                 </DockPanel>
             </Border>
 
-            <!-- ============ Pages ============ -->
             <Button Grid.Column="1" Style="{StaticResource Fb.IconButton}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,14,14,0"
                     Panel.ZIndex="2" Command="{Binding CloseCommand}" ToolTip="Close (Esc)">
                 <ui:SymbolIcon Symbol="Dismiss24" FontSize="16" />
             </Button>
-            <!-- Board style page: not inside the page scroller so its preview stays visible while adjusting sliders -->
             <DockPanel Grid.Column="1" Margin="30,24,20,20" Panel.ZIndex="1"
                        Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=boardstyle}">
                 <StackPanel DockPanel.Dock="Top" Margin="0,0,40,14">
@@ -165,7 +159,6 @@
 
             <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="30,24,30,24">
                 <Grid>
-                    <!-- Appearance -->
                     <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=appearance}">
                         <TextBlock Text="Appearance" Style="{StaticResource PageTitle}" />
 
@@ -216,7 +209,6 @@
                             <StackPanel DockPanel.Dock="Right" Width="240" VerticalAlignment="Center">
                                 <Slider Minimum="0" Maximum="24" Value="{Binding Settings.CornerRadius}" SmallChange="1" LargeChange="4"
                                         IsSnapToTickEnabled="True" TickFrequency="1" />
-                                <!-- Live preview: a card and a button using the current radius -->
                                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                     <Border Width="90" Height="36" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.CardBrush}"
                                             BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="1">
@@ -268,7 +260,6 @@
                             </StackPanel>
                         </DockPanel>
 
-                        <!-- Windows 11 only -->
                         <DockPanel Style="{StaticResource Row}" Visibility="{Binding SupportsBackdrop, Converter={StaticResource BoolToVis}}">
                             <Border DockPanel.Dock="Right" Style="{StaticResource Fb.SegmentGroup}" VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal">
@@ -299,7 +290,6 @@
                         </Border>
                     </StackPanel>
 
-                    <!-- General -->
                     <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=general}">
                         <TextBlock Text="General" Style="{StaticResource PageTitle}" />
                         <DockPanel Style="{StaticResource Row}">
@@ -362,7 +352,6 @@
                         </DockPanel>
                     </StackPanel>
 
-                    <!-- Hotkeys -->
                     <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=hotkeys}">
                         <TextBlock Text="Hotkeys" Style="{StaticResource PageTitle}" />
                         <DockPanel Style="{StaticResource Row}">
@@ -402,7 +391,6 @@
                         </Button>
                     </StackPanel>
 
-                    <!-- Reminders -->
                     <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=reminders}">
                         <TextBlock Text="Reminders" Style="{StaticResource PageTitle}" />
                         <DockPanel Style="{StaticResource Row}">
@@ -427,7 +415,6 @@
                         </DockPanel>
                     </StackPanel>
 
-                    <!-- Focus timer -->
                     <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=focus}">
                         <TextBlock Text="Focus timer" Style="{StaticResource PageTitle}" />
                         <DockPanel Style="{StaticResource Row}">
@@ -472,7 +459,6 @@
                         </DockPanel>
                     </StackPanel>
 
-                    <!-- About -->
                     <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=about}" MaxWidth="640" HorizontalAlignment="Left">
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,18">
                             <Image Source="pack://application:,,,/Assets/app.png" Width="64" Height="64" RenderOptions.BitmapScalingMode="HighQuality" />
@@ -553,7 +539,6 @@
                         </DockPanel>
                     </StackPanel>
 
-                    <!-- Data -->
                     <StackPanel Visibility="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=data}">
                         <TextBlock Text="Data &amp; backup" Style="{StaticResource PageTitle}" />
                         <Border Style="{StaticResource Fb.Section}">

@@ -22,8 +22,6 @@
     </UserControl.Resources>
 
     <DockPanel>
-        <!-- "/" menu is placed at the focused block from code -->
-            <!-- "@" link search (placed at the caret from code) -->
             <Popup x:Name="MentionPopup" DockPanel.Dock="Top" AllowsTransparency="True" StaysOpen="True" Placement="Relative" PopupAnimation="Fade">
                 <Border Style="{StaticResource Fb.Flyout}" Width="340" Padding="6" MaxHeight="340" Margin="6">
                     <DockPanel>
@@ -80,7 +78,6 @@
                 </Border>
             </Popup>
 
-        <!-- Formatting bar: appears above selected text -->
         <Popup x:Name="FormatBar" DockPanel.Dock="Top" AllowsTransparency="True" StaysOpen="True" Placement="Relative" PopupAnimation="Fade">
             <Border Style="{StaticResource Fb.Flyout}" Padding="4" Effect="{StaticResource Fb.PopupShadow}" Margin="6">
                 <StackPanel Orientation="Horizontal">
@@ -141,7 +138,6 @@
             </Border>
         </Popup>
 
-        <!-- ============ Header ============ -->
         <Border DockPanel.Dock="Top" Style="{StaticResource Fb.HeaderPill}" Margin="12,12,12,0" Padding="6,5">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -166,7 +162,6 @@
                             
                         </StackPanel>
                     </Button>
-                    <!-- Insert below the current line -->
                     <Button Style="{StaticResource Fb.HeaderButton}" Focusable="False" Command="{Binding InsertCommand}" CommandParameter="Link"
                             ToolTip="Link a board, storyboard, canvas, page or card (or type @)">
                         <StackPanel Orientation="Horizontal">
@@ -233,10 +228,8 @@
             </Grid>
         </Border>
 
-        <!-- ============ Page ============ -->
         <Border Margin="12" Style="{StaticResource Fb.Glass}" Background="{DynamicResource Fb.SurfaceBrush}" h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}">
             <DockPanel>
-            <!-- Outline (headings) -->
             <Border DockPanel.Dock="Right" Width="220" BorderThickness="1,0,0,0" BorderBrush="{DynamicResource Fb.DividerBrush}" Padding="12,18,8,12"
                     Visibility="{Binding ShowOutline, Converter={StaticResource BoolToVis}}">
                 <DockPanel>
@@ -272,7 +265,6 @@
             <Grid >
                 <ScrollViewer x:Name="Scroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AllowDrop="True" PreviewDrop="OnDrop" PreviewDragOver="OnDragOver">
                     <StackPanel x:Name="PageContent">
-                    <!-- Cover -->
                     <Grid x:Name="CoverArea" Height="190" Visibility="{Binding Page.HasCover, Converter={StaticResource BoolToVis}}">
                         <Image Source="{Binding Page.CoverFullPath, Converter={StaticResource ImagePath}, ConverterParameter=2000}" Stretch="UniformToFill" />
                         <StackPanel x:Name="CoverTools" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="12">
@@ -305,7 +297,6 @@
                                 </Style.Triggers>
                             </Style>
                         </StackPanel.Style>
-                        <!-- Icon -->
                         <Button x:Name="IconButton" Style="{StaticResource Fb.GhostButton}" HorizontalAlignment="Left" Padding="8" Margin="40,0,0,4" Click="OnIconClick" ToolTip="Change icon">
                             <ui:SymbolIcon Symbol="{Binding Page.Icon, Converter={StaticResource SymbolName}}" FontSize="40" Foreground="{DynamicResource Fb.AccentTextBrush}" />
                         </Button>
@@ -329,13 +320,11 @@
                             </Border>
                         </Popup>
     
-                        <!-- Title -->
                         <TextBox x:Name="TitleBox" Style="{StaticResource Fb.BareTextBox}" Margin="48,0,0,6" FontSize="34" FontWeight="ExtraBold" Tag="Untitled"
                                  Text="{Binding Page.Title, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="False"
                                  h:Behaviors.EnterCommand="{Binding FocusFirstCommand}" />
                         <TextBlock Text="{Binding Stats}" Style="{StaticResource Fb.Muted}" FontSize="12" Margin="50,0,0,18" />
     
-                        <!-- Blocks -->
                         <ItemsControl x:Name="BlocksHost" ItemsSource="{Binding Page.Blocks}" Focusable="False" PreviewKeyDown="OnBlockKey" LostKeyboardFocus="OnBlocksLostFocus">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:NoteBlock}">
@@ -346,7 +335,6 @@
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
     
-                                        <!-- Gutter: add + block menu -->
                                         <StackPanel x:Name="Gutter" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,3,2,0" Opacity="0">
                                             <Button Style="{StaticResource GutterButton}" ToolTip="Add a block below" Command="{Binding DataContext.AddBelowCommand, ElementName=Root}" CommandParameter="{Binding}">
                                                 <ui:SymbolIcon Symbol="Add24" FontSize="14" />
@@ -386,7 +374,6 @@
                                             </Button>
                                         </StackPanel>
     
-                                        <!-- Markers -->
                                         <Grid Grid.Column="1" x:Name="Marker" Width="26" VerticalAlignment="Top" Visibility="Collapsed">
                                             <Ellipse x:Name="Bullet" Width="6" Height="6" Fill="{DynamicResource Fb.TextBrush}" Margin="0,12,0,0" VerticalAlignment="Top" HorizontalAlignment="Center" Visibility="Collapsed" />
                                             <TextBlock x:Name="Number" Text="{Binding Number, StringFormat='{}{0}.'}" FontSize="15" Margin="0,4,0,0" HorizontalAlignment="Center" Visibility="Collapsed"
@@ -394,7 +381,6 @@
                                             <CheckBox x:Name="Check" IsChecked="{Binding IsChecked}" Margin="2,4,0,0" MinWidth="0" Visibility="Collapsed" Focusable="False" />
                                         </Grid>
     
-                                        <!-- Text blocks -->
                                         <Border Grid.Column="2" x:Name="TextFrame" Padding="2,3" BorderThickness="0" CornerRadius="{DynamicResource Fb.Radius}">
                                             <DockPanel>
                                                 <ui:SymbolIcon x:Name="CalloutIcon" DockPanel.Dock="Left" Symbol="Lightbulb24" FontSize="18" Margin="4,2,10,0" VerticalAlignment="Top"
@@ -410,10 +396,8 @@
                                             </DockPanel>
                                         </Border>
     
-                                        <!-- Divider -->
                                         <Border Grid.Column="1" Grid.ColumnSpan="2" x:Name="Divider" Height="1" Margin="0,14" Background="{DynamicResource Fb.DividerBrush}" Visibility="Collapsed" />
     
-                                        <!-- Image -->
                                         <StackPanel Grid.Column="1" Grid.ColumnSpan="2" x:Name="ImageBlock" Visibility="Collapsed" Margin="0,6">
                                             <Grid x:Name="ImageArea" HorizontalAlignment="Left">
                                                 <Button Style="{StaticResource Fb.GhostButton}" Padding="0" HorizontalAlignment="Left" Cursor="Hand"
@@ -436,7 +420,6 @@
                                                      FontSize="13" Foreground="{DynamicResource Fb.MutedTextBrush}" Margin="2,6,0,0" AcceptsReturn="False" />
                                         </StackPanel>
     
-                                        <!-- Link: a preview card of the board / storyboard / canvas / page / card -->
                                         <Button Grid.Column="1" Grid.ColumnSpan="2" x:Name="LinkBlock" Visibility="Collapsed" Style="{StaticResource Fb.SubtleButton}" HorizontalAlignment="Left"
                                                 HorizontalContentAlignment="Stretch" MinWidth="320" MaxWidth="620" Margin="0,4" Padding="0"
                                                 Command="{Binding DataContext.OpenLinkCommand, ElementName=Root}" CommandParameter="{Binding}">
@@ -446,7 +429,6 @@
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
-                                                <!-- Thumbnail: board colors or the first image -->
                                                 <Border Width="86" Height="62" Margin="6" CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleHoverBrush}" ClipToBounds="True">
                                                     <Grid>
                                                         <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{Binding Link.Background, Converter={StaticResource BoardThumbnail}}"
@@ -576,7 +558,6 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
     
-                        <!-- Start from a template (only on an empty page) -->
                         <StackPanel Margin="50,18,0,0" Visibility="{Binding ShowTemplates, Converter={StaticResource BoolToVis}}">
                             <TextBlock Text="START WITH A TEMPLATE" Style="{StaticResource Fb.Caption}" Margin="0,0,0,8" />
                             <ItemsControl ItemsSource="{Binding Templates}" Focusable="False">
@@ -594,7 +575,6 @@
                             </ItemsControl>
                         </StackPanel>
     
-                        <!-- Click below the last block to keep writing -->
                         <Border Height="160" Background="Transparent" Cursor="IBeam" MouseLeftButtonDown="OnTailClick" />
                     </StackPanel>
                     </StackPanel>

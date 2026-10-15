@@ -2,7 +2,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace FlowBoard.Models;
 
-/// <summary>A board-level label. Cards reference labels by id so renaming or recoloring updates every card.</summary>
 public partial class Label : ObservableObject
 {
     [ObservableProperty] private Guid _id = Guid.NewGuid();

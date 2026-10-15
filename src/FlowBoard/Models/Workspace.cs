@@ -3,11 +3,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace FlowBoard.Models;
 
-/// <summary>Everything that is persisted to data.json.</summary>
 public partial class Workspace : ObservableObject
 {
     [ObservableProperty] private int _version = 1;
-    /// <summary>Name of the folder next to the project file that holds its media ("&lt;name&gt; files").</summary>
     public string? MediaFolder { get; set; }
     [ObservableProperty] private ObservableCollection<Board> _boards = [];
     [ObservableProperty] private ObservableCollection<BoardTemplate> _userTemplates = [];
@@ -54,7 +52,6 @@ public class BoardTemplate
     public string Background { get; set; } = "gradient:#0C66E4,#9F6FEF";
     public List<string> Lists { get; set; } = [];
     public List<TemplateLabel> Labels { get; set; } = [];
-    /// <summary>For user-saved templates: full board snapshot as JSON.</summary>
     public string? BoardJson { get; set; }
     public bool IsBuiltIn { get; set; }
 }

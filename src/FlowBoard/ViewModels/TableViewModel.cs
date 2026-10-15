@@ -18,7 +18,6 @@ public sealed class TableRow
     public string LabelsText => string.Join(", ", Card.ResolvedLabels.Select(l => l.Name).Where(n => n.Length > 0));
 }
 
-/// <summary>Spreadsheet-like view of all cards with sortable columns.</summary>
 public sealed partial class TableViewModel : ObservableObject
 {
     private readonly MainViewModel _main;

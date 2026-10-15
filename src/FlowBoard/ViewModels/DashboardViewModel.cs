@@ -17,14 +17,9 @@ public sealed record RecentItem(string Title, string Subtitle, string Icon, Acti
 
 public sealed record StatLine(string Label, string Value);
 
-/// <summary>One section of the project on the home screen: size, a few numbers and a progress bar.</summary>
 public sealed record SectionCard(string Title, string Icon, string Color, int Count, string CountLabel,
     IReadOnlyList<StatLine> Lines, double Progress, string ProgressText, bool HasProgress, System.Windows.Input.ICommand NewCommand, string NewText);
 
-/// <summary>
-/// Home: with no project open it offers new / open / recent projects; with a project it shows
-/// every section's numbers, what's due, what got done and where the time went.
-/// </summary>
 public sealed partial class DashboardViewModel : DocumentViewModel
 {
     public override void OnExternalChange() => Refresh();
@@ -57,7 +52,6 @@ public sealed partial class DashboardViewModel : DocumentViewModel
     public void Refresh()
     {
         var now = DateTime.Now;
-        // A plain title: the project's name, or a welcome when nothing is open.
         Greeting = Main.HasProject ? Main.ProjectName : "Welcome to FlowBoard";
         DateText = now.ToString("dddd, d MMMM");
         Projects = Main.RecentProjects;
@@ -168,7 +162,6 @@ public sealed partial class DashboardViewModel : DocumentViewModel
 
     private static string BoardColor(Board b)
     {
-        // First color of the board background, so bars match the sidebar thumbnails.
         var spec = b.Background;
         var start = spec.IndexOf('#');
         return start >= 0 && spec.Length >= start + 7 ? spec.Substring(start, 7) : "#8B5CF6";

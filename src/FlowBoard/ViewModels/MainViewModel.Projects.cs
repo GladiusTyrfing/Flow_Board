@@ -7,10 +7,8 @@ using Microsoft.Win32;
 
 namespace FlowBoard.ViewModels;
 
-/// <summary>A project in the recent list on the home screen.</summary>
 public sealed record RecentProject(string Path, string Name, string Folder, string Edited, bool Exists, bool IsOpen);
 
-/// <summary>Project files: new, open, recent, close, save a copy. The app always starts with no project open.</summary>
 public sealed partial class MainViewModel
 {
     public bool HasProject => _store.HasProject;
@@ -41,7 +39,6 @@ public sealed partial class MainViewModel
         return t.ToString("d MMM yyyy");
     }
 
-    /// <summary>Guard for anything that creates content. Returns false (and says why) with no project open.</summary>
     public bool EnsureProject()
     {
         if (HasProject) return true;
@@ -50,7 +47,6 @@ public sealed partial class MainViewModel
         return false;
     }
 
-    /// <summary>Finishes everything that belongs to the current project before its contents are swapped out.</summary>
     private void BeforeProjectSwitch()
     {
         CloseAllDialogs();
@@ -105,15 +101,12 @@ public sealed partial class MainViewModel
         else if (toast != null) ShowToast(toast);
     }
 
-    // ---------- commands ----------
-
     [RelayCommand]
     private void NewProject() => CreateProject(sample: false);
 
     [RelayCommand]
     private void NewSampleProject() => CreateProject(sample: true);
 
-    /// <summary>A save dialog: pick the name and any folder. A "&lt;name&gt; files" folder for pictures and recordings goes next to it.</summary>
     private static string? AskProjectPath(string title, string suggestedName)
     {
         Directory.CreateDirectory(AppPaths.DefaultProjectsDir);
@@ -202,7 +195,6 @@ public sealed partial class MainViewModel
         }, null);
     }
 
-    /// <summary>Saves the open project as a new .flowboard file anywhere (its files are copied along) and keeps working in it.</summary>
     [RelayCommand]
     private void SaveProjectAs()
     {

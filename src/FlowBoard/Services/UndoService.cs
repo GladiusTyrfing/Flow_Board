@@ -3,10 +3,6 @@ using FlowBoard.Models;
 
 namespace FlowBoard.Services;
 
-/// <summary>
-/// Snapshot-based undo/redo. Before a change, the affected board is serialized; undoing swaps the
-/// board back from that snapshot. A null snapshot means "the board did not exist" (creation/deletion).
-/// </summary>
 public sealed partial class UndoService : ObservableObject
 {
     private const int MaxEntries = 80;
@@ -28,7 +24,6 @@ public sealed partial class UndoService : ObservableObject
         Raise();
     }
 
-    /// <summary>Records a snapshot taken earlier (e.g. when a card dialog was opened).</summary>
     public void PushSnapshot(Guid boardId, int index, string json, string description)
     {
         Push(_undo, new Entry(boardId, index, json, description));
@@ -36,7 +31,6 @@ public sealed partial class UndoService : ObservableObject
         Raise();
     }
 
-    /// <summary>Records that a board is about to be created (undo removes it).</summary>
     public void CheckpointBoardCreated(Guid boardId, string description)
     {
         Push(_undo, new Entry(boardId, -1, null, description));

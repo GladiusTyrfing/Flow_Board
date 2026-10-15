@@ -10,15 +10,12 @@ public partial class Attachment : ObservableObject
     [ObservableProperty] private Guid _id = Guid.NewGuid();
     [ObservableProperty] private AttachmentKind _kind;
     [ObservableProperty] private string _name = string.Empty;
-    /// <summary>Path relative to the data folder (files, images, voice notes).</summary>
     [ObservableProperty] private string? _relativePath;
-    /// <summary>Web address for link attachments.</summary>
     [ObservableProperty] private string? _url;
     [ObservableProperty] private long _size;
     [ObservableProperty] private double _durationSeconds;
     [ObservableProperty] private DateTime _addedAt = DateTime.Now;
 
-    // Runtime-only playback state for voice notes.
     [ObservableProperty][property: JsonIgnore] private bool _isPlaying;
     [ObservableProperty][property: JsonIgnore] private double _playbackProgress;
     [ObservableProperty][property: JsonIgnore] private string _playbackPositionText = string.Empty;

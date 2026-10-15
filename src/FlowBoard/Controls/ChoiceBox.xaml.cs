@@ -5,7 +5,6 @@ using System.Windows.Controls.Primitives;
 
 namespace FlowBoard.Controls;
 
-/// <summary>Editable text with a dropdown of suggestions, styled like the rest of the app.</summary>
 public partial class ChoiceBox : UserControl
 {
     public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(

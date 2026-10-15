@@ -18,7 +18,6 @@ public sealed class PaletteItem
     public int Score { get; set; }
 }
 
-/// <summary>Ctrl+K: fuzzy search over commands, boards and every card.</summary>
 public sealed partial class CommandPaletteViewModel : DialogViewModel
 {
     private readonly MainViewModel _main;
@@ -128,7 +127,6 @@ public sealed partial class CommandPaletteViewModel : DialogViewModel
 
         if (q.Length > 0)
         {
-            // Text inside note pages.
             foreach (var n in _main.Workspace.Notes)
             {
                 var hit = n.Blocks.FirstOrDefault(b => b.Text.Contains(q, StringComparison.OrdinalIgnoreCase));
@@ -162,7 +160,6 @@ public sealed partial class CommandPaletteViewModel : DialogViewModel
         Selected = Results.FirstOrDefault();
     }
 
-    /// <summary>Simple fuzzy score: substring beats in-order character match; 0 = no match.</summary>
     internal static int Score(string text, string q)
     {
         if (q.Length == 0) return 1;

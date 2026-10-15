@@ -11,7 +11,6 @@ using FlowBoard.Services;
 
 namespace FlowBoard.ViewModels;
 
-/// <summary>Draw a frame (optionally over the current image). Saves a PNG plus the ink strokes so it stays editable.</summary>
 public sealed partial class SketchPadViewModel : DialogViewModel
 {
     private readonly StoryboardViewModel _owner;
@@ -20,7 +19,6 @@ public sealed partial class SketchPadViewModel : DialogViewModel
     {
         _owner = owner;
         Shot = shot;
-        // Re-editing a sketch: draw over its original photo. Otherwise draw over the current image (if any).
         BackgroundPath = shot.SketchPath != null ? shot.SketchBackgroundPath : shot.ImagePath;
         if (shot.SketchPath is { } ink && File.Exists(AppPaths.ToFull(ink)))
         {
@@ -77,7 +75,6 @@ public sealed partial class SketchPadViewModel : DialogViewModel
     [RelayCommand]
     private void ClearAll() => Strokes.Clear();
 
-    /// <summary>Called by the view with the rendered frame.</summary>
     public void Save(BitmapSource frame)
     {
         try
@@ -88,7 +85,6 @@ public sealed partial class SketchPadViewModel : DialogViewModel
             var inkPath = AppPaths.UniquePath(folder, $"Sketch {Shot.Number} {stamp}.isf");
             using (var fs = File.Create(inkPath)) Strokes.Save(fs);
 
-            // Old files are kept on purpose: undo (and duplicated storyboards) may still point at them.
             _owner.ApplySketch(Shot, png, AppPaths.ToRelative(inkPath), ShowBackground ? BackgroundPath : null);
             Close();
         }
@@ -99,7 +95,6 @@ public sealed partial class SketchPadViewModel : DialogViewModel
     }
 }
 
-/// <summary>Plays the storyboard as a timed slideshow (with each frame's voice note) — an animatic.</summary>
 public sealed partial class AnimaticViewModel : DialogViewModel
 {
     private readonly StoryboardViewModel _owner;
@@ -132,7 +127,6 @@ public sealed partial class AnimaticViewModel : DialogViewModel
     [ObservableProperty] private double _totalProgress;
     [ObservableProperty] private string _timeText = "0:00";
 
-    /// <summary>Raised when a new shot is shown; the argument is its transition ("Cut", "Fade", ...).</summary>
     public event EventHandler<string>? ShotEntered;
 
     public string Caption
@@ -174,7 +168,6 @@ public sealed partial class AnimaticViewModel : DialogViewModel
         }
         catch
         {
-            // Playback problems shouldn't stop the animatic.
         }
     }
 
@@ -259,7 +252,6 @@ public sealed partial class AnimaticViewModel : DialogViewModel
     [RelayCommand]
     private void Previous()
     {
-        // First press restarts the shot, a second one goes back.
         if (Elapsed > 1 || Index == 0)
         {
             Enter();

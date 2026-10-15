@@ -17,7 +17,6 @@ public sealed class TimelineDay
     public string MonthText { get; init; } = string.Empty;
 }
 
-/// <summary>One line of the timeline: a list header or a card bar.</summary>
 public sealed partial class TimelineRow : ObservableObject
 {
     public required BoardList List { get; init; }
@@ -38,7 +37,6 @@ public sealed partial class TimelineRow : ObservableObject
 
 public sealed record TimelineLink(string Path, string Arrow, bool IsBlocking);
 
-/// <summary>Gantt-style view: cards as bars from start to due date, grouped by list, with dependency arrows.</summary>
 public sealed partial class TimelineViewModel : ObservableObject
 {
     public const double HeaderRowHeight = 34;
@@ -62,7 +60,6 @@ public sealed partial class TimelineViewModel : ObservableObject
     public bool ShowDayNumbers => DayWidth >= 22;
     public int UnscheduledCount => Unscheduled.Count;
 
-    /// <summary>Asks the view to scroll so a date is visible (argument: x position).</summary>
     public event EventHandler<double>? ScrollRequested;
 
     public void Rebuild()
@@ -86,7 +83,6 @@ public sealed partial class TimelineViewModel : ObservableObject
         var start = Min(today.AddDays(-14), first.AddDays(-7));
         var end = Max(today.AddDays(60), last.AddDays(21));
         if ((end - start).TotalDays > 730) end = start.AddDays(730);
-        // Start on a Monday so weeks line up.
         start = start.AddDays(-(((int)start.DayOfWeek + 6) % 7));
         RangeStart = start;
 
@@ -184,7 +180,6 @@ public sealed partial class TimelineViewModel : ObservableObject
                 if (!byCard.TryGetValue(blockerId, out var blocker)) continue;
                 var a = new Box(blocker.Left, blocker.Top + 8, blocker.Width, RowHeight - 16);
                 var b = new Box(row.Left, row.Top + 8, row.Width, RowHeight - 16);
-                // Always leave from the blocker's end and arrive at the dependent's start.
                 var shape = CanvasGeometry.Route(
                     new Box(a.Right - 1, a.Y, 1, a.H),
                     new Box(b.X, b.Y, 1, b.H),
@@ -195,9 +190,6 @@ public sealed partial class TimelineViewModel : ObservableObject
         }
     }
 
-    // ================= dragging =================
-
-    /// <summary>Live preview while dragging a bar (days are relative to the original dates).</summary>
     public void Preview(TimelineRow row, string mode, int days)
     {
         switch (mode)
@@ -242,8 +234,6 @@ public sealed partial class TimelineViewModel : ObservableObject
         Rebuild();
     }
 
-    // ================= commands =================
-
     [RelayCommand]
     private void ZoomIn() => SetDayWidth(DayWidth * 1.35);
 
@@ -268,7 +258,6 @@ public sealed partial class TimelineViewModel : ObservableObject
         if (row.Card != null) _main.OpenCard(row.Card);
     }
 
-    /// <summary>Gives an unscheduled card a 3-day bar starting today.</summary>
     [RelayCommand]
     private void Schedule(TimelineRow row)
     {

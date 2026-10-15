@@ -20,7 +20,6 @@
                 </Button>
             </Grid>
 
-            <!-- Aspect presets -->
             <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding Aspects}" Margin="0,0,0,12" Focusable="False">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -61,7 +60,6 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Stage: the grid sizes itself to the displayed image -->
             <Border Background="#FF0B0D12" CornerRadius="{DynamicResource Fb.Radius}" Padding="10" MinHeight="300">
                 <Grid x:Name="Stage" HorizontalAlignment="Center" VerticalAlignment="Center" MaxHeight="560">
                     <Image x:Name="Picture" Stretch="Uniform" Source="{Binding FullPath, Converter={StaticResource ImagePath}, ConverterParameter=1600}" />

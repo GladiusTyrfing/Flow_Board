@@ -11,12 +11,10 @@
              mc:Ignorable="d"
              x:Name="Root"
              d:DataContext="{d:DesignInstance vm:BoardSettingsViewModel}">
-    <!-- Board look: theme preset, transparency, corners, blur/dim. Used by the Style drawer and Settings → Board style. -->
     <UserControl.Resources>
         <Style x:Key="SliderRow" TargetType="StackPanel">
             <Setter Property="Margin" Value="0,0,0,14" />
         </Style>
-        <!-- Mini card used by the live preview -->
         <DataTemplate x:Key="MiniCard">
             <Border Background="{DynamicResource Fb.CardBrush}" BorderBrush="{DynamicResource Fb.CardBorderBrush}" BorderThickness="1"
                     CornerRadius="{DynamicResource Fb.Radius}" Padding="7,5" Margin="0,6,0,0">
@@ -30,7 +28,6 @@
     </UserControl.Resources>
     <DockPanel>
         <StackPanel DockPanel.Dock="Top">
-        <!-- ============ Live preview (always visible, even when a dialog covers the board) ============ -->
         <TextBlock Text="PREVIEW" Style="{StaticResource Fb.Caption}" Margin="0,0,0,8" />
         <Border x:Name="PreviewHost" Height="150" Margin="0,0,0,18" h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}">
             <Grid>
@@ -69,7 +66,6 @@
 
         </StackPanel>
 
-        <!-- Controls scroll; the preview above stays in view. -->
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,10,0">
         <StackPanel>
                         <TextBlock Text="QUICK LOOKS" Style="{StaticResource Fb.Caption}" Margin="0,0,0,8" />

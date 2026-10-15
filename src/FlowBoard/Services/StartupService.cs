@@ -2,7 +2,6 @@ using Microsoft.Win32;
 
 namespace FlowBoard.Services;
 
-/// <summary>Registers FlowBoard to start with Windows (per user, no admin rights needed).</summary>
 public static class StartupService
 {
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
@@ -25,7 +24,6 @@ public static class StartupService
         }
         catch
         {
-            // Registry access can be blocked by policy; the setting simply has no effect then.
         }
     }
 }

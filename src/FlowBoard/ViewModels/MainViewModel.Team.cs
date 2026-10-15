@@ -3,10 +3,6 @@ using FlowBoard.Services;
 
 namespace FlowBoard.ViewModels;
 
-/// <summary>
-/// Working together on a shared project: changes saved by others are merged in by the data store;
-/// here the open views catch up and everyone can see who else is in the project.
-/// </summary>
 public sealed partial class MainViewModel
 {
     private DateTime _lastTeamToast = DateTime.MinValue;
@@ -49,15 +45,12 @@ public sealed partial class MainViewModel
 
     private void OnExternalChange(ExternalChange change)
     {
-        // Page editors only reload text when told to.
         foreach (var o in change.ChangedObjects)
             if (o is NoteBlock b) b.ContentVersion++;
 
-        // Undo would put back what the other person just changed: start fresh where their changes landed.
         if (CurrentBoard != null && change.ChangedItems.Contains(CurrentBoard.Id)) Undo.Clear();
         if (IdOf(ActiveDocument?.Model) is { } docId && change.ChangedItems.Contains(docId)) ActiveDocument!.ClearHistory();
 
-        // Things that were deleted by someone else.
         foreach (var d in Dialogs.OfType<CardDetailViewModel>().ToList())
             if (Workspace.FindCard(d.Card.Id, out _, out _) == null) CloseDialog(d);
         if (CurrentBoard != null && !Workspace.Boards.Contains(CurrentBoard) && ActiveView == ActiveView.Board)
@@ -80,7 +73,6 @@ public sealed partial class MainViewModel
         ApplyFilter();
         RefreshViews();
 
-        // One quiet note at a time (others may save every few seconds while they work).
         if (DateTime.Now - _lastTeamToast > TimeSpan.FromSeconds(20) || change.Conflicts > 0 || change.FromConflictCopy)
         {
             _lastTeamToast = DateTime.Now;

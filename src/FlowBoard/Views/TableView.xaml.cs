@@ -31,7 +31,6 @@ public partial class TableView : UserControl, Helpers.ICapturable
 
     private void Grid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        // Ignore double-clicks on headers or the empty area.
         if (e.OriginalSource is DependencyObject d && ItemsControl.ContainerFromElement(Grid, d) is DataGridRow { Item: TableRow row })
         {
             MainViewModel.Instance.OpenCard(row.Card);
@@ -49,7 +48,6 @@ public partial class TableView : UserControl, Helpers.ICapturable
         }
     }
 
-    // ----- high-res screenshot -----
     FrameworkElement Helpers.ICapturable.CaptureElement => this;
     Rect? Helpers.ICapturable.CaptureArea => null;
     System.Windows.Media.Brush? Helpers.ICapturable.CaptureBackground => null;

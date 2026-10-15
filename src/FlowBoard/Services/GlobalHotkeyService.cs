@@ -5,10 +5,6 @@ using System.Windows.Interop;
 
 namespace FlowBoard.Services;
 
-/// <summary>
-/// System-wide hotkeys (they work while FlowBoard is minimized or in the tray) using Win32 RegisterHotKey.
-/// Hotkeys are written as text, e.g. "Ctrl+Alt+Space" or "Win+Shift+N".
-/// </summary>
 public sealed class GlobalHotkeyService : IDisposable
 {
     private const int WmHotkey = 0x0312;
@@ -31,7 +27,6 @@ public sealed class GlobalHotkeyService : IDisposable
         _source?.AddHook(WndProc);
     }
 
-    /// <summary>Registers (or replaces) hotkey <paramref name="id"/>. Returns false if the text is invalid or another app owns it.</summary>
     public bool Register(int id, string? hotkey, Action action)
     {
         Unregister(id);
@@ -67,7 +62,6 @@ public sealed class GlobalHotkeyService : IDisposable
         (m.HasFlag(ModifierKeys.Alt) ? ModAlt : 0) | (m.HasFlag(ModifierKeys.Control) ? ModControl : 0)
         | (m.HasFlag(ModifierKeys.Shift) ? ModShift : 0) | (m.HasFlag(ModifierKeys.Windows) ? ModWin : 0);
 
-    /// <summary>Parses "Ctrl+Alt+Space". Global hotkeys need at least one modifier.</summary>
     public static bool TryParse(string? text, out ModifierKeys modifiers, out Key key)
     {
         modifiers = ModifierKeys.None;
@@ -91,7 +85,6 @@ public sealed class GlobalHotkeyService : IDisposable
         return key != Key.None && modifiers != ModifierKeys.None;
     }
 
-    /// <summary>Formats a key press as hotkey text ("Ctrl+Shift+K"); null for modifier-only presses.</summary>
     public static string? Format(ModifierKeys modifiers, Key key)
     {
         if (key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt or Key.LeftShift or Key.RightShift

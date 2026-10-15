@@ -43,6 +43,5 @@ public partial class BoardStyleEditor : UserControl
             RefreshPreview();
     }
 
-    /// <summary>The preview is small, so it can be restyled on every slider tick.</summary>
     private void RefreshPreview() => BoardThemeService.Apply(PreviewHost, _board);
 }

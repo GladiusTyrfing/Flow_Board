@@ -19,7 +19,6 @@ public sealed class LinkOption
     public int Score { get; set; }
 }
 
-/// <summary>Search dialog for linking cards, boards, storyboards, canvases or notes.</summary>
 public sealed partial class LinkPickerViewModel : DialogViewModel
 {
     private readonly MainViewModel _main;

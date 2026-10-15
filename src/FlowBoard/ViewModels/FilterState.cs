@@ -16,7 +16,6 @@ public partial class FilterLabelOption : ObservableObject
     [ObservableProperty] private bool _isSelected;
 }
 
-/// <summary>Board filter: text, labels, priority, due window and completion.</summary>
 public partial class FilterState : ObservableObject
 {
     [ObservableProperty] private string _text = string.Empty;

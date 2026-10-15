@@ -13,7 +13,6 @@ public partial class CardDetailView : UserControl
         InitializeComponent();
         Loaded += (_, _) =>
         {
-            // Hover hotkeys (D, L) ask for a popup to be opened right away.
             if (Vm?.PendingPopup is { } popup)
             {
                 Vm.PendingPopup = null;
@@ -43,7 +42,6 @@ public partial class CardDetailView : UserControl
 
     private CardDetailViewModel? Vm => DataContext as CardDetailViewModel;
 
-    /// <summary>Ctrl+V pastes images/files as attachments (text still pastes normally inside text boxes).</summary>
     private void Root_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (Vm == null) return;
@@ -63,11 +61,6 @@ public partial class CardDetailView : UserControl
         }
     }
 
-    /// <summary>
-    /// Single-key shortcuts while the card is open and you're not typing:
-    /// L labels · D dates · P priority · K checklist · A attach · R record/stop · T timer · F focus · M move · B cover · X complete.
-    /// Ctrl+D duplicate · Ctrl+Shift+C archive · Ctrl+Delete delete.
-    /// </summary>
     private bool HandleCardHotkey(KeyEventArgs e)
     {
         var vm = Vm!;
@@ -79,7 +72,6 @@ public partial class CardDetailView : UserControl
         if (mods == ModifierKeys.Control && e.Key == Key.Delete) { vm.DeleteCommand.Execute(null); return true; }
         if (mods == ModifierKeys.Control && e.Key == Key.Enter && typing)
         {
-            // Ctrl+Enter: finish editing and leave the text box.
             Keyboard.ClearFocus();
             Focus();
             return true;
@@ -124,7 +116,6 @@ public partial class CardDetailView : UserControl
 
     private void Card_DragLeave(object sender, DragEventArgs e)
     {
-        // DragLeave also fires when moving between child elements; only reset when really leaving the card.
         var pos = e.GetPosition(Card);
         if (pos.X <= 0 || pos.Y <= 0 || pos.X >= Card.ActualWidth || pos.Y >= Card.ActualHeight)
             if (Vm != null) Vm.IsDragOver = false;

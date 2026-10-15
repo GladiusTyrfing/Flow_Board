@@ -40,7 +40,6 @@
     </UserControl.Resources>
 
     <DockPanel>
-        <!-- ============ Header ============ -->
         <Border DockPanel.Dock="Top" Style="{StaticResource Fb.HeaderPill}" Margin="12,12,12,0" Padding="6,5">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -170,7 +169,6 @@
             </Grid>
         </Border>
 
-        <!-- ============ Shots ============ -->
         <Grid >
             <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Padding="12,14,12,6"
                           PreviewMouseWheel="OnScrollerWheel">
@@ -191,18 +189,15 @@
                                         <ColumnDefinition Width="300" />
                                     </Grid.ColumnDefinitions>
     
-                                    <!-- Curved connector from the previous shot -->
                                     <Path x:Name="Connector" Grid.Column="0" VerticalAlignment="Top" Margin="0,104,0,0" Stretch="None"
                                           Stroke="{DynamicResource Fb.AccentBrush}" StrokeThickness="2" StrokeDashArray="3 2" Opacity="0.8"
                                           Data="M 0,0 C 22,0 22,26 44,26" />
                                     <Ellipse x:Name="ConnectorDot" Grid.Column="0" Width="8" Height="8" Fill="{DynamicResource Fb.AccentBrush}"
                                              HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,126,-4,0" />
     
-                                    <!-- Shot column -->
                                     <Border Grid.Column="1" x:Name="Card" Background="{DynamicResource Fb.CardBrush}" BorderBrush="{DynamicResource Fb.CardBorderBrush}" BorderThickness="1"
                                             CornerRadius="{DynamicResource Fb.RadiusLarge}" h:Behaviors.AnimateIn="rise">
                                         <DockPanel>
-                                            <!-- Title row -->
                                             <Grid DockPanel.Dock="Top" Margin="12,10,6,6">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto" />
@@ -332,14 +327,12 @@
     
                                             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="12,0,12,12">
                                                 <StackPanel>
-                                                    <!-- Frame -->
                                                     <Grid x:Name="Frame" Height="{Binding DataContext.FrameHeight, ElementName=Root}" AllowDrop="True" Drop="OnFrameDrop" DragOver="OnFrameDragOver" Tag="{Binding}"
                                                           h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusValue}">
                                                         <Border Background="{DynamicResource Fb.SubtleBrush}" BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="1"
                                                                 CornerRadius="{DynamicResource Fb.Radius}" />
                                                         <Image x:Name="FrameImage" Source="{Binding ImageFullPath, Converter={StaticResource ImagePath}, ConverterParameter=1024}" Stretch="UniformToFill"
                                                                RenderOptions.BitmapScalingMode="HighQuality" />
-                                                        <!-- Empty frame -->
                                                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
                                                                     Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
                                                             <ui:SymbolIcon Symbol="ImageAdd24" FontSize="26" Foreground="{DynamicResource Fb.MutedTextBrush}" HorizontalAlignment="Center" />
@@ -362,7 +355,6 @@
                                                             </StackPanel>
                                                             <TextBlock Text="or drop an image here" Style="{StaticResource Fb.Muted}" FontSize="11" HorizontalAlignment="Center" Margin="0,6,0,0" />
                                                         </StackPanel>
-                                                        <!-- Hover tools on a filled frame -->
                                                         <StackPanel x:Name="FrameTools" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8" Opacity="0">
                                                             <Button Style="{StaticResource FrameButton}" Command="{Binding DataContext.ViewImageCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="View">
                                                                 <ui:SymbolIcon Symbol="ZoomIn24" FontSize="15" />
@@ -386,7 +378,6 @@
                                                                 <ui:SymbolIcon Symbol="Delete24" FontSize="15" />
                                                             </Button>
                                                         </StackPanel>
-                                                        <!-- Duration badge -->
                                                         <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8" Padding="7,2" CornerRadius="{DynamicResource Fb.RadiusSmall}" Background="#B3101218">
                                                             <TextBlock Text="{Binding DurationSeconds, Converter={StaticResource Seconds}}" Foreground="White" FontSize="11" FontWeight="SemiBold" />
                                                         </Border>
@@ -394,7 +385,6 @@
     
                                                     <Grid x:Name="Details">
                                                     <StackPanel>
-                                                    <!-- Scene + date -->
                                                     <Grid Margin="0,10,0,0">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="*" />
@@ -410,7 +400,6 @@
                                                         <c:DateChip Grid.Column="1" Date="{Binding Date}" Placeholder="Shoot date" ToolTip="Shoot / due date" />
                                                     </Grid>
     
-                                                    <!-- Film -->
                                                     <StackPanel Visibility="{Binding DataContext.IsAnimation, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
                                                         <TextBlock Text="CAMERA" Style="{StaticResource SbLabel}" />
                                                         <WrapPanel>
@@ -430,7 +419,6 @@
                                                         </Border>
                                                     </StackPanel>
     
-                                                    <!-- Animation -->
                                                     <StackPanel Visibility="{Binding DataContext.IsAnimation, ElementName=Root, Converter={StaticResource BoolToVis}}">
                                                         <TextBlock Text="ACTION" Style="{StaticResource SbLabel}" />
                                                         <TextBox Style="{StaticResource Fb.Field}" Tag="What happens in this frame…" Text="{Binding Action, UpdateSourceTrigger=PropertyChanged}" MinHeight="44" />
@@ -463,7 +451,6 @@
                                                             </Border>
                                                             <c:ChoiceBox Style="{StaticResource SbCombo}" Width="130" ToolTip="Transition into this frame" Placeholder="Transition" Options="{Binding DataContext.Transitions, ElementName=Root}" Value="{Binding Transition}" />
                                                         </WrapPanel>
-                                                        <!-- Voice -->
                                                         <Border CornerRadius="{DynamicResource Fb.Radius}" Background="{DynamicResource Fb.SubtleBrush}" Padding="4">
                                                             <DockPanel>
                                                                 <Button DockPanel.Dock="Left" Style="{StaticResource Fb.IconButton}" Width="30" Height="30" ToolTip="Record voice / stop"
@@ -495,7 +482,6 @@
                                                                 </Grid>
                                                             </DockPanel>
                                                         </Border>
-                                                        <!-- Recording meter (only on the shot being recorded) -->
                                                         <Border x:Name="RecBar" CornerRadius="{DynamicResource Fb.Radius}" Background="#33F87168" Padding="10,6" Margin="0,6,0,0" Visibility="Collapsed">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <Ellipse Width="8" Height="8" Fill="#F87168" VerticalAlignment="Center" />
@@ -506,11 +492,9 @@
                                                         </Border>
                                                     </StackPanel>
     
-                                                    <!-- Description -->
                                                     <TextBlock Text="DESCRIPTION" Style="{StaticResource SbLabel}" />
                                                     <TextBox Style="{StaticResource Fb.Field}" Tag="Describe the shot…" Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" MinHeight="44" />
     
-                                                    <!-- Tags -->
                                                     <TextBlock Text="TAGS" Style="{StaticResource SbLabel}" />
                                                     <WrapPanel>
                                                         <ItemsControl ItemsSource="{Binding Tags}" Focusable="False">
@@ -537,7 +521,6 @@
                                                                  h:Behaviors.EnterCommand="{Binding DataContext.AddTagCommand, ElementName=Root}" h:Behaviors.CommandParameter="{Binding}" />
                                                     </WrapPanel>
     
-                                                    <!-- Shots required (film) -->
                                                     <StackPanel Visibility="{Binding DataContext.IsAnimation, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
                                                         <TextBlock Text="SHOTS REQUIRED" Style="{StaticResource SbLabel}" />
                                                         <ItemsControl ItemsSource="{Binding ShotList}" Focusable="False">
@@ -576,11 +559,9 @@
                                                         </DockPanel>
                                                     </StackPanel>
     
-                                                    <!-- Scene notes -->
                                                     <TextBlock Text="SCENE" Style="{StaticResource SbLabel}" />
                                                     <TextBox Style="{StaticResource Fb.Field}" Tag="Mood, lighting, blocking, sound…" Text="{Binding SceneNotes, UpdateSourceTrigger=PropertyChanged}" />
     
-                                                    <!-- Equipment (film) -->
                                                     <StackPanel Visibility="{Binding DataContext.IsAnimation, ElementName=Root, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
                                                         <TextBlock Text="EQUIPMENT" Style="{StaticResource SbLabel}" />
                                                         <ItemsControl ItemsSource="{Binding Equipment}" Focusable="False">
@@ -622,7 +603,6 @@
                                     </Border>
                                 </Grid>
                                 <DataTemplate.Triggers>
-                                    <!-- Collapsed: only the title row and the picture -->
                                     <DataTrigger Binding="{Binding IsCollapsed}" Value="True">
                                         <Setter TargetName="Details" Property="Visibility" Value="Collapsed" />
                                         <Setter TargetName="Card" Property="VerticalAlignment" Value="Top" />
@@ -663,7 +643,6 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
     
-                    <!-- Add shot column -->
                     <Button Style="{StaticResource Fb.GhostButton}" Width="140" Margin="44,0,0,0" VerticalAlignment="Stretch" Command="{Binding AddShotCommand}"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Padding="0"
                             BorderBrush="{DynamicResource Fb.DividerBrush}" Foreground="{DynamicResource Fb.MutedTextBrush}">

@@ -9,7 +9,6 @@ public partial class Comment : ObservableObject
     [ObservableProperty] private string _author = string.Empty;
     [ObservableProperty] private string _text = string.Empty;
     [ObservableProperty] private DateTime _createdAt = DateTime.Now;
-    /// <summary>True for automatic activity entries ("moved this card from To Do to Done").</summary>
     [ObservableProperty] private bool _isActivity;
 }
 

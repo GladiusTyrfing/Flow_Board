@@ -7,7 +7,6 @@ using Microsoft.Win32;
 
 namespace FlowBoard.Services;
 
-/// <summary>Images and renders for storyboards, canvases and notes (stored under attachments\docs\&lt;id&gt;).</summary>
 public static class MediaStore
 {
     public const string ImageFilter = "Images|*.png;*.jpg;*.jpeg;*.gif;*.bmp;*.webp;*.tif;*.tiff|All files|*.*";
@@ -17,7 +16,6 @@ public static class MediaStore
     public static bool IsAudioFile(string path) =>
         Models.Attachment.AudioExtensions.Contains(Path.GetExtension(path).ToLowerInvariant()) || Path.GetExtension(path).ToLowerInvariant() is ".flac";
 
-    /// <summary>Length of an audio file in seconds (0 when it can't be read).</summary>
     public static double AudioSeconds(string fullPath)
     {
         try
@@ -39,7 +37,6 @@ public static class MediaStore
         }
     }
 
-    /// <summary>Lets the user pick audio files from the PC.</summary>
     public static string[] PickAudio(bool multiple)
     {
         var dlg = new OpenFileDialog { Filter = AudioFilter, Title = "Choose audio", Multiselect = multiple };
@@ -56,7 +53,6 @@ public static class MediaStore
     public static bool IsImageFile(string path) =>
         Models.Attachment.ImageExtensions.Contains(Path.GetExtension(path).ToLowerInvariant());
 
-    /// <summary>Copies a file into the document folder and returns its path relative to the data folder.</summary>
     public static string ImportFile(string source, Guid owner)
     {
         var dest = AppPaths.UniquePath(DocFolder(owner), Path.GetFileName(source));
@@ -64,14 +60,12 @@ public static class MediaStore
         return AppPaths.ToRelative(dest);
     }
 
-    /// <summary>Lets the user pick an image; returns the stored relative path or null.</summary>
     public static string? PickImage(Guid owner)
     {
         var dlg = new OpenFileDialog { Filter = ImageFilter, Title = "Choose an image" };
         return dlg.ShowDialog() == true ? ImportFile(dlg.FileName, owner) : null;
     }
 
-    /// <summary>Stores a clipboard image (or the first copied image file). Returns null when there is none.</summary>
     public static string? FromClipboard(Guid owner)
     {
         try
@@ -87,7 +81,6 @@ public static class MediaStore
         }
         catch
         {
-            // Clipboard can be locked by another app.
         }
 
         return null;
@@ -114,14 +107,8 @@ public static class MediaStore
         try { File.Delete(AppPaths.ToFull(relative)); } catch { }
     }
 
-    /// <summary>
-    /// Renders any element (even one inside a transformed/scrolled parent) at its own size, optionally
-    /// scaled up for a crisp export. <paramref name="background"/> fills behind transparent areas.
-    /// </summary>
     public static BitmapSource Render(FrameworkElement element, double scale = 2, Brush? background = null, Rect? area = null)
     {
-        // The element is rendered directly at the target resolution (text and shapes stay vector-sharp).
-        // A VisualBrush would go through an intermediate bitmap of limited size, which blurs large captures.
         var rect = area ?? new Rect(0, 0, Math.Max(1, element.ActualWidth), Math.Max(1, element.ActualHeight));
         var w = Math.Max(1, (int)Math.Ceiling(rect.Width * scale));
         var h = Math.Max(1, (int)Math.Ceiling(rect.Height * scale));
@@ -135,8 +122,6 @@ public static class MediaStore
             rtb.Render(bg);
         }
 
-        // RenderTargetBitmap draws the element at its offset in the parent (scroll position, margins...):
-        // shift it so the requested area lands at the top-left, then put everything back.
         var offset = VisualTreeHelper.GetOffset(element);
         var local = element.ReadLocalValue(UIElement.RenderTransformProperty);
         var original = element.RenderTransform;
@@ -158,7 +143,6 @@ public static class MediaStore
         return rtb;
     }
 
-    /// <summary>Asks where to save and writes a PNG. Returns true when saved.</summary>
     public static bool ExportPng(BitmapSource image, string suggestedName)
     {
         var name = suggestedName;
@@ -169,7 +153,6 @@ public static class MediaStore
         return true;
     }
 
-    /// <summary>Prints an image scaled to fit the page.</summary>
     public static void Print(BitmapSource image, string description)
     {
         var pd = new PrintDialog();

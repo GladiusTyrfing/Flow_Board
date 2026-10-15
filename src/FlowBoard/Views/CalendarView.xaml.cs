@@ -27,7 +27,6 @@ public partial class CalendarView : UserControl, Helpers.ICapturable
         }
     }
 
-    // ----- high-res screenshot -----
     FrameworkElement Helpers.ICapturable.CaptureElement => this;
     Rect? Helpers.ICapturable.CaptureArea => null;
     System.Windows.Media.Brush? Helpers.ICapturable.CaptureBackground => null;

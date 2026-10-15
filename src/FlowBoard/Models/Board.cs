@@ -10,21 +10,14 @@ public partial class Board : ObservableObject
     [ObservableProperty] private Guid _id = Guid.NewGuid();
     [ObservableProperty] private string _name = "Untitled board";
     [ObservableProperty] private bool _isStarred;
-    /// <summary>"gradient:#A,#B", "color:#A" or "image:relative/path.jpg".</summary>
     [ObservableProperty] private string _background = "gradient:#0C66E4,#9F6FEF";
     [ObservableProperty] private double _backgroundDim = 0.15;
-    /// <summary>Board style preset (see BoardThemeService): "Auto" follows the app theme.</summary>
     [ObservableProperty] private string _theme = "Auto";
-    /// <summary>0 = fully transparent lists, 1 = solid.</summary>
     [ObservableProperty] private double _listOpacity = 0.82;
     [ObservableProperty] private double _cardOpacity = 0.96;
-    /// <summary>Blur radius applied to the board wallpaper (0 = sharp).</summary>
     [ObservableProperty] private double _backgroundBlur;
-    /// <summary>Corner roundness for this board's lists and cards; negative = use the app setting.</summary>
     [ObservableProperty] private double _cornerRadius = -1;
-    /// <summary>Draw curved lines between linked cards on the board.</summary>
     [ObservableProperty] private bool _showLinks = true;
-    /// <summary>Timeline zoom: pixels per day.</summary>
     [ObservableProperty] private double _timelineDayWidth = 36;
     [ObservableProperty] private DateTime _createdAt = DateTime.Now;
     [ObservableProperty] private DateTime _lastOpened = DateTime.Now;
@@ -47,7 +40,6 @@ public partial class Board : ObservableObject
     [JsonIgnore] public int ActiveCardCount => Lists.Sum(l => l.Cards.Count);
     [JsonIgnore] public int ArchivedCount => ArchivedCards.Count + ArchivedLists.Count;
 
-    /// <summary>Sets runtime back-references after loading or cloning.</summary>
     public void Hydrate()
     {
         foreach (var list in Lists)

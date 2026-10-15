@@ -41,7 +41,6 @@ public partial class MainWindow : FluentWindow
             if (e.PropertyName == nameof(MainViewModel.NarrowSidebarOpen)) UpdateResponsiveLayout();
         };
 
-        // Board styles (preset + transparency) are applied to the board area only.
         vm.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(MainViewModel.CurrentBoard)) ApplyBoardTheme();
@@ -58,7 +57,6 @@ public partial class MainWindow : FluentWindow
 
     private Models.StyledDocument? _styledDoc;
 
-    /// <summary>Storyboards, canvases and pages can have their own theme preset (and see-through panels over a wallpaper).</summary>
     private void ApplyDocTheme()
     {
         if (_styledDoc != null) _styledDoc.PropertyChanged -= OnDocStyleChanged;
@@ -82,18 +80,14 @@ public partial class MainWindow : FluentWindow
         });
     }
 
-    /// <summary>Adapts the title bar and board header to the window width so nothing gets clipped.</summary>
     private void UpdateResponsiveLayout()
     {
         var w = ActualWidth;
         if (w <= 0) return;
-        // Title bar: small search box that never pushes into the buttons on the right.
         SearchButton.Width = Math.Clamp(w - 900, 150, 300);
 
-        // Below ~1100px the sidebar hides itself (the header button still opens it).
         _vm.IsNarrow = w < 1100;
 
-        // Board header: icons only when space is tight; the board name trims with "…".
         var boardWidth = w - 20 - (_vm.IsSidebarShown ? 274 : 0);
         _vm.IsCompact = boardWidth < 1000;
         var reserved = _vm.IsCompact ? 380 : 620;
@@ -117,7 +111,6 @@ public partial class MainWindow : FluentWindow
         if (e.PropertyName is not (nameof(Models.Board.Theme) or nameof(Models.Board.ListOpacity) or nameof(Models.Board.CardOpacity)
             or nameof(Models.Board.CornerRadius))) return;
 
-        // Sliders fire many changes per second: coalesce them into one restyle after rendering.
         if (_boardThemePending) return;
         _boardThemePending = true;
         Dispatcher.BeginInvoke(DispatcherPriority.Render, () =>
@@ -126,9 +119,6 @@ public partial class MainWindow : FluentWindow
             BoardThemeService.Apply(BoardArea, _themedBoard);
         });
     }
-
-    /// <summary>Routes hotkeys that plain KeyBindings can't express (single letters, hover-card actions).</summary>
-    // ================= high-res screenshots =================
 
     private void OnScreenshotRequested(object? sender, string mode)
     {
@@ -151,7 +141,6 @@ public partial class MainWindow : FluentWindow
                 return;
             }
 
-            // As sharp as possible (3x) while staying a sane file size.
             var scale = Math.Min(3, Math.Min(16000 / Math.Max(area.Width, area.Height), Math.Sqrt(120_000_000 / (area.Width * area.Height))));
             scale = Math.Max(0.5, scale);
             var bg = source.CaptureBackground ?? (Brush)FindResource("Fb.WindowBrush");
@@ -206,7 +195,6 @@ public partial class MainWindow : FluentWindow
             Height = s.WindowHeight;
         }
 
-        // Only restore the position when it is still on a visible screen area.
         if (!double.IsNaN(s.WindowLeft) && !double.IsNaN(s.WindowTop)
             && s.WindowLeft >= SystemParameters.VirtualScreenLeft - 50
             && s.WindowTop >= SystemParameters.VirtualScreenTop - 50

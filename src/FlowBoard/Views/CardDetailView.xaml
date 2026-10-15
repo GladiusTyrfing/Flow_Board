@@ -16,7 +16,6 @@
              Focusable="True" FocusVisualStyle="{x:Null}">
 
     <UserControl.Resources>
-        <!-- Small action button in the card's action row -->
         <Style x:Key="ActionButton" TargetType="Button" BasedOn="{StaticResource Fb.SubtleButton}">
             <Setter Property="Margin" Value="0,0,6,6" />
             <Setter Property="Padding" Value="10,5" />
@@ -47,7 +46,6 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- ============ Header ============ -->
             <Grid Margin="16,12,12,8">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="in list" Style="{StaticResource Fb.Muted}" VerticalAlignment="Center" Margin="4,0,8,0" />
@@ -96,7 +94,6 @@
                 </StackPanel>
             </Grid>
 
-            <!-- ============ Cover ============ -->
             <Grid Grid.Row="1">
                 <Border Height="170" Visibility="{Binding Card.CoverImagePath, Converter={StaticResource HasValueToVis}}">
                     <Border.Background>
@@ -107,7 +104,6 @@
                         Visibility="{Binding Card.HasCoverColor, Converter={StaticResource BoolToVis}}" />
             </Grid>
 
-            <!-- ============ Body ============ -->
             <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -117,7 +113,6 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,6,0">
                     <StackPanel Margin="24,10,18,28">
 
-                        <!-- Title -->
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -129,7 +124,6 @@
                                      Text="{Binding Card.Title, UpdateSourceTrigger=PropertyChanged}" />
                         </Grid>
 
-                        <!-- Actions -->
                         <WrapPanel Margin="30,12,0,0">
                             <Button x:Name="LabelsBtn" Style="{StaticResource ActionButton}" h:Behaviors.OpensPopup="{Binding ElementName=LabelsPopup}">
                                 <StackPanel Orientation="Horizontal">
@@ -219,7 +213,6 @@
                             </Button>
                         </WrapPanel>
 
-                        <!-- Meta: labels, dates, priority, time -->
                         <WrapPanel Margin="30,6,0,0">
                             <StackPanel Margin="0,0,24,8" Visibility="{Binding Card.HasLabels, Converter={StaticResource BoolToVis}}">
                                 <TextBlock Text="Labels" Style="{StaticResource Fb.Caption}" Margin="0,0,0,4" />
@@ -296,7 +289,6 @@
                             </StackPanel>
                         </WrapPanel>
 
-                        <!-- Description -->
                         <StackPanel Style="{StaticResource SectionHeader}">
                             <ui:SymbolIcon Symbol="TextDescription24" Style="{StaticResource SectionIcon}" />
                             <TextBlock Text="Description" Style="{StaticResource Fb.SectionTitle}" />
@@ -305,7 +297,6 @@
                                     PlaceholderText="Add a more detailed description…" SpellCheck.IsEnabled="True"
                                     Text="{Binding Card.Description, UpdateSourceTrigger=PropertyChanged, Delay=250}" />
 
-                        <!-- Drop hint -->
                         <Border Margin="30,14,0,0" CornerRadius="{DynamicResource Fb.Radius}" Height="70" BorderThickness="2" Background="{DynamicResource Fb.SubtleBrush}"
                                 BorderBrush="{DynamicResource Fb.AccentBrush}"
                                 Visibility="{Binding IsDragOver, Converter={StaticResource BoolToVis}}">
@@ -315,7 +306,6 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Attachments -->
                         <StackPanel Visibility="{Binding Card.FileCount, Converter={StaticResource HasValueToVis}}">
                             <Grid>
                                 <StackPanel Style="{StaticResource SectionHeader}">
@@ -334,7 +324,6 @@
                                                     <ColumnDefinition Width="112" />
                                                     <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
-                                                <!-- Thumbnail -->
                                                 <Button Style="{StaticResource Fb.GhostButton}" Padding="0" Height="76" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
                                                         Command="{Binding DataContext.OpenAttachmentCommand, ElementName=Root}" CommandParameter="{Binding}" ToolTip="Open">
                                                     <Grid>
@@ -390,7 +379,6 @@
                             <TextBlock Margin="30,2,0,0" Style="{StaticResource Fb.Muted}" Text="Tip: drop files here or press Ctrl+V to paste an image." />
                         </StackPanel>
 
-                        <!-- Voice notes -->
                         <StackPanel>
                             <StackPanel.Style>
                                 <Style TargetType="StackPanel">
@@ -418,7 +406,6 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Recording panel -->
                             <Border Margin="30,0,0,8" CornerRadius="{DynamicResource Fb.Radius}" Padding="12" Background="#26F87168"
                                     Visibility="{Binding Recorder.IsRecording, Converter={StaticResource BoolToVis}}">
                                 <Grid>
@@ -488,7 +475,6 @@
                                                             <Run Text="{Binding PlaybackPositionText, Mode=OneWay}" /><Run Text=" / " /><Run Text="{Binding DurationText, Mode=OneWay}" />
                                                         </TextBlock>
                                                     </Grid>
-                                                    <!-- Click anywhere on the bar to seek -->
                                                     <Grid Height="14" Margin="0,4,0,0" Background="Transparent" Cursor="Hand" MouseLeftButtonDown="Seek_MouseLeftButtonDown">
                                                         <ProgressBar Style="{StaticResource Fb.ThinProgress}" Maximum="1" Value="{Binding PlaybackProgress, Mode=OneWay}" VerticalAlignment="Center" />
                                                     </Grid>
@@ -508,7 +494,6 @@
                             </ItemsControl>
                         </StackPanel>
 
-                        <!-- Checklists -->
                         <ItemsControl ItemsSource="{Binding Card.Checklists}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:Checklist}">
@@ -592,7 +577,6 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <!-- Links & dependencies -->
                         <StackPanel Visibility="{Binding HasRelations, Converter={StaticResource BoolToVis}}" Margin="0,0,0,8">
                             <Grid>
                                 <StackPanel Style="{StaticResource SectionHeader}">
@@ -660,7 +644,6 @@
                             </ItemsControl>
                         </StackPanel>
 
-                        <!-- Time tracking -->
                         <StackPanel>
                             <StackPanel.Style>
                                 <Style TargetType="StackPanel">
@@ -721,7 +704,6 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- ============ Comments & activity ============ -->
                 <Border Grid.Column="1" Background="{DynamicResource Fb.SurfaceAltBrush}" CornerRadius="0"
                         BorderBrush="{DynamicResource Fb.DividerBrush}" BorderThickness="1,0,0,0">
                     <DockPanel Margin="16,14,10,14">
@@ -771,7 +753,6 @@
                                                            HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#1D2125" />
                                             </Border>
                                             <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                                                <!-- Comment -->
                                                 <StackPanel x:Name="CommentBody">
                                                     <TextBlock>
                                                         <Run Text="{Binding Author, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Fb.TextBrush}" />
@@ -790,7 +771,6 @@
                                                         </TextBox>
                                                     </Border>
                                                 </StackPanel>
-                                                <!-- Activity -->
                                                 <TextBlock x:Name="ActivityBody" Visibility="Collapsed" TextWrapping="Wrap" FontSize="13">
                                                     <Run Text="{Binding Author, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Fb.TextBrush}" />
                                                     <Run Text="{Binding Text, Mode=OneWay}" Foreground="{DynamicResource Fb.MutedTextBrush}" />
@@ -813,9 +793,6 @@
                 </Border>
             </Grid>
 
-            <!-- ============ Popups ============ -->
-
-            <!-- Labels -->
             <Popup x:Name="LabelsPopup" Style="{StaticResource Fb.Popup}" PlacementTarget="{Binding ElementName=LabelsBtn}">
                 <Border Style="{StaticResource Fb.Flyout}" Width="320">
                     <StackPanel>
@@ -844,7 +821,6 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <!-- Edit selected label -->
                         <Border Style="{StaticResource Fb.Section}" Margin="0,10,0,0" Visibility="{Binding EditingLabel, Converter={StaticResource HasValueToVis}}">
                             <StackPanel>
                                 <TextBlock Text="Edit label" Style="{StaticResource Fb.Caption}" Margin="0,0,0,6" />
@@ -874,7 +850,6 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Create label -->
                         <TextBlock Text="Create a new label" Style="{StaticResource Fb.Caption}" Margin="0,12,0,6" />
                         <Border CornerRadius="{DynamicResource Fb.RadiusSmall}" Height="32" Padding="10,0" Margin="0,0,0,8" Background="{Binding NewLabelColor, Converter={StaticResource HexToBrush}}">
                             <TextBlock Text="{Binding NewLabelName}" VerticalAlignment="Center" FontWeight="SemiBold"
@@ -904,7 +879,6 @@
                 </Border>
             </Popup>
 
-            <!-- Dates -->
             <Popup x:Name="DatesPopup" Style="{StaticResource Fb.Popup}" PlacementTarget="{Binding ElementName=DatesBtn}">
                 <Border Style="{StaticResource Fb.Flyout}" Width="330">
                     <StackPanel>
@@ -940,7 +914,6 @@
                 </Border>
             </Popup>
 
-            <!-- Priority -->
             <Popup x:Name="PriorityPopup" Style="{StaticResource Fb.Popup}" PlacementTarget="{Binding ElementName=PriorityBtn}">
                 <Border Style="{StaticResource Fb.Flyout}" Width="220">
                     <StackPanel>
@@ -963,7 +936,6 @@
                 </Border>
             </Popup>
 
-            <!-- Cover -->
             <Popup x:Name="CoverPopup" Style="{StaticResource Fb.Popup}" PlacementTarget="{Binding ElementName=CoverBtn}" Placement="Bottom" HorizontalOffset="-260">
                 <Border Style="{StaticResource Fb.Flyout}" Width="300">
                     <StackPanel>
@@ -1011,7 +983,6 @@
                 </Border>
             </Popup>
 
-            <!-- Move to board -->
             <Popup x:Name="MovePopup" Style="{StaticResource Fb.Popup}" PlacementTarget="{Binding ElementName=MoveBtn}">
                 <Border Style="{StaticResource Fb.Flyout}" Width="260">
                     <StackPanel>

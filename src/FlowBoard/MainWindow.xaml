@@ -57,7 +57,6 @@
                 <ResourceDictionary Source="Views/DialogTemplates.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Board entry in the sidebar -->
             <DataTemplate x:Key="SidebarBoardTemplate" DataType="{x:Type models:Board}">
                 <Button x:Name="Btn" Style="{StaticResource Fb.GhostButton}" Padding="8,6" Margin="0,1"
                         HorizontalContentAlignment="Stretch"
@@ -278,7 +277,6 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- ================= App background: ink + soft aurora glow ================= -->
         <Border Grid.RowSpan="2" Background="{DynamicResource Fb.WindowBrush}" />
         <Canvas Grid.RowSpan="2" ClipToBounds="True" IsHitTestVisible="False"
                 Visibility="{Binding Settings.AuroraBackground, Converter={StaticResource BoolToVis}}">
@@ -287,7 +285,6 @@
             <Ellipse Width="900" Height="700" Canvas.Left="320" Canvas.Bottom="-420" Fill="{DynamicResource Fb.Aurora3Brush}" />
         </Canvas>
 
-        <!-- ================= Title bar ================= -->
         <ui:TitleBar Grid.Row="0" Title="" Height="44">
             <ui:TitleBar.Icon>
                 <ui:ImageIcon Source="pack://application:,,,/Assets/app.png" />
@@ -320,7 +317,6 @@
             <ui:TitleBar.TrailingContent>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
 
-                    <!-- Running time tracker -->
                     <Border CornerRadius="{DynamicResource Fb.Radius}" Height="30" Padding="10,0,4,0" Margin="0,0,6,0" Background="#33F87168"
                             Visibility="{Binding Timer.IsRunning, Converter={StaticResource BoolToVis}}">
                         <StackPanel Orientation="Horizontal">
@@ -337,7 +333,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Pomodoro -->
                     <ToggleButton x:Name="PomodoroToggle" Height="30" Margin="0,0,6,0" Cursor="Hand" ToolTip="Focus timer (Ctrl+P)">
                         <ToggleButton.Template>
                             <ControlTemplate TargetType="ToggleButton">
@@ -452,14 +447,12 @@
             </ui:TitleBar.TrailingContent>
         </ui:TitleBar>
 
-        <!-- ================= Body ================= -->
         <Grid Grid.Row="1" Margin="10,2,10,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Sidebar: floating glass panel -->
             <Border x:Name="Sidebar" Width="264" Margin="0,0,10,0" Style="{StaticResource Fb.Glass}"
                     Visibility="{Binding IsSidebarShown, Converter={StaticResource BoolToVis}}">
                 <DockPanel Margin="12,14,12,12">
@@ -468,7 +461,6 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <!-- Project switcher -->
                         <Button Style="{StaticResource Fb.GhostButton}" Padding="4,2" HorizontalContentAlignment="Stretch" h:Behaviors.ClickOpensContextMenu="True"
                                 ToolTip="{Binding ProjectPath, TargetNullValue='No project open'}">
                             <Grid>
@@ -479,7 +471,6 @@
                                 <StackPanel>
                                     <TextBlock Text="PROJECT" Style="{StaticResource Fb.Caption}" FontSize="10" />
                                     <TextBlock Text="{Binding ProjectName}" FontSize="18" Style="{StaticResource Fb.GradientTitle}" TextTrimming="CharacterEllipsis" />
-                                    <!-- Who else has this project open (shared folder) -->
                                     <StackPanel Orientation="Horizontal" Margin="0,3,0,0" Visibility="{Binding HasCollaborators, Converter={StaticResource BoolToVis}}">
                                         <Ellipse Width="7" Height="7" Fill="#22C55E" VerticalAlignment="Center" Margin="1,0,6,0" />
                                         <TextBlock Text="{Binding CollaboratorsText}" FontSize="11.5" Foreground="{DynamicResource Fb.MutedTextBrush}" TextTrimming="CharacterEllipsis" />
@@ -582,7 +573,6 @@
                                     <TextBlock Grid.Column="1" Text="Home" VerticalAlignment="Center" FontSize="14" Foreground="{DynamicResource Fb.TextBrush}" />
                                 </Grid>
                             </Button>
-                            <!-- No project: quick way in -->
                             <StackPanel Visibility="{Binding HasProject, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" Margin="0,4,0,0">
                                 <TextBlock Text="No project is open. Boards, storyboards, canvases and pages live inside a project." Style="{StaticResource Fb.Muted}"
                                            FontSize="12.5" TextWrapping="Wrap" Margin="6,0,6,10" />
@@ -659,12 +649,9 @@
                 </DockPanel>
             </Border>
 
-            <!-- Board area -->
-            <!-- Storyboards, canvases, notes and the dashboard (app theme, not board theme) -->
             <Grid x:Name="DocArea" Grid.Column="1" h:Behaviors.ClipRadius="{DynamicResource Fb.RadiusLargeValue}"
                   Visibility="{Binding ActiveView, Converter={StaticResource NotEquals}, ConverterParameter=Board}">
                 <Border Background="{DynamicResource Fb.PanelBrush}" CornerRadius="{DynamicResource Fb.RadiusLarge}" />
-                <!-- Wallpaper (like board backgrounds) -->
                 <Border x:Name="DocWallpaper" Margin="-48" Background="{Binding ActiveDocument.Model.Background, Converter={StaticResource BoardBackground}}"
                         Visibility="{Binding ActiveDocument.Model.HasWallpaper, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}">
                     <Border.Effect>
@@ -687,7 +674,6 @@
                 <Border Background="Black" Opacity="{Binding CurrentBoard.BackgroundDim}" />
                 <Border CornerRadius="{DynamicResource Fb.RadiusLarge}" BorderThickness="1" BorderBrush="{DynamicResource Fb.PanelBorderBrush}" IsHitTestVisible="False" Panel.ZIndex="10" />
 
-                <!-- Empty state -->
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420"
                             Visibility="{Binding CurrentBoard, Converter={StaticResource HasValueToVis}, ConverterParameter=invert}">
                     <Image Source="pack://application:,,,/Assets/app.png" Width="96" Height="96" Margin="0,0,0,18" />
@@ -703,8 +689,6 @@
                 </StackPanel>
 
                 <DockPanel Visibility="{Binding CurrentBoard, Converter={StaticResource HasValueToVis}}">
-                    <!-- Board header -->
-                    <!-- One header bar, aligned with the lists below (same 12px side margins). -->
                     <Border DockPanel.Dock="Top" Style="{StaticResource Fb.HeaderPill}" Margin="12,12,12,0" Padding="6,5"
                             TextElement.Foreground="{DynamicResource Fb.HeaderTextBrush}">
                         <Grid>
@@ -713,7 +697,6 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <!-- Left side shrinks (and clips) instead of sliding under the buttons on the right. -->
                             <Border HorizontalAlignment="Left" ClipToBounds="True">
                             <StackPanel Orientation="Horizontal">
                                 <Button Style="{StaticResource Fb.HeaderButton}" Command="{Binding ToggleSidebarCommand}" ToolTip="Show sidebar (Ctrl+B)"
@@ -721,7 +704,6 @@
                                     <ui:SymbolIcon Symbol="PanelLeft24" FontSize="16" />
                                 </Button>
 
-                                <!-- Board name: click to rename -->
                                 <Grid VerticalAlignment="Center" Margin="4,0">
                                     <Button Style="{StaticResource Fb.HeaderButton}" Command="{Binding StartRenameBoardCommand}" ToolTip="Rename board"
                                             Visibility="{Binding CurrentBoard.IsEditingName, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
@@ -742,7 +724,6 @@
 
                                 <Border Width="1" Height="20" Background="{DynamicResource Fb.DividerBrush}" Margin="6,0" />
 
-                                <!-- View switcher -->
                                 <Border Style="{StaticResource Fb.SegmentGroup}" Background="Transparent" BorderThickness="0">
                                     <StackPanel Orientation="Horizontal">
                                         <RadioButton Style="{StaticResource Fb.Segment}" Foreground="{DynamicResource Fb.HeaderTextBrush}" GroupName="View" ToolTip="Board (Ctrl+1)"
@@ -787,7 +768,6 @@
                                         <TextBlock Text="Style" Margin="6,0,0,0" Visibility="{Binding IsCompact, Converter={StaticResource BoolToVis}, ConverterParameter=invert}" />
                                     </StackPanel>
                                 </Button>
-                                <!-- Filter -->
                                 <ToggleButton x:Name="FilterToggle" Style="{StaticResource Fb.HeaderToggle}" IsChecked="{Binding IsFilterOpen}" ToolTip="Filter cards (Ctrl+F)">
                                     <StackPanel Orientation="Horizontal">
                                         <ui:SymbolIcon Symbol="Filter24" FontSize="16" />
@@ -913,7 +893,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Views -->
                     <Grid x:Name="ViewHost">
                         <views:BoardView Visibility="{Binding ViewMode, Converter={StaticResource Equals}, ConverterParameter=Board}" />
                         <views:TableView Visibility="{Binding ViewMode, Converter={StaticResource Equals}, ConverterParameter=Table}" />
@@ -923,7 +902,6 @@
                 </DockPanel>
             </Grid>
 
-            <!-- ================= Dialog stack ================= -->
             <ItemsControl Grid.ColumnSpan="2" ItemsSource="{Binding Dialogs}" Focusable="False" Margin="-10,-2,-10,-10"
                           Visibility="{Binding HasDialog, Converter={StaticResource BoolToVis}}">
                 <ItemsControl.ItemsPanel>
@@ -948,7 +926,6 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <!-- ================= Toasts ================= -->
             <ItemsControl Grid.ColumnSpan="2" ItemsSource="{Binding Toasts}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                           Margin="0,0,0,24" Focusable="False">
                 <ItemsControl.ItemTemplate>

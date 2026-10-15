@@ -49,7 +49,6 @@ public class CoreTests
         Assert.Equal("1/2", card.ChecklistText);
         Assert.Equal(1, card.VoiceCount);
         Assert.True(card.HasTrackedTime);
-        // Runtime-only state must not be persisted.
         Assert.DoesNotContain("IsFilteredOut", json);
         Assert.DoesNotContain("NewCardTitle", json);
     }
@@ -122,7 +121,7 @@ public class CoreTests
         Assert.Equal("From template", created.Name);
         var card = created.Lists[0].Cards[0];
         Assert.Equal("Bugs", card.Title);
-        Assert.Empty(card.Attachments); // files belong to the original card only
+        Assert.Empty(card.Attachments);
         Assert.Single(card.ResolvedLabels);
     }
 
@@ -182,7 +181,6 @@ public class CoreTests
     [Fact]
     public void DefaultSettings_RoundTripThroughJson()
     {
-        // Regression: the NaN window position used to make the first save throw, so the app never showed.
         var json = JsonSerializer.Serialize(new AppSettings(), Json.Options);
         var back = JsonSerializer.Deserialize<AppSettings>(json, Json.Options)!;
         Assert.True(double.IsNaN(back.WindowLeft));
@@ -212,7 +210,7 @@ public class CoreTests
         Assert.Equal(0.3, back.ListOpacity);
         Assert.Equal(0, back.CornerRadius);
         Assert.True(back.Lists[0].Cards[0].IsExpanded);
-        Assert.Equal(-1, new Board().CornerRadius); // new boards follow the app setting
+        Assert.Equal(-1, new Board().CornerRadius);
     }
 
     [Fact]

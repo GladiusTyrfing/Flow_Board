@@ -17,7 +17,6 @@
         </Style>
     </UserControl.Resources>
 
-    <!-- Cinema: black stage fills the window -->
     <Border Background="#F2050608" CornerRadius="{DynamicResource Fb.RadiusLarge}" Margin="10,2,10,10">
         <DockPanel Margin="24,18,24,20">
             <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
@@ -31,7 +30,6 @@
                 </Button>
             </Grid>
 
-            <!-- Controls -->
             <StackPanel DockPanel.Dock="Bottom" Margin="0,14,0,0">
                 <Grid x:Name="Seek" Height="18" Cursor="Hand" Background="Transparent" MouseLeftButtonDown="OnSeek" MouseMove="OnSeekDrag">
                     <Border Height="4" CornerRadius="2" Background="#33FFFFFF" VerticalAlignment="Center" />
@@ -65,7 +63,6 @@
                 </Grid>
             </StackPanel>
 
-            <!-- Stage -->
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -80,7 +77,6 @@
                             <TextBlock Text="{Binding Current.Title}" Foreground="#E6FFFFFF" FontSize="54" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="1100" />
                             <TextBlock Text="{Binding Current.Scene}" Foreground="#99FFFFFF" FontSize="30" HorizontalAlignment="Center" Margin="0,8,0,0" />
                         </StackPanel>
-                        <!-- Shot progress along the bottom of the frame -->
                         <Border VerticalAlignment="Bottom" Height="6" Background="#26FFFFFF">
                             <Border x:Name="ShotFill" HorizontalAlignment="Left" Background="{DynamicResource Fb.AccentGradientBrush}" />
                         </Border>

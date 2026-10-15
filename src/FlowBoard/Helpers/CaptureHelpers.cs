@@ -8,7 +8,6 @@ namespace FlowBoard.Helpers;
 
 public static class CaptureHelpers
 {
-    /// <summary>The open document's wallpaper (for screenshots), or null for the app background.</summary>
     public static Brush? DocWallpaper()
     {
         if (MainViewModel.Instance.ActiveDocument?.Model is not StyledDocument { HasWallpaper: true } d) return null;

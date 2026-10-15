@@ -4,7 +4,6 @@
                     xmlns:h="clr-namespace:FlowBoard.Helpers"
                     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
-    <!-- ============ Converters ============ -->
     <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
     <conv:InverseBoolConverter x:Key="InverseBool" />
     <conv:HasValueToVisibilityConverter x:Key="HasValueToVis" />
@@ -42,11 +41,9 @@
 
     <CubicEase x:Key="EaseOut" EasingMode="EaseOut" />
 
-    <!-- No white "focus rectangle" around sliders, buttons and other controls. -->
     <Style x:Key="DefaultControlFocusVisualStyle" />
     <Style x:Key="{x:Static SystemParameters.FocusVisualStyleKey}" />
 
-    <!-- Corner radius tokens (defaults; replaced at runtime from Settings → Appearance → Corner roundness) -->
     <CornerRadius x:Key="Fb.RadiusSmall">6</CornerRadius>
     <CornerRadius x:Key="Fb.Radius">8</CornerRadius>
     <CornerRadius x:Key="Fb.RadiusGroup">11</CornerRadius>
@@ -54,7 +51,6 @@
     <sys:Double x:Key="Fb.RadiusValue">8</sys:Double>
     <sys:Double x:Key="Fb.RadiusLargeValue">14</sys:Double>
 
-    <!-- Bundled typeface (Plus Jakarta Sans, SIL OFL) with Segoe UI as fallback. -->
     <FontFamily x:Key="Fb.Font">/Assets/Fonts/#Plus Jakarta Sans, Segoe UI</FontFamily>
 
     <DropShadowEffect x:Key="Fb.CardShadow" BlurRadius="10" ShadowDepth="2" Direction="270" Opacity="0.22" Color="Black" />
@@ -62,7 +58,6 @@
     <DropShadowEffect x:Key="Fb.PanelShadow" BlurRadius="24" ShadowDepth="4" Direction="270" Opacity="0.28" Color="Black" />
     <DropShadowEffect x:Key="Fb.PopupShadow" BlurRadius="36" ShadowDepth="10" Direction="270" Opacity="0.4" Color="Black" />
 
-    <!-- ============ Text ============ -->
     <Style x:Key="Fb.Text" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource Fb.TextBrush}" />
         <Setter Property="TextWrapping" Value="Wrap" />
@@ -84,14 +79,11 @@
         <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Foreground" Value="{DynamicResource Fb.MutedTextBrush}" />
     </Style>
-    <!-- Big gradient headline text -->
     <Style x:Key="Fb.GradientTitle" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource Fb.AccentGradientBrush}" />
         <Setter Property="FontWeight" Value="ExtraBold" />
     </Style>
 
-    <!-- ============ Buttons ============ -->
-    <!-- Soft hover layer that fades in + a tiny press "squish": every custom button shares this. -->
     <ControlTemplate x:Key="Fb.ButtonTemplate" TargetType="ButtonBase">
         <Grid x:Name="Root" RenderTransformOrigin="0.5,0.5" Background="Transparent">
             <Grid.RenderTransform>
@@ -169,7 +161,6 @@
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
-    <!-- Gradient pill: the primary action -->
     <Style x:Key="Fb.AccentButton" TargetType="Button" BasedOn="{StaticResource Fb.GhostButton}">
         <Setter Property="Background" Value="{DynamicResource Fb.AccentGradientBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource Fb.OnAccentBrush}" />
@@ -197,7 +188,6 @@
         <Setter Property="h:Behaviors.CornerRadius" Value="{DynamicResource Fb.Radius}" />
     </Style>
 
-    <!-- Buttons inside the floating board header -->
     <Style x:Key="Fb.HeaderButton" TargetType="Button" BasedOn="{StaticResource Fb.GhostButton}">
         <Setter Property="Foreground" Value="{DynamicResource Fb.HeaderTextBrush}" />
         <Setter Property="Padding" Value="9,6" />
@@ -221,7 +211,6 @@
         </Style.Triggers>
     </Style>
 
-    <!-- Color swatch: Background carries the color; ring on hover / when Tag="selected" (drawn inside its bounds, never clipped) -->
     <Style x:Key="Fb.SwatchButton" TargetType="Button">
         <Setter Property="Width" Value="40" />
         <Setter Property="Height" Value="30" />
@@ -250,7 +239,6 @@
         </Setter>
     </Style>
 
-    <!-- Segmented control item: the checked item becomes a gradient pill -->
     <Style x:Key="Fb.Segment" TargetType="RadioButton">
         <Setter Property="Foreground" Value="{DynamicResource Fb.TextBrush}" />
         <Setter Property="Padding" Value="12,6" />
@@ -298,7 +286,6 @@
         </Setter>
     </Style>
 
-    <!-- Container for a group of Fb.Segment items -->
     <Style x:Key="Fb.SegmentGroup" TargetType="Border">
         <Setter Property="CornerRadius" Value="{DynamicResource Fb.RadiusGroup}" />
         <Setter Property="Padding" Value="3,4" />
@@ -308,7 +295,6 @@
         <Setter Property="HorizontalAlignment" Value="Left" />
     </Style>
 
-    <!-- Round "complete" checkbox -->
     <Style x:Key="Fb.RoundCheck" TargetType="CheckBox">
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Width" Value="18" />
@@ -352,8 +338,6 @@
         </Setter>
     </Style>
 
-    <!-- ============ Text boxes ============ -->
-    <!-- Looks like plain text until focused (inline editing of titles and names). -->
     <Style x:Key="Fb.InlineTextBox" TargetType="TextBox">
         <Setter Property="Foreground" Value="{DynamicResource Fb.TextBrush}" />
         <Setter Property="CaretBrush" Value="{DynamicResource Fb.TextBrush}" />
@@ -385,7 +369,6 @@
         </Setter>
     </Style>
 
-    <!-- Borderless field with a placeholder (set the placeholder text in Tag). Storyboards, notes, canvas. -->
     <Style x:Key="Fb.Field" TargetType="TextBox" BasedOn="{StaticResource Fb.InlineTextBox}">
         <Setter Property="AcceptsReturn" Value="True" />
         <Setter Property="Template">
@@ -415,13 +398,11 @@
         </Setter>
     </Style>
 
-    <!-- Single-line field with a placeholder -->
     <Style x:Key="Fb.LineField" TargetType="TextBox" BasedOn="{StaticResource Fb.Field}">
         <Setter Property="AcceptsReturn" Value="False" />
         <Setter Property="TextWrapping" Value="NoWrap" />
     </Style>
 
-    <!-- Bare text box (no chrome at all): note blocks, canvas node labels. -->
     <Style x:Key="Fb.BareTextBox" TargetType="TextBox">
         <Setter Property="Foreground" Value="{DynamicResource Fb.TextBrush}" />
         <Setter Property="CaretBrush" Value="{DynamicResource Fb.TextBrush}" />
@@ -454,7 +435,6 @@
         </Setter>
     </Style>
 
-    <!-- Rich text with no chrome (note blocks). -->
     <Style x:Key="Fb.BareRichText" TargetType="RichTextBox">
         <Setter Property="Foreground" Value="{DynamicResource Fb.TextBrush}" />
         <Setter Property="CaretBrush" Value="{DynamicResource Fb.TextBrush}" />
@@ -476,7 +456,6 @@
         </Setter>
     </Style>
 
-    <!-- Bordered input with rounded corners. -->
     <Style x:Key="Fb.Input" TargetType="TextBox" BasedOn="{StaticResource Fb.InlineTextBox}">
         <Setter Property="Background" Value="{DynamicResource Fb.InputBrush}" />
         <Setter Property="BorderThickness" Value="1" />
@@ -484,8 +463,6 @@
         <Setter Property="Padding" Value="10,7" />
     </Style>
 
-    <!-- ============ Surfaces ============ -->
-    <!-- Floating translucent panel (sidebar, board header pills). -->
     <Style x:Key="Fb.Glass" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource Fb.PanelBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Fb.PanelBorderBrush}" />
@@ -493,7 +470,6 @@
         <Setter Property="CornerRadius" Value="{DynamicResource Fb.RadiusLarge}" />
     </Style>
 
-    <!-- Floating pill in the board header (board-themed) -->
     <Style x:Key="Fb.HeaderPill" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource Fb.HeaderBarBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource Fb.ListBorderBrush}" />
@@ -560,7 +536,6 @@
         </Setter>
     </Style>
 
-    <!-- Tiny rounded pill used for badges -->
     <Style x:Key="Fb.Badge" TargetType="Border">
         <Setter Property="CornerRadius" Value="{DynamicResource Fb.RadiusSmall}" />
         <Setter Property="Padding" Value="6,2" />
@@ -568,7 +543,6 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
-    <!-- ============ Menus (follow the app theme, font and corner radius) ============ -->
     <Style TargetType="ContextMenu">
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="HasDropShadow" Value="False" />

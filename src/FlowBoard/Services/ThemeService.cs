@@ -20,7 +20,6 @@ public sealed record AccentPreset(string Name, Color Primary, Color Secondary)
     }
 }
 
-/// <summary>Applies dark/light theme, the accent gradient, the background glow and the window backdrop.</summary>
 public static class ThemeService
 {
     private static AppSettings? _settings;
@@ -28,7 +27,6 @@ public static class ThemeService
 
     public static bool IsDark { get; private set; } = true;
 
-    /// <summary>Mica/Acrylic/Tabbed backdrops need Windows 11 (build 22000+). Windows 10 gets a solid window.</summary>
     public static bool SupportsBackdrop { get; } = Environment.OSVersion.Version.Build >= 22000;
 
     public static event EventHandler? ThemeApplied;
@@ -61,10 +59,6 @@ public static class ThemeService
     private static bool _radiusPending;
     private static double _appliedRadius = double.NaN;
 
-    /// <summary>
-    /// Corner slider path: only the corner resources change (no palette/theme swap). Many slider ticks
-    /// are coalesced into one update per rendered frame, so the change is live while dragging.
-    /// </summary>
     public static void QueueRadiusUpdate()
     {
         if (_radiusPending) return;
@@ -84,7 +78,6 @@ public static class ThemeService
         ApplyRadius(Application.Current.Resources, r);
     }
 
-    /// <summary>Replaces one merged dictionary in a single step (one resource refresh instead of one per key).</summary>
     public static void SwapMerged(ResourceDictionary target, ref ResourceDictionary? current, ResourceDictionary? fresh)
     {
         var list = target.MergedDictionaries;
@@ -142,10 +135,6 @@ public static class ThemeService
         ThemeApplied?.Invoke(null, EventArgs.Empty);
     }
 
-    /// <summary>
-    /// One roundness value drives every corner: small chips, controls, grouped pills and large panels.
-    /// Also feeds WPF-UI's own corner keys so its text boxes, check boxes and menus match.
-    /// </summary>
     public static ResourceDictionary BuildRadius(double r)
     {
         var res = new ResourceDictionary();
@@ -186,7 +175,6 @@ public static class ThemeService
         res["Fb.AccentTextBrush"] = Frozen(new SolidColorBrush(IsDark ? Mix(accent.Primary, Colors.White, 0.35) : Mix(accent.Primary, Colors.Black, 0.1)));
         res["Fb.OnAccentBrush"] = Frozen(new SolidColorBrush(Colors.White));
 
-        // Soft glow blobs behind the app (strength differs per theme).
         byte a = IsDark ? (byte)0x55 : (byte)0x40;
         res["Fb.Aurora1Brush"] = Glow(WithAlpha(accent.Primary, a));
         res["Fb.Aurora2Brush"] = Glow(WithAlpha(accent.Secondary, a));

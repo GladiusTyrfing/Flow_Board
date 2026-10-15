@@ -3,13 +3,8 @@ using FlowBoard.Models;
 
 namespace FlowBoard.Services;
 
-/// <summary>Markdown shortcuts for the block editor and export of a page to Markdown (pure, testable).</summary>
 public static class NoteMarkdown
 {
-    /// <summary>
-    /// If <paramref name="text"/> starts with a Markdown shortcut ("# ", "- ", "[] ", "> "...), returns the block
-    /// type it stands for and the text without the prefix.
-    /// </summary>
     public static (BlockType Type, string Text)? DetectShortcut(string text)
     {
         if (text == "---" || text == "***") return (BlockType.Divider, string.Empty);
@@ -24,7 +19,7 @@ public static class NoteMarkdown
         foreach (var (prefix, type) in map)
         {
             if (!text.StartsWith(prefix, StringComparison.Ordinal)) continue;
-            if (prefix == "```" && text.Length > 3) continue; // only a bare ``` turns into code
+            if (prefix == "```" && text.Length > 3) continue;
             return (type, text[prefix.Length..]);
         }
 
@@ -35,7 +30,6 @@ public static class NoteMarkdown
 
     public static bool HasText(BlockType t) => t is not (BlockType.Divider or BlockType.Image or BlockType.Link);
 
-    /// <summary>Recomputes 1., 2., 3. for consecutive numbered blocks (restarting per indent level).</summary>
     public static void Renumber(IList<NoteBlock> blocks)
     {
         var counters = new int[8];
@@ -50,7 +44,6 @@ public static class NoteMarkdown
             }
             else
             {
-                // Any other block ends the numbering at its level (and deeper); a nested bullet keeps the parent list going.
                 for (int i = level; i < counters.Length; i++) counters[i] = 0;
             }
         }

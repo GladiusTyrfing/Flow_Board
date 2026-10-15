@@ -9,8 +9,6 @@ public sealed partial class MainViewModel
 {
     private string Me => Settings.DisplayName;
 
-    // ================= Lists =================
-
     [RelayCommand]
     private void StartAddList()
     {
@@ -35,7 +33,6 @@ public sealed partial class MainViewModel
         Undo.Checkpoint(Workspace, CurrentBoard, "Add list");
         CurrentBoard.Lists.Add(new BoardList { Name = name });
         NewListName = string.Empty;
-        // Stay in "adding" mode so several lists can be added in a row, like Trello.
     }
 
     [RelayCommand]
@@ -170,8 +167,6 @@ public sealed partial class MainViewModel
         ShowToast($"List \"{list.Name}\" deleted", "Undo", () => UndoCommand.Execute(null));
     }
 
-    // ================= Cards =================
-
     [RelayCommand]
     private void StartAddCard(BoardList list)
     {
@@ -194,7 +189,6 @@ public sealed partial class MainViewModel
         }
 
         Undo.Checkpoint(Workspace, CurrentBoard, "Add card");
-        // Several lines pasted at once become several cards.
         foreach (var line in title.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0))
         {
             var card = CreateCardFromText(line, CurrentBoard, list);
@@ -206,10 +200,6 @@ public sealed partial class MainViewModel
         list.NewCardTitle = string.Empty;
     }
 
-    /// <summary>
-    /// Builds a card from quick-add text: "Edit trailer fri 3pm #video !high" sets the title, due date,
-    /// label (created if the board doesn't have it yet) and priority.
-    /// </summary>
     public Card CreateCardFromText(string text, Board board, BoardList list)
     {
         var parsed = SmartParser.Parse(text, DateTime.Now);
@@ -245,7 +235,6 @@ public sealed partial class MainViewModel
         list.NewCardTitle = string.Empty;
     }
 
-    /// <summary>Ctrl+N: start adding a card in the first list.</summary>
     [RelayCommand]
     private void QuickAddCard()
     {
@@ -294,10 +283,6 @@ public sealed partial class MainViewModel
         if (ViewMode != BoardViewMode.Board) RefreshViews();
     }
 
-    /// <summary>
-    /// Keeps lists in sync with completion: a completed card goes to the top of the board's Done list,
-    /// an un-completed card goes back to where it came from (or the first regular list).
-    /// </summary>
     public void MoveForCompletion(Card card)
     {
         if (!Settings.MoveCompletedToDone || card.Board is not { } board) return;
@@ -433,7 +418,6 @@ public sealed partial class MainViewModel
         if (card.IsTimerRunning) Timer.Stop();
         board.FindListOf(card)?.Cards.Remove(card);
         board.ArchivedCards.Remove(card);
-        // Attachment files are kept until the next start so that undo can bring the card back intact.
         _pendingAttachmentDeletes.Add(card.Id);
         RefreshViews();
         ShowToast($"Deleted \"{card.Title}\"", "Undo", () => UndoCommand.Execute(null));
@@ -441,7 +425,6 @@ public sealed partial class MainViewModel
 
     private readonly HashSet<Guid> _pendingAttachmentDeletes = [];
 
-    /// <summary>On exit: remove attachment folders of cards that were deleted and not restored.</summary>
     public void PurgeDeletedAttachments()
     {
         foreach (var id in _pendingAttachmentDeletes)
@@ -455,7 +438,6 @@ public sealed partial class MainViewModel
             }
             catch
             {
-                // Ignore; the folder is harmless.
             }
         }
     }
@@ -472,7 +454,6 @@ public sealed partial class MainViewModel
         ShowToast("Card duplicated");
     }
 
-    /// <summary>Deep copy (new ids). Attachment files are copied so each card owns its files.</summary>
     private Card CloneCard(Card card)
     {
         var json = System.Text.Json.JsonSerializer.Serialize(card, Json.Compact);
@@ -515,7 +496,6 @@ public sealed partial class MainViewModel
         from.FindListOf(card)?.Cards.Remove(card);
         from.ArchivedCards.Remove(card);
 
-        // Labels are board-specific: map by name+color, create missing ones.
         var newIds = new List<Guid>();
         foreach (var label in card.ResolvedLabels)
         {
@@ -546,7 +526,6 @@ public sealed partial class MainViewModel
         card.Priority = p;
     }
 
-    /// <summary>Common bookkeeping after a card changed lists (drag & drop or the list picker).</summary>
     public void AfterCardMoved(Card card, BoardList? from, BoardList? to)
     {
         if (to == null) return;

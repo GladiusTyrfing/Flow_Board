@@ -34,7 +34,7 @@ public class CanvasGeometryTests
     public void Routes_use_invariant_numbers_and_the_right_segments(EdgeStyle style, string segment)
     {
         var prev = Thread.CurrentThread.CurrentCulture;
-        Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("de-DE"); // decimal comma must not leak in
+        Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("de-DE");
         try
         {
             var shape = CanvasGeometry.Route(new Box(0.5, 0, 100, 51), new Box(300, 0, 100, 50), style, arrow: true);

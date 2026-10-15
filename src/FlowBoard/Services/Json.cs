@@ -10,7 +10,6 @@ public static class Json
     {
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        // Window position defaults to NaN ("not set yet"), which plain JSON can't represent.
         NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
         Converters = { new JsonStringEnumConverter() },
     };
@@ -26,7 +25,6 @@ public static class Json
         return board;
     }
 
-    /// <summary>Deep copy with fresh ids for the board, lists, cards and labels (label references are remapped).</summary>
     public static Board CloneWithNewIds(Board source, bool includeCards = true)
     {
         var copy = DeserializeBoard(SerializeBoard(source));
@@ -58,7 +56,6 @@ public static class Json
         return copy;
     }
 
-    /// <summary>Deep copy of a storyboard, canvas or note with a new id (child ids are kept; they are local).</summary>
     public static T CloneDocument<T>(T doc) where T : class
     {
         var copy = JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(doc, Compact), Options)!;
@@ -72,7 +69,6 @@ public static class Json
         return copy;
     }
 
-    /// <summary>Gives a card (and children) new ids. Attachments keep their files but get new ids.</summary>
     public static void ReassignIds(Card card, IReadOnlyDictionary<Guid, Guid>? labelMap = null)
     {
         card.Id = Guid.NewGuid();

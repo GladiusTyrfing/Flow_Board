@@ -5,13 +5,11 @@ using FlowBoard.Models;
 
 namespace FlowBoard.ViewModels;
 
-/// <summary>Storyboards, canvases, notes and the dashboard: opening, creating, deleting.</summary>
 public sealed partial class MainViewModel
 {
     [ObservableProperty] private ActiveView _activeView = ActiveView.Board;
     [ObservableProperty] private DocumentViewModel? _activeDocument;
 
-    /// <summary>What the sidebar highlights: the open board or the open document's model.</summary>
     public object? SelectedItem => ActiveView == ActiveView.Board ? CurrentBoard : ActiveDocument?.Model ?? ActiveDocument;
 
     public IEnumerable<Storyboard> SidebarStoryboards => FilterDocs(Workspace.Storyboards, s => s.Name);
@@ -48,7 +46,6 @@ public sealed partial class MainViewModel
         if (e.PropertyName is nameof(DocumentViewModel.CanUndo) or nameof(DocumentViewModel.CanRedo)) RaiseUndoState();
     }
 
-    /// <summary>Title bar undo/redo: the board history on boards, the document's own history elsewhere.</summary>
     public bool CanUndoNow => ActiveView == ActiveView.Board ? Undo.CanUndo : ActiveDocument?.CanUndo == true;
     public bool CanRedoNow => ActiveView == ActiveView.Board ? Undo.CanRedo : ActiveDocument?.CanRedo == true;
     public string? UndoDescriptionNow => ActiveView == ActiveView.Board ? Undo.UndoDescription : null;
@@ -79,7 +76,6 @@ public sealed partial class MainViewModel
         if (IsNarrow) NarrowSidebarOpen = false;
     }
 
-    /// <summary>Back to the board area (used by SelectBoard).</summary>
     private void LeaveDocument()
     {
         if (ActiveView == ActiveView.Board) return;
@@ -87,14 +83,11 @@ public sealed partial class MainViewModel
         ActiveView = ActiveView.Board;
     }
 
-    // ---------- open ----------
-
     [RelayCommand] public void OpenStoryboard(Storyboard s) => ShowDocument(new StoryboardViewModel(this, s));
     [RelayCommand] public void OpenCanvas(CanvasDoc c) => ShowDocument(new CanvasViewModel(this, c));
     [RelayCommand] public void OpenNote(NotePage n) => ShowDocument(new NoteViewModel(this, n));
     [RelayCommand] public void OpenDashboard() => ShowDocument(new DashboardViewModel(this));
 
-    /// <summary>Opens anything that can be linked to (from notes, the palette...).</summary>
     public void OpenTarget(LinkTarget kind, Guid id)
     {
         switch (kind)
@@ -103,7 +96,6 @@ public sealed partial class MainViewModel
                 SelectBoard(b);
                 break;
             case LinkTarget.Card when Workspace.FindCard(id, out var board, out _) is { } card && board != null:
-                // From a storyboard, canvas, note or the dashboard the card opens on top; on boards we switch to its board.
                 if (ActiveView == ActiveView.Board && CurrentBoard != board) SelectBoard(board);
                 card.Board ??= board;
                 OpenCard(card);
@@ -127,12 +119,10 @@ public sealed partial class MainViewModel
         }
     }
 
-    /// <summary>Raised to save ("save") or copy ("copy") a high-res screenshot of what's open.</summary>
     public event EventHandler<string>? ScreenshotRequested;
 
     [RelayCommand] private void Screenshot(string? mode) => ScreenshotRequested?.Invoke(this, mode ?? "save");
 
-    /// <summary>Theme and wallpaper for the open storyboard, canvas or page.</summary>
     [RelayCommand]
     private void OpenDocStyle()
     {
@@ -141,8 +131,6 @@ public sealed partial class MainViewModel
         var name = doc switch { Storyboard s => s.Name, CanvasDoc c => c.Name, NotePage n => n.Title, _ => string.Empty };
         ShowDialog(new DocStyleViewModel(this, doc, name));
     }
-
-    // ---------- create ----------
 
     [RelayCommand]
     private void NewStoryboard()
@@ -180,8 +168,6 @@ public sealed partial class MainViewModel
         RefreshDocSidebar();
         OpenNote(n);
     }
-
-    // ---------- star / duplicate / delete ----------
 
     [RelayCommand]
     private void ToggleDocStar(object? doc)
@@ -253,7 +239,6 @@ public sealed partial class MainViewModel
 
 public sealed partial class MainViewModel
 {
-    /// <summary>Shows the link search dialog; null when cancelled.</summary>
     public Task<LinkPick?> PickLinkAsync(string title, params LinkTarget[] kinds) => PickLinkAsync(title, kinds, null);
 
     public async Task<LinkPick?> PickLinkAsync(string title, IEnumerable<LinkTarget> kinds, IEnumerable<Guid>? exclude)

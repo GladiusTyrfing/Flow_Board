@@ -17,7 +17,6 @@ public sealed class CalendarDay
     public ObservableCollection<Card> Cards { get; } = [];
 }
 
-/// <summary>Month grid of cards by due date. Cards can be dragged between days to reschedule.</summary>
 public sealed partial class CalendarViewModel : ObservableObject
 {
     private readonly MainViewModel _main;
@@ -69,7 +68,6 @@ public sealed partial class CalendarViewModel : ObservableObject
         if (title == null) return;
         _main.Undo.Checkpoint(_main.Workspace, board, "Add card");
         var card = _main.CreateCardFromText(title, board, board.Lists[0]);
-        // The clicked day wins; keep a parsed time of day if there was one.
         card.DueDate = day.Date + (card.DueDate?.TimeOfDay ?? TimeSpan.Zero);
         card.ReminderMinutes = _main.Settings.DefaultReminderMinutes;
         card.AddActivity($"added this card to {board.Lists[0].Name}", _main.Settings.DisplayName);
@@ -126,7 +124,6 @@ public sealed partial class CalendarViewModel : ObservableObject
                     continue;
                 }
 
-                // Multi-day cards (start date → due date) appear on every day in range.
                 var from = card.StartDate?.Date ?? due.Date;
                 if (from > due.Date) from = due.Date;
                 for (var day = from; day <= due.Date; day = day.AddDays(1))

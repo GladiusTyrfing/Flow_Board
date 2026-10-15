@@ -6,10 +6,6 @@ using Microsoft.Win32;
 
 namespace FlowBoard.Services;
 
-/// <summary>
-/// Registers .flowboard files for the current user (no admin rights needed): they get the FlowBoard
-/// project icon in Explorer and open in FlowBoard on double-click.
-/// </summary>
 public static class FileAssociation
 {
     private const string ProgId = "FlowBoard.Project";
@@ -23,7 +19,6 @@ public static class FileAssociation
             var icon = WriteDocumentIcon() ?? exe;
             var command = $"\"{exe}\" \"%1\"";
 
-            // Only touch the registry (and refresh Explorer) when something changed, e.g. the app moved.
             using (var existing = Registry.CurrentUser.OpenSubKey($@"Software\Classes\{ProgId}\shell\open\command"))
             using (var existingIcon = Registry.CurrentUser.OpenSubKey($@"Software\Classes\{ProgId}\DefaultIcon"))
             {
@@ -46,7 +41,7 @@ public static class FileAssociation
                 using (var cmd = prog.CreateSubKey(@"shell\open\command")) cmd.SetValue(null, command);
             }
 
-            SHChangeNotify(0x08000000 /* SHCNE_ASSOCCHANGED */, 0, IntPtr.Zero, IntPtr.Zero);
+            SHChangeNotify(0x08000000 , 0, IntPtr.Zero, IntPtr.Zero);
         }
         catch (Exception ex)
         {
@@ -54,7 +49,6 @@ public static class FileAssociation
         }
     }
 
-    /// <summary>Copies the project-file icon out of the app so Explorer can show it.</summary>
     private static string? WriteDocumentIcon()
     {
         try

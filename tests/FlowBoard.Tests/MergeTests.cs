@@ -70,8 +70,8 @@ public class MergeTests
         var (ours, theirs, b) = Fork();
         var card = theirs.Boards[0].Lists[0].Cards[0];
         theirs.Boards[0].Lists[0].Cards.Remove(card);
-        theirs.Boards[0].Lists[1].Cards.Add(card);              // they moved "Script" to Done
-        ours.Boards[0].Lists[0].Cards[0].Priority = Priority.High; // we changed its priority
+        theirs.Boards[0].Lists[1].Cards.Add(card);
+        ours.Boards[0].Lists[0].Cards[0].Priority = Priority.High;
 
         var m = Merge(b, ours, theirs);
         Assert.DoesNotContain(m.Boards[0].Lists[0].Cards, c => c.Title == "Script");
@@ -83,13 +83,13 @@ public class MergeTests
     public void Deletes_apply_unless_the_other_side_edited_the_item()
     {
         var (ours, theirs, b) = Fork();
-        theirs.Boards[0].Lists[0].Cards.RemoveAt(1);           // they deleted Casting
+        theirs.Boards[0].Lists[0].Cards.RemoveAt(1);
         var m = Merge(b, ours, theirs);
         Assert.Single(m.Boards[0].Lists[0].Cards);
 
         (ours, theirs, b) = Fork();
-        theirs.Boards[0].Lists[0].Cards.RemoveAt(1);           // they deleted Casting…
-        ours.Boards[0].Lists[0].Cards[1].Title = "Casting call"; // …while we renamed it: keep it
+        theirs.Boards[0].Lists[0].Cards.RemoveAt(1);
+        ours.Boards[0].Lists[0].Cards[1].Title = "Casting call";
         m = Merge(b, ours, theirs);
         Assert.Contains(m.Boards[0].Lists[0].Cards, c => c.Title == "Casting call");
     }
@@ -153,7 +153,6 @@ public class ReconcileTests
         board.Lists.Add(done);
         live.Boards.Add(board);
 
-        // Another copy: Script renamed and moved to Done, Casting deleted, a new card and a page added.
         var other = JsonSerializer.Deserialize<Workspace>(JsonSerializer.Serialize(live, Json.Options), Json.Options)!;
         var s2 = other.Boards[0].Lists[0].Cards[0];
         s2.Title = "Script (final)";
@@ -176,7 +175,6 @@ public class ReconcileTests
         Assert.Equal("Notes", live.Notes.Single().Title);
         Assert.True(events > 0);
         Assert.Contains(moved, changed);
-        // Same content as the other copy now.
         Assert.Equal(JsonSerializer.Serialize(other, Json.Options), JsonSerializer.Serialize(live, Json.Options));
     }
 
@@ -201,7 +199,6 @@ public class ReconcileTests
     }
 }
 
-/// <summary>Two people sharing one project file, using the same merge-then-save steps as the app.</summary>
 public class TeamworkSimulationTests
 {
     private sealed class Disk
@@ -223,7 +220,6 @@ public class TeamworkSimulationTests
             Live.Hydrate();
         }
 
-        /// <summary>What DataStore.CheckForExternalChanges does.</summary>
         public void Pull()
         {
             if (_disk.Content == _base) return;
@@ -234,7 +230,6 @@ public class TeamworkSimulationTests
             _base = _disk.Content;
         }
 
-        /// <summary>What DataStore.SaveIfChanged does.</summary>
         public void Save()
         {
             Pull();
@@ -263,7 +258,6 @@ public class TeamworkSimulationTests
         var sam = new Peer(disk);
         var myScript = me.Live.Boards[0].Lists[0].Cards[0];
 
-        // Both work at the same time without seeing each other yet.
         myScript.Description = "Draft 2";
         me.Live.Boards[0].Lists[0].Cards.Add(new Card { Title = "Casting" });
         sam.Live.Storyboards[0].Shots.Add(new Shot { Title = "Close-up" });
@@ -271,10 +265,9 @@ public class TeamworkSimulationTests
         sam.Live.Notes.Add(new NotePage { Title = "Call sheet" });
 
         me.Save();
-        sam.Save();   // merges my save first
+        sam.Save();
         me.Pull();
 
-        // Sam moves Script to Done while I rename it.
         var samScript = sam.Live.Boards[0].Lists[0].Cards.First(c => c.Title == "Script");
         sam.Live.Boards[0].Lists[0].Cards.Remove(samScript);
         sam.Live.Boards[0].Lists[1].Cards.Add(samScript);
@@ -293,7 +286,7 @@ public class TeamworkSimulationTests
         var moved = Assert.Single(w.Boards[0].Lists[1].Cards);
         Assert.Equal("Script (final)", moved.Title);
         Assert.Equal("Draft 2", moved.Description);
-        Assert.Same(myScript, moved); // my live card object was moved, not replaced
+        Assert.Same(myScript, moved);
         Assert.Equal(["Open", "Close-up"], w.Storyboards[0].Shots.Select(s => s.Title).ToList());
         Assert.Equal("Done", w.Storyboards[0].Shots[0].Status);
         Assert.Equal("Call sheet", w.Notes.Single().Title);

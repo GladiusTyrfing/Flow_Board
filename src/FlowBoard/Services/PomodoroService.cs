@@ -12,7 +12,6 @@ public enum PomodoroPhase
     LongBreak,
 }
 
-/// <summary>Focus timer. Completed focus time can be logged to a linked card.</summary>
 public sealed partial class PomodoroService : ObservableObject
 {
     private readonly AppSettings _settings;
@@ -29,10 +28,8 @@ public sealed partial class PomodoroService : ObservableObject
     [ObservableProperty] private Guid? _linkedCardId;
     [ObservableProperty] private string? _linkedCardTitle;
 
-    /// <summary>Raised when a phase finishes naturally.</summary>
     public event EventHandler<PomodoroPhase>? PhaseCompleted;
 
-    /// <summary>Raised with (cardId, start, end) when focus time should be logged.</summary>
     public event Action<Guid, DateTime, DateTime>? FocusLogged;
 
     public PomodoroService(AppSettings settings)
@@ -97,7 +94,6 @@ public sealed partial class PomodoroService : ObservableObject
         AccumulateFocus();
     }
 
-    /// <summary>Stops everything and logs any focus time already spent.</summary>
     public void Reset()
     {
         Pause();

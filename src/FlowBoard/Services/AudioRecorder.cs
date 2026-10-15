@@ -5,7 +5,6 @@ using NAudio.Wave;
 
 namespace FlowBoard.Services;
 
-/// <summary>Records voice notes from the default microphone to a WAV file.</summary>
 public sealed partial class AudioRecorder : ObservableObject, IDisposable
 {
     private readonly DispatcherTimer _tick;
@@ -25,7 +24,6 @@ public sealed partial class AudioRecorder : ObservableObject, IDisposable
         _tick = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(60) };
         _tick.Tick += (_, _) =>
         {
-            // Smooth the meter: rise instantly, fall gently.
             var p = _peak;
             _peak = 0;
             Level = p > Level ? p : Level * 0.8;
@@ -77,7 +75,6 @@ public sealed partial class AudioRecorder : ObservableObject, IDisposable
         _tick.Start();
     }
 
-    /// <summary>Stops recording and returns the temp WAV path and its duration.</summary>
     public async Task<(string Path, TimeSpan Duration)?> StopAsync()
     {
         if (!IsRecording || _waveIn == null || _path == null) return null;

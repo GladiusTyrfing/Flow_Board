@@ -6,7 +6,6 @@ namespace FlowBoard.Tests;
 
 public class SmartParserTests
 {
-    // Monday 28 Sep 2026, 10:00
     private static readonly DateTime Now = new(2026, 9, 28, 10, 0, 0);
 
     [Fact]
