@@ -1,163 +1,256 @@
+<div align="center">
+
+<img src="src/FlowBoard/Assets/app.png" alt="FlowBoard" width="120" />
+
 # FlowBoard
 
-A fast, good-looking **Kanban task manager and creative workspace for Windows**, in the spirit of Trello, Zenkit, Notion and Miro — written in C# / WPF with a Fluent look (Windows 10 and 11).
-**Fully local:** no account, no cloud, no internet needed. Your boards live on your PC.
+**Kanban boards, storyboards, canvases and notes in one fast, fully local Windows app.**
 
-## Features
+In the spirit of Trello, Zenkit, Notion and Miro, but your projects live on your PC.
+No account, no cloud, no internet needed.
 
-**Projects**
-- Work in separate **project files** (`.flowboard`): each project has its own boards, storyboards, canvases and pages. A `.flowboard` file is a real packaged file (compressed, not plain JSON) with its own FlowBoard icon in Explorer — double-click it to open it
-- Pictures, recordings, wallpapers and automatic backups live in a "`<name> files`" folder next to the project file
-- FlowBoard always starts on **Home** with nothing open: create a new project (empty or a sample) — choosing its name and **where to save it** — open one (Ctrl+O), pick a recent one, or restore a backup zip as a new project
-- Switch projects any time from the project name at the top of the sidebar; **Save project as…** (any name, any folder), back up a project to a zip, show it in Explorer
+[![Build](https://github.com/GladiusTyrfing/Flow_Board/actions/workflows/build.yml/badge.svg)](https://github.com/GladiusTyrfing/Flow_Board/actions/workflows/build.yml)
+![.NET 8](https://img.shields.io/badge/.NET-8-512BD4?logo=dotnet&logoColor=white)
+![WPF](https://img.shields.io/badge/UI-WPF%20%2B%20Fluent-0078D4)
+![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6?logo=windows&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-127%20passing-success)
+![Local first](https://img.shields.io/badge/data-100%25%20local-2ea44f)
 
-**Boards, lists & cards**
-- Unlimited boards, created from templates (Basic Kanban, Project, Bug tracker, Weekly planner, Content pipeline, Personal, Blank) or from your own saved templates
-- Add as many lists as you like (not just To Do / Doing / Done) — rename, reorder by drag & drop, collapse, color, sort, copy, archive
-- Work-in-progress limits per list, and "done" lists that auto-complete cards dropped into them
-- Drag & drop cards between lists; drag the empty board background to scroll sideways
-- Star boards, duplicate, export/import a board, per-board wallpaper (your own photo, gradients or colors) with dimming
+[Features](#-features) ·
+[Teamwork](#-working-together) ·
+[Hotkeys](#%EF%B8%8F-hotkeys) ·
+[Download](#-getting-the-app) ·
+[Your data](#-where-is-my-data) ·
+[Limits](#-limits) ·
+[Build](#%EF%B8%8F-building)
 
-**Cards (like Trello's card back)**
-- Title, description, completion checkbox, labels (board-wide, colored, renamable), priority (Low → Urgent)
-- Start / due dates with time, quick picks (Today, Tomorrow, Weekend, Next week) and reminders
-- Multiple checklists with progress bars; paste many lines to add many items; convert an item into a card
-- **Attachments:** any file, drag & drop from Explorer, or **Ctrl+V to paste screenshots**; image thumbnails, image preview, card covers
-- **Voice notes:** record from your microphone with a live level meter, or import audio files (wav, mp3, m4a…); play back with seek
-- Links, cover colors/images, comments and an automatic activity log
-- **Time tracking** (start/stop timer, manual log) and a **Pomodoro focus timer** that logs time to the card
+</div>
 
-**Views**
-- **Board** (Kanban), **Table** (sortable spreadsheet, all boards optionally), **Calendar** (month grid; drag cards to reschedule, "no date" tray)
-- **Timeline / Gantt**: cards as bars from start to due date, grouped by list — drag a bar to move it, drag its edges to change dates, zoom, "today" line, dependency arrows (red when a card starts before its blocker ends)
+---
 
-**Working together** (no server, no account)
-- Put a project (the `.flowboard` file and its `files` folder) in a shared folder: a network drive, a folder synced with **Syncthing** (direct between computers on your own network, no internet needed), or OneDrive / Dropbox / Google Drive
-- When someone else saves, FlowBoard merges their changes into what you have open **item by item** — both people's cards, shots, shapes and pages are kept, moves follow, deletes apply. If two people change the same thing at the same moment, your version is kept and you're told
-- Conflict copies made by sync apps are merged in automatically; the sidebar shows who else has the project open
+## ✨ Features
 
-**Everything is connected**
-- Link a card to a **board, storyboard, single shot, canvas or page** (card → Relate → Link item…), or add a card *for* one straight from a list's "Add card" box (Link… button)
-- **Done follows the links, both ways:** mark a shot *Done* or *Approved* and its cards complete (and move to Done); complete a card and its shots are marked Done and its page to-dos get ticked; tick the to-do and the card completes. "Turn shots into cards" and "turn to-dos into cards" link them automatically
-- Link related cards on any board, and mark cards as *blocked by* / *blocks* other cards (loops are refused)
-- Blocked cards show a lock badge on the board and in the timeline; links open the other card in one click
+<table>
+<tr>
+<td width="50%" valign="top">
 
-**Storyboards** (switch between **Film** and **Animation**)
-- A row of shot columns joined by connectors: frame image (pick, paste, drop, or **sketch** with pen/tablet — also over a photo), scene, date, description, tags
-- **Crop** each frame (16:9, 4:3, 2.39:1, 1:1, 9:16 … or free) or show the whole image; choose the storyboard's frame shape; import a folder of images as shots; production status per shot; collapse one shot or all of them to just their title and picture
-- Film: shot type, angle, movement, lens, location, a "shots required" checklist and an equipment list
-- Animation: action, dialogue, timing per frame, transition (cut, fade, dissolve, wipe) and a **voice line** — record it or use an audio file from your PC
-- **Animatic player**: plays the frames with their timing and voice lines; export the storyboard as PNG, print it, or turn every shot into a card
+### 📋 Boards and cards
+- Unlimited boards from templates (Kanban, Project, Bug tracker, Weekly planner, Content pipeline, Personal, Blank) or your own
+- Any number of lists: reorder, collapse, colour, sort, copy, archive, **WIP limits**, and "done" lists that complete their cards
+- Cards with labels, priority, start and due dates with reminders, **checklists**, comments and an activity log
+- **Attachments** dragged from Explorer or **pasted screenshots**, covers, image previews
+- **Voice notes** recorded from the microphone with a level meter
+- **Time tracking** and a **Pomodoro** timer that logs to the card
+- Per-board wallpapers, gradients and dimming
 
-**Canvas & flowcharts**
-- Infinite canvas with pan/zoom and a dot grid; boxes, rounded boxes, ellipses, decision diamonds, sticky notes, text, images and **live cards** from your boards
-- Drag from a shape's dot to connect (drop on empty space to create the next shape); curved, straight or elbow connectors with arrows, labels, colors, dashes
-- Mind-map keys (Tab = child, Enter = sibling), snap to grid, marquee select, copy/paste/duplicate, paste or drop images, **one-click tidy-up layout**, export PNG / print
-- **Sections (frames)** hold their shapes: dragging anything inside a section moves the whole section; **Ctrl+drag** moves a single shape (a click still selects it); Ctrl+drag on a section's empty area box-selects inside it; double-click inside adds a shape. **Tidy up** lays out each section's inside, resizes the section to fit and arranges sections as blocks
-- Draw **free lines and arrows** anywhere (ends stick to shapes) and **curve** them with a drag, **freehand pen**, circles, align & distribute, lock, Alt+drag copies, line thickness and double-headed arrows, crop images, right-click menu
-- **Link nodes**: drop a live preview of any board, storyboard, single shot, canvas, page or card onto the canvas (double-click opens it)
+</td>
+<td width="50%" valign="top">
 
-**Notes / docs pages**
-- Block editor: headings, to-dos, bulleted and numbered lists, quotes, callouts, code, dividers, images and links to cards, boards, storyboards, canvases or other pages
-- Type `/` for the block menu or use Markdown shortcuts (`#`, `-`, `1.`, `[]`, `>`, ```` ``` ````, `---`); Tab to indent, Alt+↑/↓ to move blocks
-- **Rich text**: bold, italic, underline, strikethrough, inline code, any text color and highlight — select text for the formatting bar
-- Type `@` anywhere in a line to link **inline** to a card, board, storyboard, a specific **shot**, canvas or page (click to open); the Link button embeds a **preview card**
-- Page icons and **cover images**, full-width or reading-width pages, an **outline** of headings, page templates (meeting notes, brief, script, shot list, to-dos, journal), word count and reading time, export/copy as Markdown, turn open to-dos into cards
+### 🗓️ Views
+- **Board**: Kanban with drag and drop
+- **Table**: a sortable spreadsheet, optionally across every board
+- **Calendar**: a month grid; drag cards to reschedule
+- **Timeline / Gantt**: drag bars and their edges to change dates, with dependency arrows (red when a card starts before its blocker ends)
+- **Home**: stats for every section, a 14-day completion chart, focus time, streaks, "up next" and "jump back in"
 
-**Home & stats** (Ctrl+H)
-- With no project open: new / open / recent projects
-- With a project open: numbers for **every section** — boards (lists, cards, % done), storyboards (shots, runtime, shots done, pictures, voice clips), canvases (shapes, sections, connections), pages (words, to-dos checked, edited this week) — plus open / done-this-week / overdue / due-soon / focus time / streak tiles, a 14-day "completed per day" chart, open cards by priority, time per board, an "up next" agenda, "jump back in" and a project switcher
+</td>
+</tr>
+<tr>
+<td valign="top">
 
-**Quality of life**
-- Command palette / global search (Ctrl+K) across every board, card, storyboard, canvas and note (including text inside pages)
-- **Smart quick add**: type `Call Sam tomorrow 3pm #work !high` and the date, time, label and priority are filled in for you
-- Filter by keyword, labels, due window, priority, completion
-- Undo / redo for everything (Ctrl+Z / Ctrl+Y) + archive with restore
-- Windows notifications for due-date reminders and Pomodoro phases, tray icon, "keep running in tray", start with Windows
-- **Global hotkeys** that work from any app (quick add a card, show/hide) — customizable
-- Dark / light / follow-Windows theme, accent colors, Mica / Acrylic backdrops, smooth animations
-- A full **color picker** (any color, hex, recent colors) next to every palette: labels, lists, covers, board backgrounds, canvas, sketches, note text
-- **Themes and wallpapers for storyboards, canvases and pages** too (Style button): theme presets, photos, gradients, colors, dim, blur, panel transparency
-- **Minimap** in the corner of boards, storyboards, canvases, timelines and pages — drag the box to look around, click to jump (and wheel to zoom on the canvas); hide it with its × button, **Ctrl+M** or in Settings
-- **Export for other apps:** pages as text, JSON or Markdown; canvases as **SVG**, **draw.io / diagrams.net** (same shapes, colors, positions and sections), **Mermaid** or a JSON graph; boards as a draw.io board layout, Mermaid, CSV, Markdown or JSON; storyboards as a CSV shot list or JSON
-- **High-res screenshots** (Ctrl+Shift+S or the camera button): the whole board, canvas, storyboard, timeline or page rendered sharply at up to 3× resolution, saved as PNG or copied
-- Autosave every 2 seconds, rolling automatic backups per project, zip backup of a project and restore as a new project, portable mode
+### 🎬 Storyboards
+- **Film** or **Animation** mode
+- Frames that you pick, paste, drop or **sketch** with a pen or tablet, even over a photo
+- **Crop** frames to 16:9, 4:3, 2.39:1, 1:1, 9:16 or freely
+- Film: shot type, angle, movement, lens, location, equipment
+- Animation: action, dialogue, timing, transitions and **recorded voice lines**
+- An **animatic player**, PNG export and printing, and "turn every shot into a card"
 
-## Hotkeys
+</td>
+<td valign="top">
 
-Press **F1** in the app for the full cheat sheet. Highlights:
+### 🧠 Canvas and flowcharts
+- An infinite canvas with shapes, sticky notes, text, images and **live cards**
+- Drag from a shape's dot to connect it, with curved, straight or elbow connectors
+- Mind-map keys (<kbd>Tab</kbd> for a child, <kbd>Enter</kbd> for a sibling), snapping, align and distribute, freehand pen
+- **Sections (frames)** that carry their shapes, and **one-click tidy-up** layout
+- **Link nodes**: a live preview of any board, shot, canvas, page or card
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### 📝 Notes and pages
+- A block editor: headings, to-dos, lists, quotes, callouts, code, dividers, images
+- <kbd>/</kbd> opens the block menu; Markdown shortcuts (`#` `-` `1.` `[]` `>` ` ``` ` `---`)
+- **Rich text**: bold, italic, underline, strikethrough, code, colours, highlights
+- <kbd>@</kbd> links **inline** to any card, board, storyboard, shot, canvas or page
+- Covers, icons, an outline, page templates, word count, and Markdown export
+
+</td>
+<td valign="top">
+
+### 🔗 Everything is connected
+- Link a card to a board, storyboard, **single shot**, canvas or page
+- **Done follows the links, both ways**: approve a shot and its cards complete; complete a card and its shots and to-dos are ticked
+- *Blocked by* / *blocks* between cards, with loops refused
+- **Command palette** (<kbd>Ctrl</kbd>+<kbd>K</kbd>) searches every board, card, storyboard, canvas and page
+
+</td>
+</tr>
+</table>
+
+### ⚡ Quality of life
+
+| | |
+|---|---|
+| **Smart quick add** | Type `Call Sam tomorrow 3pm #work !high` and the date, time, label and priority are filled in |
+| **Global hotkeys** | Quick-add a card or show/hide FlowBoard from any app |
+| **Undo / redo** | For everything, plus an archive you can restore from |
+| **Themes** | Dark, light or follow Windows; accent colours; Mica or Acrylic backdrops; a full colour picker everywhere |
+| **Styles for every section** | Theme presets, photos, gradients, dimming, blur and panel transparency for storyboards, canvases and pages |
+| **Minimaps** | On boards, storyboards, canvases, timelines and pages (<kbd>Ctrl</kbd>+<kbd>M</kbd>) |
+| **Screenshots** | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> renders the whole view at **up to 3×** resolution, as PNG or to the clipboard |
+| **Notifications** | Windows notifications for due dates and Pomodoro phases; tray icon; start with Windows |
+| **Safety** | Autosave every 2 seconds, rolling backups per project, zip backup and restore |
+
+### 📤 Export for other apps
+
+| From | To |
+|---|---|
+| **Canvas** | SVG · **draw.io / diagrams.net** (same shapes, colours, positions and sections) · Mermaid · JSON graph · PNG |
+| **Board** | draw.io board layout · Mermaid · CSV · Markdown · JSON |
+| **Storyboard** | CSV shot list · JSON · PNG · print |
+| **Page** | Text · JSON · Markdown |
+
+---
+
+## 🤝 Working together
+
+There's no server and no account. Put a project (the `.flowboard` file and its `files` folder) in a
+**shared folder**: a network drive, a folder synced with **Syncthing** (direct between computers on
+your network, with no internet), or OneDrive, Dropbox or Google Drive.
+
+- When someone else saves, their changes are **merged item by item** into what you have open. Both people's cards, shots, shapes and pages are kept, moves follow, and deletes apply.
+- If two people change the same thing at the same moment, **your version is kept** and you're told.
+- Conflict copies made by sync apps are merged in automatically.
+- The sidebar shows **who else has the project open**.
+
+---
+
+## ⌨️ Hotkeys
+
+Press <kbd>F1</kbd> in the app for the full cheat sheet.
 
 | Where | Keys | Action |
 |---|---|---|
-| Anywhere in Windows | **Ctrl+Alt+Space** | Quick add a card (pops up over any app) |
-| Anywhere in Windows | **Ctrl+Alt+F** | Show / hide FlowBoard |
-| App | Ctrl+K or / | Command palette & search |
-| App | Ctrl+F | Filter |
-| App | Ctrl+N or N | New card · Ctrl+Shift+N new board · Ctrl+Shift+L new list |
-| App | Ctrl+Z / Ctrl+Y | Undo / redo |
-| App | Ctrl+O · Ctrl+Shift+Alt+S | Open project · save project as |
-| App | Ctrl+H · Ctrl+M | Home · show/hide minimap |
-| App | Ctrl+Tab · Alt+1…9 | Next board · jump to board |
-| App | Ctrl+1 / 2 / 3 / 4 | Board / Table / Calendar / Timeline |
-| App | Ctrl+B or [ · Ctrl+T · Ctrl+P | Sidebar · theme · focus timer |
-| Hover a card | Enter · X · C · Delete · Ctrl+D | Open · complete · archive · delete · duplicate |
-| Hover a card | 1…9 · P · T · F · D · L | Toggle label · cycle priority · timer · focus · dates · labels |
-| Hover a card | Alt+← / → · Alt+↑ / ↓ | Move to previous/next list · move up/down |
-| Open card | L D P B M K A R T F X | Labels, Dates, Priority, Cover, Move, Checklist, Attach, Record, Timer, Focus, Complete |
-| Open card | Ctrl+V | Paste image / files as attachments |
+| **Anywhere in Windows** | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Space</kbd> | Quick-add a card over any app |
+| **Anywhere in Windows** | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd> | Show / hide FlowBoard |
+| App | <kbd>Ctrl</kbd>+<kbd>K</kbd> or <kbd>/</kbd> | Command palette and search |
+| App | <kbd>Ctrl</kbd>+<kbd>F</kbd> | Filter |
+| App | <kbd>Ctrl</kbd>+<kbd>N</kbd> · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | New card · board · list |
+| App | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd> | Undo / redo |
+| App | <kbd>Ctrl</kbd>+<kbd>O</kbd> · <kbd>Ctrl</kbd>+<kbd>H</kbd> · <kbd>Ctrl</kbd>+<kbd>M</kbd> | Open project · Home · minimap |
+| App | <kbd>Ctrl</kbd>+<kbd>1</kbd>–<kbd>4</kbd> | Board · Table · Calendar · Timeline |
+| App | <kbd>Ctrl</kbd>+<kbd>Tab</kbd> · <kbd>Alt</kbd>+<kbd>1</kbd>–<kbd>9</kbd> | Next board · jump to board |
+| Hover a card | <kbd>Enter</kbd> <kbd>X</kbd> <kbd>C</kbd> <kbd>Del</kbd> <kbd>Ctrl</kbd>+<kbd>D</kbd> | Open · complete · archive · delete · duplicate |
+| Hover a card | <kbd>1</kbd>–<kbd>9</kbd> <kbd>P</kbd> <kbd>T</kbd> <kbd>F</kbd> <kbd>D</kbd> <kbd>L</kbd> | Label · priority · timer · focus · dates · labels |
+| Hover a card | <kbd>Alt</kbd>+<kbd>←</kbd>/<kbd>→</kbd> · <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> | Move between lists · up/down |
+| Open card | <kbd>Ctrl</kbd>+<kbd>V</kbd> | Paste images or files as attachments |
+| Canvas | Double-click · drag a dot · <kbd>Tab</kbd>/<kbd>Enter</kbd> | Add shape · connect · child/sibling |
+| Canvas | <kbd>Ctrl</kbd>+drag | Move one shape inside a section |
+| Animatic | <kbd>Space</kbd> · <kbd>←</kbd> <kbd>→</kbd> · <kbd>Esc</kbd> | Play/pause · step · close |
 
-| Canvas | Double-click · drag a dot · Tab / Enter | Add shape · connect · child / sibling |
-| Canvas | V R B O D S T C I · Space+drag · Ctrl+wheel | Tools · pan · zoom |
-| Canvas | Ctrl+drag | Move one shape inside a section |
-| Notes | / · # - 1. [] > | Block menu · Markdown shortcuts |
-| Animatic | Space · ← → · Esc | Play/pause · step · close |
+Global hotkeys can be changed or turned off in **Settings → Hotkeys**.
 
-Global hotkeys can be changed (or turned off) in **Settings → Hotkeys**.
+---
 
-## Getting the app
+## 📥 Getting the app
 
-- **Download:** every push builds `FlowBoard.exe` on GitHub Actions (*Actions → Build FlowBoard → Artifacts*). It's a single self-contained file — no .NET install needed. Windows 10 (1809+) or 11, x64.
-- **Build yourself:** install the [.NET 8 SDK](https://dotnet.microsoft.com/download) and run
+**Download.** Every push builds a single, self-contained `FlowBoard.exe` on GitHub Actions
+(**Actions → Build FlowBoard → Artifacts**). No .NET install is needed. It runs on Windows 10
+(1809 or later) and Windows 11, x64.
 
-  ```powershell
-  dotnet run --project src/FlowBoard
-  # or a single-file exe:
-  dotnet publish src/FlowBoard -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish
-  ```
+**Projects.** FlowBoard starts on **Home** with nothing open. Create a project (empty or from a
+sample) and choose where to save it, open one (<kbd>Ctrl</kbd>+<kbd>O</kbd>), pick a recent one, or
+restore a backup zip. A `.flowboard` file is a compressed package with its own icon in Explorer;
+double-click it to open it.
 
-  You can also open `FlowBoard.sln` in Visual Studio 2022 and press F5.
+---
 
-## Where is my data?
+## 💾 Where is my data?
 
-- **Projects:** wherever you save them (by default `Documents\FlowBoard Projects`, changeable in **Settings → General**). A project is `<name>.flowboard` plus a `<name> files` folder next to it with `attachments\` (card files; storyboard/canvas/page images, sketches and recordings under `attachments\docs\`), `backgrounds\` and `backups\` (rolling automatic copies). Keep the file and its folder together when copying or moving a project.
-- **App settings** (theme, hotkeys, recent projects) live in `%AppData%\FlowBoard\settings.json`.
-- Data from older versions (`%AppData%\FlowBoard\data.json`) shows up in the recent list as **My workspace**; open it and use **Save project as…** to turn it into a project file.
-- Create an empty `portable.txt` next to `FlowBoard.exe` to keep settings and new projects in a `Data` folder beside the exe instead (e.g. on a USB stick or a synced folder).
+| What | Where |
+|---|---|
+| **Projects** | Wherever you save them (by default `Documents\FlowBoard Projects`) |
+| **Project files** | `<name>.flowboard`, plus a `<name> files` folder beside it holding `attachments\`, `backgrounds\` and `backups\`. Keep them together. |
+| **App settings** | `%AppData%\FlowBoard\settings.json` (theme, hotkeys, recent projects) |
+| **Portable mode** | Put an empty `portable.txt` next to `FlowBoard.exe` to keep settings and new projects in a `Data` folder beside the exe |
+| **Older versions** | `%AppData%\FlowBoard\data.json` appears in the recent list as **My workspace**. Use **Save project as…** to turn it into a project. |
 
-## About
+---
 
-FlowBoard is designed and developed by **Gladius_Tyrfing**. © 2026 Gladius_Tyrfing. All rights reserved.
+## 🚧 Limits
 
-## Project layout
+| | |
+|---|---|
+| **Platform** | Windows 10 (1809+) and 11 only; FlowBoard is a WPF app |
+| **Sync** | No built-in server or cloud. Teamwork needs a shared or synced folder that you provide. |
+| **Simultaneous edits** | When two people change the same item at the same moment, only your version is kept, and you're told |
+| **Moving projects** | The `.flowboard` file and its `files` folder must travel together |
+| **Exports** | draw.io, Mermaid, SVG, CSV and Markdown are one-way. Only FlowBoard's own board JSON can be imported back. |
+| **Signing** | The exe isn't code-signed, so SmartScreen may warn on first run |
+
+---
+
+## 🛠️ Building
+
+Requires the [.NET 8 SDK](https://dotnet.microsoft.com/download), or open `FlowBoard.sln` in Visual
+Studio 2022 and press <kbd>F5</kbd>.
+
+```powershell
+dotnet run --project src/FlowBoard
+```
+
+Build a single-file exe:
+
+```powershell
+dotnet publish src/FlowBoard -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish
+```
+
+Run the tests (they run anywhere, with no Windows UI needed):
+
+```powershell
+dotnet test tests/FlowBoard.Tests
+```
+
+### Project layout
 
 ```
 src/FlowBoard/
-  Models/        Board, BoardList, Card, Label, Checklist, Attachment, Comment/TimeEntry, settings,
-                 Documents (storyboards & shots, canvas nodes & edges, note pages & blocks)
-  Services/      Project files, JSON storage & backups, undo, templates, audio record/playback, reminders,
-                 Pomodoro, time tracking, tray, theme, global hotkeys, start-with-Windows,
-                 smart quick-add parser, connector routing & auto-layout, Markdown, dashboard stats,
-                 .flowboard packages, link sync, shared-folder teamwork (3-way merge, in-place apply,
-                 presence), exporters (SVG, draw.io, Mermaid, CSV, JSON)
-  ViewModels/    MainViewModel (+ Cards, App, Hotkeys, Projects, Links, Team partials), card details, calendar, table,
-                 timeline, command palette, quick add, settings, drag & drop handlers,
-                 storyboard (+ sketch pad, animatic), canvas, notes, home/dashboard, link picker
-  Views/         Board (Kanban), Table, Calendar, Timeline, card details, storyboard, canvas,
-                 notes, dashboard, dialogs
-  Themes/        Dark/light palettes and shared styles
-tools/make_icons.py      Renders the app icon and the .flowboard document icon
-tests/FlowBoard.Tests/   Tests for models, storage, undo, templates, filters, quick-add parsing, connector
-                         routing, layout, Markdown, stats, project files, link sync and exports (run anywhere with `dotnet test`)
+  Models/        boards, lists, cards, labels, checklists, attachments, settings,
+                 documents (storyboards and shots, canvas nodes and edges, pages and blocks)
+  Services/      project packages, storage and backups, undo, templates, audio, reminders,
+                 Pomodoro, time tracking, tray, themes, global hotkeys, quick-add parser,
+                 connector routing and layout, Markdown, stats, link sync,
+                 shared-folder teamwork (3-way merge, presence), exporters
+  ViewModels/    main window (cards, projects, links, hotkeys, team), card details, calendar,
+                 table, timeline, palette, storyboard, canvas, notes, dashboard
+  Views/         Board, Table, Calendar, Timeline, card details, storyboard, animatic,
+                 sketch pad, canvas, notes, dashboard, settings, dialogs
+  Themes/        dark and light palettes, shared styles
+tests/FlowBoard.Tests/   models, storage, undo, templates, filters, quick add, routing,
+                         Markdown, stats, project files, link sync, merge, exports
+tools/make_icons.py      renders the app and .flowboard document icons
 ```
 
-Built with [WPF-UI](https://github.com/lepoco/wpfui) (Fluent design), [CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet), [gong-wpf-dragdrop](https://github.com/punker76/gong-wpf-dragdrop) and [NAudio](https://github.com/naudio/NAudio).
+---
+
+<div align="center">
+
+Built with [WPF-UI](https://github.com/lepoco/wpfui) · [CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet) · [gong-wpf-dragdrop](https://github.com/punker76/gong-wpf-dragdrop) · [NAudio](https://github.com/naudio/NAudio) · [Plus Jakarta Sans](https://github.com/tokotype/PlusJakartaSans) (OFL)
+
+**FlowBoard** is designed and developed by **Gladius_Tyrfing**. © 2026 Gladius_Tyrfing. All rights reserved.
+
+</div>
